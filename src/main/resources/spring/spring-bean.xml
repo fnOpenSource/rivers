@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	    http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd
+	    http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd"> 
+	<context:component-scan base-package="com.feiniu" />
+	<util:properties id="configPathConfig" location="classpath:config/configPath.properties"></util:properties>
+	<util:properties id="chechksrvConfig" location="classpath:config/checksrv.properties"></util:properties>
+	 
+	<bean id="log4jInitialization" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+	   <property name="targetClass" value="org.springframework.util.Log4jConfigurer" />
+	   <property name="targetMethod" value="initLogging" />
+	   <property name="arguments">
+	      <list>
+	         <value>#{configPathConfig['config.path']}/config/log4j.properties
+	         </value>
+	      </list>
+	   </property>
+	</bean>
+	
+	<bean id="globalConfigBean"
+		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+		<property name="locations">
+			<list>
+				<value>#{configPathConfig['config.path']}/config/config.properties
+				</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="NodeTreeConfigs" class="com.feiniu.config.NodeTreeConfigs">
+		<constructor-arg value="#{globalConfigBean['zkConfigPath']}" />
+		<constructor-arg value="#{globalConfigBean['instances']}" />
+		<constructor-arg value="#{globalConfigBean['write_batch']}" />
+		<constructor-arg value="#{globalConfigBean['pool_size']}" />
+		<constructor-arg value="#{globalConfigBean['nosql_flow']}" />
+		<constructor-arg value="#{globalConfigBean['sql_flow']}" />
+		<constructor-arg value="#{globalConfigBean['zkhost']}" />
+	</bean>
+
+	<bean id="nodeCenter" class="com.feiniu.node.NodeCenter"/>
+
+	<bean id="TaskManager" class="com.feiniu.task.TaskManager" />
+
+	<bean id="SearcherService" class="com.feiniu.searcher.service.SearcherService"/> 
+	
+	<bean id="HttpReaderService" class="com.feiniu.reader.service.HttpReaderService"/>  
+ 
+	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
+	<bean id="taskJobCenter" class="com.feiniu.task.schedule.TaskJobCenter"/>
+	<bean id="healthChecker" class="com.feiniu.util.HealthChecker"/> 
+	<bean id="FNStart" class="com.feiniu.node.startup.Run"/>
+	<bean id="FNMonitor" class="com.feiniu.service.FNMonitor" init-method="start"/>
+</beans>
