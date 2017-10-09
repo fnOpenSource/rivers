@@ -116,7 +116,7 @@ public class ESFlow extends WriterFlowSocket {
 					} else
 						cbuilder.field(field, value);
 				} else {
-					cbuilder.field(field, value.toLowerCase());
+					cbuilder.field(field, value);
 				}
 			} 
 			cbuilder.field("SYSTEM_UPDATE_TIME", unit.getUpdateTime());
