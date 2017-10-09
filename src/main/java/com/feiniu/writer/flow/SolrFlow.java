@@ -142,7 +142,7 @@ public class SolrFlow extends WriterFlowSocket{
 				else
 					doc.addField(field, value); 
 			} else {
-				doc.addField(field, value.toLowerCase());
+				doc.addField(field, value);
 			}
 		} 
 		if(isUpdate)
