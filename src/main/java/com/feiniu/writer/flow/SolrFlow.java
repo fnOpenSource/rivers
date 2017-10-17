@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.FNIocConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.connect.FnConnection;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.util.Common;
@@ -50,7 +49,6 @@ import com.feiniu.util.FNException;
 public class SolrFlow extends WriterFlowSocket{
 	
 	private CloudSolrClient conn;
-	private FnConnection<?> FC;   
 	private static String linux_spilt= "/";
 	private static String srcDir= "config/template";
 	private static String zkDir = "/configs";
@@ -114,7 +112,7 @@ public class SolrFlow extends WriterFlowSocket{
 	} 
 	
 	@Override
-	public void write(WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		String name = Common.getStoreName(instantcName,storeId);
 		if (unit.getData().size() == 0){
 			log.warn("Empty IndexUnit for " + name );
@@ -123,8 +121,7 @@ public class SolrFlow extends WriterFlowSocket{
 		if(this.conn.getDefaultCollection() == null){
 			this.conn.setDefaultCollection(name);
 		}  
-		SolrInputDocument doc = new SolrInputDocument();
-		
+		SolrInputDocument doc = new SolrInputDocument(); 
 		for(Entry<String, Object> r:unit.getData().entrySet()){
 			String field = r.getKey(); 
 			if (r.getValue() == null)
@@ -134,19 +131,41 @@ public class SolrFlow extends WriterFlowSocket{
 			if (indexParam == null)
 				continue;
 			
-			if (indexParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
-				if (indexParam.getSeparator() != null){
-					String[] vs = value.split(indexParam.getSeparator());
-					doc.addField(field, vs);
+			if(isUpdate){  
+				if (indexParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
+					if (indexParam.getSeparator() != null){
+						String[] vs = value.split(indexParam.getSeparator());
+						Map<String,Object> fm = new HashMap<>(1);
+						fm.put("set",vs);
+						doc.setField(field, fm);
+					}
+					else{
+						if(keyColumn.equals(field)){
+							doc.setField(field, value);
+						}else{
+							Map<String, String> fm = new HashMap<>(1);
+							fm.put("set",value);
+							doc.setField(field, fm);
+						}  
+					} 
+				} else {
+					Map<String, String> fm = new HashMap<>(1);
+					fm.put("set",value);
+					doc.setField(field, fm);
 				}
-				else
-					doc.addField(field, value); 
-			} else {
-				doc.addField(field, value);
-			}
-		} 
-		if(isUpdate)
-			doc.addField("_version_", 1);
+			}else{
+				if (indexParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
+					if (indexParam.getSeparator() != null){
+						String[] vs = value.split(indexParam.getSeparator());
+						doc.addField(field, vs);
+					}
+					else
+						doc.addField(field, value); 
+				} else {
+					doc.addField(field, value);
+				}
+			} 
+		}  
 		docs.add(doc); 
 		if (!this.batch) {
 			this.conn.add(docs);

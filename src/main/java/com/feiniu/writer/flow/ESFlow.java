@@ -81,7 +81,7 @@ public class ESFlow extends WriterFlowSocket {
 	}
  
 	@Override
-	public void write(WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate)
+	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate)
 			throws FNException {
 		try {
 			if (this.batch && this.bulkProcessor==null) {

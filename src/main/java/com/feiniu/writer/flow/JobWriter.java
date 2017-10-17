@@ -169,7 +169,7 @@ public class JobWriter {
 			this.writer.getResource(); 
 			try{
 				while (reader.nextLine()) {   
-					this.writer.write(reader.getLineData(),getWriteParamMap(),instance, storeId,isUpdate);
+					this.writer.write(reader.getkeyColumn(),reader.getLineData(),getWriteParamMap(),instance, storeId,isUpdate);
 					count++;
 				}
 				String lastUpdateTime = reader.getLastUpdateTime();

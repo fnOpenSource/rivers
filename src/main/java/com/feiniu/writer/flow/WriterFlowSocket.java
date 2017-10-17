@@ -55,7 +55,7 @@ public class WriterFlowSocket implements Flow{
 		return null;
 	}
 
-	public void write(WriteUnit unit,Map<String, WriteParam> writeParamMap,String instantcName, String batchId,boolean isUpdate) throws Exception {
+	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap,String instantcName, String batchId,boolean isUpdate) throws Exception {
 	}
 
 	public void doDelete(WriteUnit unit, String instantcName, String batchId) throws Exception {

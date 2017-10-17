@@ -65,7 +65,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 	 
 	@Override
-	public void write(WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		if (unit.getData().size() == 0){
 			log.info("Empty IndexUnit for " + instantcName + " " + storeId);
 			return;
