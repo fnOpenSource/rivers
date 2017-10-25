@@ -28,7 +28,7 @@ import com.feiniu.util.ZKUtil;
  */
 public class NodeTreeConfigs { 
 	
-	private Map<String, NodeConfig> configMap;
+	private Map<String, NodeConfig> nodeConfigs;
 	private Map<String, NodeConfig> searchConfigMap = new HashMap<String, NodeConfig>();
 	private Map<String, WarehouseSqlParam> SqlParamMap = new HashMap<String, WarehouseSqlParam>();
 	private Map<String, WarehouseNosqlParam> NoSqlParamMap = new HashMap<String, WarehouseNosqlParam>(); 
@@ -59,7 +59,7 @@ public class NodeTreeConfigs {
 	
 	public void loadConfig(String instances,boolean reset,boolean init){
 		if(reset){
-			configMap = new HashMap<String, NodeConfig>();
+			this.nodeConfigs = new HashMap<String, NodeConfig>();
 		} 
 		parseDatasConfig(GlobalParam.CONFIG_PATH + "/" +  this.noSqlFileName,"nosql");
 		parseDatasConfig(GlobalParam.CONFIG_PATH + "/" +  this.sqlFileName,"sql");
@@ -76,8 +76,12 @@ public class NodeTreeConfigs {
 			NodeConfig nconfig = new NodeConfig(filename, indexType); 
 			if(init){
 				nconfig.init();
+				if(nconfig.getAlias().equals("")){
+					nconfig.setAlias(name);
+				} 
+				this.searchConfigMap.put(nconfig.getAlias(), nconfig);
 			}
-			configMap.put(name, nconfig);  
+			this.nodeConfigs.put(name, nconfig);  
 		}	  
 	}
 	
@@ -133,8 +137,8 @@ public class NodeTreeConfigs {
 			}
 		}
 	}
-	public Map<String, NodeConfig> getConfigMap(){
-		return this.configMap;
+	public Map<String, NodeConfig> getNodeConfigs(){
+		return this.nodeConfigs;
 	}
 	
 	public Map<String, NodeConfig> getSearchConfigs(){
@@ -150,17 +154,17 @@ public class NodeTreeConfigs {
 	}
 
 	public void init(){
-		for(Map.Entry<String, NodeConfig> e : configMap.entrySet()){
+		for(Map.Entry<String, NodeConfig> e : this.nodeConfigs.entrySet()){
 			e.getValue().init();
 			if(e.getValue().getAlias().equals("")){
 				e.getValue().setAlias(e.getKey());
 			}
-			searchConfigMap.put(e.getValue().getAlias(), e.getValue());
+			this.searchConfigMap.put(e.getValue().getAlias(), e.getValue());
 		}
 	}
 	
 	public void reload() {
-		for(Map.Entry<String, NodeConfig> e : configMap.entrySet()){
+		for(Map.Entry<String, NodeConfig> e : this.nodeConfigs.entrySet()){
 			e.getValue().reload();
 		}
 	} 

@@ -13,5 +13,5 @@ public interface Flow {
 
 	public FnConnection<?> PULL(boolean canSharePipe);
 
-	public void CLOSED(FnConnection<?> FC);
+	public void CLOSED(FnConnection<?> FC,boolean releaseConn);
 }

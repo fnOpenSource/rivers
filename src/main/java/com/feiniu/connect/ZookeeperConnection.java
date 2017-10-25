@@ -8,12 +8,11 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZookeeperConnection implements FnConnection<ZooKeeper> {
+public class ZookeeperConnection extends FnConnectionSocket implements FnConnection<ZooKeeper> {
 
 	private final static int CONNECTION_TIMEOUT = 50000; 
-	private HashMap<String, Object> connectParams = null;
-	private ZooKeeper conn;
-	private boolean isShare = false;
+	
+	private ZooKeeper conn; 
 	
 	private final static Logger log = LoggerFactory
 			.getLogger(ZookeeperConnection.class);
@@ -24,12 +23,7 @@ public class ZookeeperConnection implements FnConnection<ZooKeeper> {
 		o.init(ConnectParams);
 		o.connect();
 		return o;
-	}
-
-	@Override
-	public void init(HashMap<String, Object> ConnectParams) {
-		this.connectParams = ConnectParams;
-	}
+	} 
 
 	@Override
 	public boolean connect() {
@@ -62,7 +56,7 @@ public class ZookeeperConnection implements FnConnection<ZooKeeper> {
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || this.conn.getState().equals(States.CLOSED)) {
+		if (this.conn == null || this.conn.getState().equals(States.CLOSED) || isOutOfTime()) {
 			return false;
 		}
 		return true;
@@ -79,15 +73,5 @@ public class ZookeeperConnection implements FnConnection<ZooKeeper> {
 			return false;
 		}
 		return true;
-	}
-	
-	@Override
-	public boolean isShare() { 
-		return this.isShare;
-	}
-
-	@Override
-	public void setShare(boolean share) {
-		this.isShare = share;
 	} 
 }

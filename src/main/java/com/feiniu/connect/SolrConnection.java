@@ -6,17 +6,11 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SolrConnection implements FnConnection<CloudSolrClient> {
+public class SolrConnection extends FnConnectionSocket implements FnConnection<CloudSolrClient> {
 
 	private final static int zkClientTimeout = 180000;
-	private final static int zkConnectTimeout = 60000;
-	private long createTime = System.currentTimeMillis();
-
-	private HashMap<String, Object> connectParams = null;
-
-	private CloudSolrClient conn = null;
-	
-	private boolean isShare = false;
+	private final static int zkConnectTimeout = 60000;  
+	private CloudSolrClient conn = null; 
 
 	private final static Logger log = LoggerFactory
 			.getLogger(SolrConnection.class);
@@ -27,12 +21,7 @@ public class SolrConnection implements FnConnection<CloudSolrClient> {
 		o.init(ConnectParams);
 		o.connect();
 		return o;
-	}
-
-	@Override
-	public void init(HashMap<String, Object> ConnectParams) {
-		this.connectParams = ConnectParams;
-	}
+	} 
 
 	@Override
 	public boolean connect() {
@@ -65,10 +54,9 @@ public class SolrConnection implements FnConnection<CloudSolrClient> {
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || System.currentTimeMillis()-createTime>zkClientTimeout) {
+		if (this.conn == null || isOutOfTime()) {
 			return false;
-		}
-		createTime = System.currentTimeMillis();
+		} 
 		return true;
 	}
 
@@ -83,16 +71,6 @@ public class SolrConnection implements FnConnection<CloudSolrClient> {
 			return false;
 		}
 		return true;
-	}
-	
-	@Override
-	public boolean isShare() { 
-		return this.isShare;
-	}
-
-	@Override
-	public void setShare(boolean share) {
-		this.isShare = share;
 	} 
 
 }

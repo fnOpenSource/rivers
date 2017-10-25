@@ -41,6 +41,7 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		isLocked.set(true);
 		FnConnection<?> FC = PULL(false);
 		this.jobPage.clear(); 
+		boolean releaseConn = false;
 		try {
 			Connection conn = (Connection) FC.getConnection();
 			PreparedStatement statement = conn.prepareStatement(param.get("sql"));
@@ -60,10 +61,14 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			}
 			statement.close();
 			rs.close();
-		} catch (Exception e) {
-			log.error(param.get("sql") + " getJobPage Exception", e);
+		} catch (SQLException e){
+			log.error(param.get("sql") + " getJobPage SQLException", e);
+		} catch (Exception e) { 
+			releaseConn = true;
+			log.error("getJobPage Exception so free connection,details ", e);
+		}finally{
+			CLOSED(FC,releaseConn);
 		} 
-		CLOSED(FC);
 		return this.jobPage;
 	}
 
@@ -98,6 +103,7 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		List<String> page = new ArrayList<String>();
 		PreparedStatement statement = null;
 		ResultSet rs  = null;
+		boolean releaseConn = false;
 		try {
 			boolean autoSelect = true;
 			if(param.get("keyColumnType") != null){
@@ -127,8 +133,11 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				}
 			}
 			Collections.reverse(page);  
-		} catch (Exception e) {
-			log.error("getPageSplit Exception", e);
+		} catch (SQLException e){
+			log.error(param.get("sql") + " getPageSplit SQLException", e);
+		} catch (Exception e) { 
+			releaseConn = true;
+			log.error("getPageSplit Exception so free connection,details ", e);
 		}finally{ 
 			try {
 				statement.close();
@@ -136,7 +145,7 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			CLOSED(FC);
+			CLOSED(FC,releaseConn);
 		}  
 		return page;
 	} 

@@ -32,19 +32,12 @@ public class TaskManager{
 	private HashSet<String> cron_exists=new HashSet<String>();
 
 	public void start() { 
-		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getConfigMap();
+		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
 		for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) {
 			String instanceName = entry.getKey();
 			NodeConfig NodeConfig = entry.getValue();
 			initParams(instanceName);
-			startInstance(instanceName, NodeConfig,false);
-			try {
-				if (NodeConfig.hasRabitmq()) {
-					//message deal 
-				}
-			} catch (Exception e) {
-				log.error("RabitMqMessageHandler Exception", e);
-			}
+			startInstance(instanceName, NodeConfig,false); 
 		} 
 	}
 	
@@ -82,7 +75,7 @@ public class TaskManager{
 	 * @return
 	 */
 	public boolean removeInstance(String instanceName){
-		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getConfigMap();
+		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
 		boolean state = true;
 		if(configMap.containsKey(instanceName)){
 			try{
@@ -215,7 +208,7 @@ public class TaskManager{
 			}
 			JobModel _sj = new JobModel(
 					getJobName(instance, "full"), NodeConfig.getTransParam().getFullCron(),
-					"com.feiniu.manager.Task", "startFullIndex", task); 
+					"com.feiniu.manager.Task", "startFullJob", task); 
 			taskJobCenter.addJob(_sj); 
 		} 
 		
@@ -247,7 +240,7 @@ public class TaskManager{
 			JobModel _sj = new JobModel(
 					getJobName(instance, "increment"),
 					NodeConfig.getTransParam().getDeltaCron(), "com.feiniu.manager.Task",
-					"startIncrementIndex", task); 
+					"startIncrementJob", task); 
 			taskJobCenter.addJob(_sj);
 		} 
 	}
@@ -255,7 +248,7 @@ public class TaskManager{
 	private void createOptimizeJob(String indexName, Task batch,String cron) throws SchedulerException{
 		JobModel _sj = new JobModel(
 				getJobName(indexName, "optimize"),cron,
-				"com.feiniu.manager.Task", "optimizeIndex", batch); 
+				"com.feiniu.manager.Task", "optimizeInstance", batch); 
 		taskJobCenter.addJob(_sj); 
 	}
 
@@ -267,6 +260,5 @@ public class TaskManager{
 		}else{
 			return indexName + "_OptimizeJob";
 		}
-	} 
-	
+	}  
 }

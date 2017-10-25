@@ -44,18 +44,36 @@ public class FnConnectionPool {
 	}
 	
 	public static void freeConn(FnConnection<?> conn,
-			String poolName){
-		FnCPool.freeConnection(poolName, conn);
+			String poolName,boolean releaseConn){
+		FnCPool.freeConnection(poolName, conn,releaseConn);
 	}
 	
 	public static String getStatus(String poolName){
 		return FnCPool.getState(poolName);
+	} 
+	
+	public static void release(String poolName){
+		FnCPool.releasePool(poolName);
+	} 
+	
+	/**
+	 * release pools
+	 */
+	private void releasePool(String poolName){
+		if(poolName!=null){
+			if(this.pools.contains(poolName))
+				this.pools.get(poolName).releaseAll();
+		}else{
+			for (Entry<String, ConnectionPool> ent : this.pools.entrySet()) {
+				ent.getValue().releaseAll();
+			}
+		}  
 	}
 	
 	/**
 	 * get connection from pool and waiting
 	 */
-	public FnConnection<?> getConnection(HashMap<String, Object> params,
+	private FnConnection<?> getConnection(HashMap<String, Object> params,
 			String poolName,boolean canShareConn) {
 		synchronized (this.pools) {
 			if (this.pools.get(poolName) == null) {
@@ -65,7 +83,7 @@ public class FnConnectionPool {
 		return this.pools.get(poolName).getConnection(this.waitTime,canShareConn);
 	} 
 	
-	public String getState(String poolName){
+	private String getState(String poolName){
 		if(this.pools.get(poolName) == null){
 			return " pool not startup!";  
 		}else{
@@ -73,22 +91,13 @@ public class FnConnectionPool {
 		}		
 	}
 	
-	public void freeConnection(String poolName, FnConnection<?> conn) {
+	private void freeConnection(String poolName, FnConnection<?> conn,boolean releaseConn) {
 		ConnectionPool pool = (ConnectionPool) this.pools.get(poolName); 
 		if (pool != null) {
-			pool.freeConnection(conn);
+			pool.freeConnection(conn,releaseConn);
 		}
-	}
+	} 
 	
-	/**
-	 * release all pools
-	 */
-	public void release(){
-		for (Entry<String, ConnectionPool> ent : this.pools.entrySet()) {
-			ent.getValue().releaseAll();
-		}
-	}
-
 	private void createPools(String poolName, HashMap<String, Object> params) {
 		ConnectionPool pool = new ConnectionPool(GlobalParam.POOL_SIZE, poolName, params);
 		this.pools.put(poolName, pool);
@@ -172,11 +181,19 @@ public class FnConnectionPool {
 		 * @param conn free connection
 		 * 
 		 */
-		public void freeConnection(FnConnection<?> conn) {
-			if(!conn.isShare()){
-				freeConnections.add(conn);
+		public void freeConnection(FnConnection<?> conn,boolean releaseConn) {
+			if(conn.isShare()){
+				if(releaseConn){
+					conn.free();
+				} 
+			}else{
+				if(releaseConn){
+					conn.free();
+				}else{
+					freeConnections.add(conn);
+				} 
 				activeNum.addAndGet(-1);
-			}
+			} 
 		}
 		
 		public String getState(){
@@ -186,17 +203,15 @@ public class FnConnectionPool {
 		/**
 		 * close connection pool all connections
 		 */
-		public void releaseAll() {
+		public void releaseAll() { 
 			for (FnConnection<?> conn : freeConnections) {
-				if (conn.free()) {
-					log.info("close free connection pool " + this.poolName
-							+ " one connection!");
-				} else {
-					log.warn("error close free connection pool " + this.poolName
-							+ " one connection!");
+				if (!conn.free()) { 
+					log.warn("error close one connection in pool " + this.poolName); 
 				}
 			}
 			freeConnections.clear();
+			log.info("free connection pool " + this.poolName
+					+ " ,Active Connections:"+activeNum+",Release Connections:"+freeConnections.size());
 		}
 		
 		private FnConnection<?> newConnection() {

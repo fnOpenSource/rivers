@@ -10,13 +10,9 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ESConnection implements FnConnection<Client>{ 
+public class ESConnection extends FnConnectionSocket implements FnConnection<Client>{ 
  
-	private Client conn;
-	
-	private HashMap<String, Object> connectParams = null;
-	
-	private boolean isShare = false;
+	private Client conn;  
 	
 	private final static Logger log = LoggerFactory.getLogger(ESConnection.class);  
   
@@ -26,11 +22,7 @@ public class ESConnection implements FnConnection<Client>{
 		o.connect();
 		return o;
 	}
- 
-	@Override
-	public void init(HashMap<String, Object> ConnectParams) {
-		this.connectParams = ConnectParams; 
-	}
+  
 
 	@Override
 	public boolean connect() {
@@ -61,7 +53,7 @@ public class ESConnection implements FnConnection<Client>{
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || this.conn.admin()==null) {
+		if (this.conn == null || this.conn.admin()==null || isOutOfTime()) {
 			return false;
 		}
 		return true;
@@ -78,16 +70,5 @@ public class ESConnection implements FnConnection<Client>{
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public boolean isShare() { 
-		return this.isShare;
-	}
-
-	@Override
-	public void setShare(boolean share) {
-		this.isShare = share;
 	} 
-	
 }

@@ -7,13 +7,9 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OracleConnection implements FnConnection<Connection>{
-	
-	private HashMap<String, Object> connectParams = null;
-	
-	private Connection conn = null;  
-	
-	private boolean isShare = false;
+public class OracleConnection extends FnConnectionSocket implements FnConnection<Connection>{
+	 
+	private Connection conn = null;   
 	
 	private final static Logger log = LoggerFactory
 			.getLogger(OracleConnection.class);
@@ -31,12 +27,7 @@ public class OracleConnection implements FnConnection<Connection>{
 		o.init(ConnectParams); 
 		o.connect();
 		return o;
-	}
-	 
-	@Override
-	public void init(HashMap<String, Object> ConnectParams) {
-		this.connectParams = ConnectParams; 
-	}
+	} 
 
 	@Override
 	public boolean connect() {
@@ -84,23 +75,13 @@ public class OracleConnection implements FnConnection<Connection>{
 	@Override
 	public boolean status(){
 		try {
-			if(this.conn != null && !this.conn.isClosed()){
+			if(this.conn != null && !this.conn.isClosed() && !isOutOfTime()){
 				return true;
 			} 
 		} catch (Exception e) { 
 			log.error("get status Exception,", e);
 		} 
 		return false;
-	}
-	
-	@Override
-	public boolean isShare() { 
-		return this.isShare;
-	}
-
-	@Override
-	public void setShare(boolean share) {
-		this.isShare = share;
 	} 
 	
 	private String getConnectionUrl() {

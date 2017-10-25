@@ -99,7 +99,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		}catch(Exception e){ 
 			throw new FNException("Search data from Solr exception!");
 		}finally{
-			CLOSED(FC);
+			CLOSED(FC,false);
 		} 
 		return ret;
 	} 

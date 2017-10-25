@@ -7,13 +7,9 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MysqlConnection implements FnConnection<Connection>{
+public class MysqlConnection extends FnConnectionSocket implements FnConnection<Connection>{ 
 	
-	private HashMap<String, Object> connectParams;
-	
-	private Connection conn = null; 
-	
-	private boolean isShare = false;
+	private Connection conn = null;  
 	
 	private final static Logger log = LoggerFactory
 			.getLogger(MysqlConnection.class);
@@ -32,11 +28,7 @@ public class MysqlConnection implements FnConnection<Connection>{
 		o.connect();
 		return o;
 	}
-	
-	@Override
-	public void init(HashMap<String, Object> ConnectParams) {
-		this.connectParams = ConnectParams; 
-	}
+	 
 
 	@Override
 	public boolean connect() {
@@ -84,7 +76,7 @@ public class MysqlConnection implements FnConnection<Connection>{
 	@Override
 	public boolean status(){
 		try {
-			if(this.conn != null && !this.conn.isClosed()){
+			if(this.conn != null && !this.conn.isClosed() && !isOutOfTime()){
 				return true;
 			} 
 		} catch (Exception e) { 
@@ -92,20 +84,9 @@ public class MysqlConnection implements FnConnection<Connection>{
 		} 
 		return false;
 	}
-	
-	@Override
-	public boolean isShare() { 
-		return this.isShare;
-	}
-
-	@Override
-	public void setShare(boolean share) {
-		this.isShare = share;
-	} 
-	
+ 
 	private String getConnectionUrl() {
 		return "jdbc:mysql://" + this.connectParams.get("host") + ":" + this.connectParams.get("port") + "/" + this.connectParams.get("dbname")
 				+ "?autoReconnect=true&failOverReadOnly=false";
-	} 
-
+	}  
 }

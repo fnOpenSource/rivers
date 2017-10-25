@@ -36,14 +36,14 @@ public class WriterFlowSocket implements Flow{
 	}
 	
 	@Override
-	public void CLOSED(FnConnection<?> FC) { 
-		FnConnectionPool.freeConn(FC, this.poolName);
+	public void CLOSED(FnConnection<?> FC,boolean releaseConn) { 
+		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
 	}
 	
 	public void getResource(){}
 	
-	public void freeResource(){
-		CLOSED(this.FC); 
+	public void freeResource(boolean releaseConn){
+		CLOSED(this.FC,releaseConn); 
 		locked.set(false);
 	}
 	

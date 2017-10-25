@@ -381,10 +381,10 @@ public class ESFlow extends WriterFlowSocket {
 				if (p.getName() == null)
 					continue;
 				map.put("type", p.getIndextype()); // type is must
-				if (p.getStored().length() > 0) {
-					map.put("store", p.getStored());
+				if (p.getStored().toLowerCase().equals("false")) {
+					map.put("store", "false");
 				}
-				if (!"false".equals(p.getIndexed())) {
+				if (p.getIndexed().toLowerCase().equals("true")) {
 					if (p.getAnalyzer().length() > 0) {
 						if (p.getAnalyzer().equalsIgnoreCase(("not_analyzed")))
 							map.put("index", "not_analyzed");
@@ -398,8 +398,8 @@ public class ESFlow extends WriterFlowSocket {
 						}
 					}
 				} else {
-					map.put("index", "no");
-				}
+					map.put("index", "not_analyzed");
+				} 
 				config_map.put(p.getName(), map);
 			}
 		} catch (Exception e) {

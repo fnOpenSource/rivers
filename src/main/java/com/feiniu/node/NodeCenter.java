@@ -46,7 +46,7 @@ public class NodeCenter{
 	 */ 
 	public JobWriter getWriterChannel(String instanceName, String seq,boolean needClear) { 
 		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq)) || needClear){
-			NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getConfigMap().get(instanceName);
+			NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
 			JobWriter writer=null;
 			String readFrom = paramConfig.getTransParam().getDataFrom(); 
 			WriteFlowSocket<?> flowSocket;
@@ -82,10 +82,10 @@ public class NodeCenter{
 	}
  
 	public FNQueryBuilder getQueryBuilder(String instanceName) { 
-		if (!GlobalParam.nodeTreeConfigs.getConfigMap().containsKey(instanceName))
+		if (!GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(instanceName))
 			return null;
 		
-		WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getConfigMap().get(instanceName).getTransParam().getWriteTo());
+		WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getTransParam().getWriteTo());
 		if (param == null)
 			return null;
 		
@@ -101,7 +101,7 @@ public class NodeCenter{
 	
 	public WriterFlowSocket getDestinationWriter(String instanceName) {
 		if (!destinationWriterMap.containsKey(instanceName)){
-			WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getConfigMap().get(instanceName).getTransParam().getWriteTo());
+			WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getTransParam().getWriteTo());
 			if (param == null)
 				return null;
 			destinationWriterMap.put(instanceName, WriterFactory.getWriter(param));
@@ -126,6 +126,5 @@ public class NodeCenter{
 		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherInstance(param, paramConfig);
 		searcherMap.put(secname, searcher); 
 		return searcher;
-	}
-	
-}
+	} 
+} 

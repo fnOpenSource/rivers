@@ -64,6 +64,7 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		isLocked.set(true);
 		FnConnection<?> FC = PULL(false);
 		this.jobPage.clear();
+		boolean releaseConn = false;
 		try {
 			HTable conn = (HTable) FC.getConnection();
 			Scan scan = new Scan();
@@ -123,9 +124,10 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				log.error("SqlReader init Exception", e);
 			} 
 		} catch (Exception e) {
-			log.error(param.get("sql") + " getJobPage Exception", e);
+			releaseConn = true;
+			log.error("getJobPage Exception", e);
 		}finally{
-			CLOSED(FC);
+			CLOSED(FC,releaseConn);
 		} 
 		return this.jobPage;
 	}
@@ -136,6 +138,7 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		FnConnection<?> FC = PULL(false);
 		HTable conn = (HTable) FC.getConnection();
 		List<String> dt = new ArrayList<String>();
+		boolean releaseConn = false;
 		try {
 			Scan scan = new Scan();
 			List<Filter> filters = new ArrayList<Filter>();
@@ -166,9 +169,10 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				i += r.size();
 			}
 		} catch (Exception e) {
+			releaseConn = true;
 			log.error("getPageSplit Exception", e);
 		}finally{ 
-			CLOSED(FC);
+			CLOSED(FC,releaseConn);
 		}
 		return dt;
 	}

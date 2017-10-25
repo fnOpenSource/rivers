@@ -1,5 +1,5 @@
 package com.feiniu.node;
- 
+
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
@@ -146,12 +146,14 @@ public class NodeMonitor {
 			}
 			OutputStream os = null;
 			try {
-				os = new FileOutputStream(configPath.replace("file:/", "")+"/config/config.properties");
-				globalConfigBean.store(os, "Auto Save Config with no format,BeCarefull!");
+				os = new FileOutputStream(configPath.replace("file:", "")
+						+ "/config/config.properties");
+				globalConfigBean.store(os,
+						"Auto Save Config with no format,BeCarefull!");
 				setResponse(1, "Config set success!");
 			} catch (Exception e) {
-				setResponse(0, "Config save Exception "+e.getMessage());
-			} 
+				setResponse(0, "Config save Exception " + e.getMessage());
+			}
 		} else {
 			setResponse(0, "Config parameters k v or type not exists!");
 		}
@@ -221,12 +223,12 @@ public class NodeMonitor {
 		setResponse(1, dt);
 	}
 
-	public void getIndexInfo(Request rq) {
-		if (GlobalParam.nodeTreeConfigs.getConfigMap().containsKey(
+	public void getInstanceInfo(Request rq) {
+		if (GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(
 				rq.getParameter("instance"))) {
 			StringBuffer sb = new StringBuffer();
-			NodeConfig config = GlobalParam.nodeTreeConfigs.getConfigMap().get(
-					rq.getParameter("instance"));
+			NodeConfig config = GlobalParam.nodeTreeConfigs.getNodeConfigs()
+					.get(rq.getParameter("instance"));
 			boolean writer = false;
 			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(
 					config.getTransParam().getDataFrom()) != null) {
@@ -359,12 +361,16 @@ public class NodeMonitor {
 		}
 	}
 
+	/**
+	 * get all instances info
+	 * 
+	 * @param rq
+	 */
 	public void getInstances(Request rq) {
-		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs
-				.getConfigMap();
-
+		Map<String, NodeConfig> nodes = GlobalParam.nodeTreeConfigs
+				.getNodeConfigs();
 		HashMap<String, List<String>> rs = new HashMap<String, List<String>>();
-		for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) {
+		for (Map.Entry<String, NodeConfig> entry : nodes.entrySet()) {
 			NodeConfig config = entry.getValue();
 			StringBuffer sb = new StringBuffer();
 			sb.append(entry.getKey() + ":[Alias]" + config.getAlias());
@@ -393,13 +399,13 @@ public class NodeMonitor {
 	public void runNow(Request rq) {
 		if (rq.getParameter("instance") != null
 				&& rq.getParameter("jobtype") != null) {
-			if (GlobalParam.nodeTreeConfigs.getConfigMap().containsKey(
+			if (GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(
 					rq.getParameter("instance"))
-					&& GlobalParam.nodeTreeConfigs.getConfigMap()
+					&& GlobalParam.nodeTreeConfigs.getNodeConfigs()
 							.get(rq.getParameter("instance")).isIndexer()) {
 				boolean state = this.taskManager.runIndexJobNow(
 						rq.getParameter("instance"),
-						GlobalParam.nodeTreeConfigs.getConfigMap().get(
+						GlobalParam.nodeTreeConfigs.getNodeConfigs().get(
 								rq.getParameter("instance")),
 						rq.getParameter("jobtype"));
 				if (state) {
@@ -459,16 +465,21 @@ public class NodeMonitor {
 	public void reloadConfig(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
 			currentThreadState(rq.getParameter("instance"), 0);
+			int type = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(rq.getParameter("instance")).getIndexType();
+			String configString = type>0?rq.getParameter("instance")+":"+type:rq.getParameter("instance");
 			if (rq.getParameter("reset") != null
 					&& rq.getParameter("reset").equals("true")
 					&& rq.getParameter("instance").length() > 2) {
-				GlobalParam.nodeTreeConfigs.loadConfig(
-						rq.getParameter("instance"), true, true);
+				GlobalParam.nodeTreeConfigs.loadConfig(configString, true, true); 
 			} else {
-				GlobalParam.nodeTreeConfigs.loadConfig(
-						rq.getParameter("instance"), false, true);
-			}
-			startIndex(rq.getParameter("instance"));
+				GlobalParam.FLOW_INFOS.put(rq.getParameter("instance")+"_full",new HashMap<String, String>());
+				GlobalParam.FLOW_INFOS.put(rq.getParameter("instance")+"_increment",new HashMap<String, String>());
+				freeInstanceConnectPool(rq.getParameter("instance")); 
+				GlobalParam.nodeTreeConfigs.getSearchConfigs().remove(
+						GlobalParam.nodeTreeConfigs.getNodeConfigs().get(rq.getParameter("instance")).getAlias());
+				GlobalParam.nodeTreeConfigs.loadConfig(configString, false, true);
+			}  
+			startIndex(configString);
 			currentThreadState(rq.getParameter("instance"), 1);
 			setResponse(1, "Writer " + rq.getParameter("instance")
 					+ " reload Config Success!");
@@ -492,7 +503,7 @@ public class NodeMonitor {
 		}
 		String alias = rq.getParameter("alias");
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs
-				.getConfigMap();
+				.getNodeConfigs();
 		boolean state = true;
 		for (Map.Entry<String, NodeConfig> ents : configMap.entrySet()) {
 			String indexname = ents.getKey();
@@ -563,7 +574,7 @@ public class NodeMonitor {
 			setResponse(0, "ESIndex Delete Exception!");
 		} finally {
 			FnConnectionPool.freeConn(FC,
-					param.getIp() + "_" + param.getDefaultValue());
+					param.getIp() + "_" + param.getDefaultValue(),false);
 		}
 	}
 
@@ -583,28 +594,25 @@ public class NodeMonitor {
 	 * @param index
 	 * @param state
 	 */
-	private void currentThreadState(String index, Integer state) {
-		for (String inst : index.split(",")) {
-			String[] strs = inst.split(":");
-			if (strs.length < 1)
-				continue;
+	private void currentThreadState(String instance, Integer state) {
+		for (String inst : instance.split(",")) {  
 			if (state == 0) {
 				int waittime = 0;
-				log.info("Index " + strs[0] + " waitting to stop...");
-				while ((GlobalParam.FLOW_STATUS.get(strs[0]).get() & 2) > 0) {
+				log.info("Instance " + inst + " waitting to stop...");
+				while ((GlobalParam.FLOW_STATUS.get(inst).get() & 2) > 0) {
 					try {
 						waittime++;
 						Thread.sleep(3000);
 						if (waittime > 5) {
-							GlobalParam.FLOW_STATUS.get(strs[0]).set(4);
+							GlobalParam.FLOW_STATUS.get(inst).set(4);
 						}
 					} catch (InterruptedException e) {
 						log.error("currentThreadState InterruptedException", e);
 					}
 				}
-				log.info("Index " + strs[0] + " success stop!");
+				log.info("Instance " + inst + " success stop!");
 			}
-			GlobalParam.FLOW_STATUS.get(strs[0]).set(state);
+			GlobalParam.FLOW_STATUS.get(inst).set(state);
 		}
 	}
 
@@ -614,7 +622,7 @@ public class NodeMonitor {
 			if (strs.length < 1)
 				continue;
 			this.taskManager.startInstance(strs[0], GlobalParam.nodeTreeConfigs
-					.getConfigMap().get(strs[0]), true);
+					.getNodeConfigs().get(strs[0]), true);
 		}
 	}
 
@@ -647,6 +655,66 @@ public class NodeMonitor {
 			str = new String(b);
 		}
 		return str;
+	}
+
+	private void freeInstanceConnectPool(String instanceName) {
+		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
+		String readFrom = paramConfig.getTransParam().getDataFrom();
+		String writeTo = paramConfig.getTransParam().getWriteTo();
+		if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(readFrom) != null) {
+			Map<String, WarehouseNosqlParam> dataMap = GlobalParam.nodeTreeConfigs
+					.getNoSqlParamMap();
+
+			List<String> seqs = dataMap.get(readFrom).getSeq();
+			if (seqs.size() > 0) {
+				for (String seq : seqs) { 
+					FnConnectionPool.release(dataMap.get(readFrom).getPoolName(
+							seq));
+				}
+			} else {
+				FnConnectionPool.release(dataMap.get(readFrom)
+						.getPoolName(null));
+			}
+
+			if (dataMap.get(writeTo) != null) {
+				seqs = dataMap.get(writeTo).getSeq();
+				if (seqs.size() > 0) {
+					for (String seq : seqs) {
+						FnConnectionPool.release(dataMap.get(writeTo)
+								.getPoolName(seq));
+					}
+				} else {
+					FnConnectionPool.release(dataMap.get(writeTo).getPoolName(
+							null));
+				}
+			}
+		} else {
+			Map<String, WarehouseSqlParam> dataMap = GlobalParam.nodeTreeConfigs
+					.getSqlParamMap();
+
+			List<String> seqs = dataMap.get(readFrom).getSeq();
+			if (seqs.size() > 0) {
+				for (String seq : seqs) {
+					FnConnectionPool.release(dataMap.get(readFrom).getPoolName(
+							seq));
+				}
+			} else {
+				FnConnectionPool.release(dataMap.get(readFrom)
+						.getPoolName(null));
+			}
+			if (dataMap.get(writeTo) != null) {
+				seqs = dataMap.get(writeTo).getSeq();
+				if (seqs.size() > 0) {
+					for (String seq : seqs) {
+						FnConnectionPool.release(dataMap.get(writeTo)
+								.getPoolName(seq));
+					}
+				} else {
+					FnConnectionPool.release(dataMap.get(writeTo).getPoolName(
+							null));
+				}
+			}
+		}
 	}
 
 	private String getBatchId(String path) {

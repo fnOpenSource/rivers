@@ -42,9 +42,21 @@ public class Task{
     	this.instanceName = instanceName;
     	this.jobWriter = jobWriter;
     	this.seq = seq;
-    }  
-    
-	public void startFullIndex() {
+    }   
+	
+	/**
+	 * if no full job will auto open optimize job 
+	 */
+	public void optimizeInstance(){
+		GlobalParam.FLOW_STATUS.get(instanceName).set(0);
+		String indexName = instanceName;
+		if (seq != null && seq.length() > 0)
+			indexName = instanceName + seq;  
+		jobWriter.optimizeIndex(indexName, Common.getStoreId(instanceName,seq,jobWriter,true,false));
+		GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+	}
+	
+	public void startFullJob() {
 		if((this.runState.get()&2)==0){  
 			this.runState.set(this.runState.get()+2); 
 			try{  
@@ -66,19 +78,8 @@ public class Task{
 		}
 	} 
 	
-	/**
-	 * if no full job will auto open optimize job 
-	 */
-	public void optimizeIndex(){
-		GlobalParam.FLOW_STATUS.get(instanceName).set(0);
-		String indexName = instanceName;
-		if (seq != null && seq.length() > 0)
-			indexName = instanceName + seq;  
-		jobWriter.optimizeIndex(indexName, Common.getStoreId(instanceName,seq,jobWriter,true,false));
-		GlobalParam.FLOW_STATUS.get(instanceName).set(1);
-	}
 	
-	public void startIncrementIndex() {
+	public void startIncrementJob() {
 		if((this.runState.get()&1)==0){    
 			if((GlobalParam.FLOW_STATUS.get(instanceName).get()&1)>0){  
 				this.runState.set(this.runState.get()+1);
@@ -102,7 +103,7 @@ public class Task{
 					this.runState.set(this.runState.get()-1);
 				} 
 			}else{
-				log.info(instanceName+" job have been stopped!startIncrementIndex failed!");
+				log.info(instanceName+" job have been stopped!startIncrement JOB failed!");
 			}
 		}else{
 			log.info(instanceName+" increment job is running, ignore this time job!");

@@ -46,7 +46,7 @@ public class SearcherFlowSocket implements Flow{
 	}
 	
 	@Override
-	public void CLOSED(FnConnection<?> FC) { 
-		FnConnectionPool.freeConn(FC, this.poolName);
+	public void CLOSED(FnConnection<?> FC,boolean releaseConn) { 
+		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
 	}
 }

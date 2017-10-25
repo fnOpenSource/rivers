@@ -123,7 +123,7 @@ public class ESFlow extends SearcherFlowSocket {
 		}catch(Exception e){ 
 			throw new FNException("Search data from ES exception!"+e.getMessage());
 		}finally{
-			CLOSED(FC); 
+			CLOSED(FC,false); 
 		} 
 		return res;
 	}

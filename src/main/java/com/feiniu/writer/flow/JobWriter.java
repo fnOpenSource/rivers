@@ -97,7 +97,7 @@ public class JobWriter {
 		try{
 			this.writer.optimize(indexName, storeId);
 		}finally{
-			this.writer.freeResource();
+			this.writer.freeResource(false);
 		}  
 	} 
 
@@ -109,7 +109,7 @@ public class JobWriter {
 			taskId = this.writer.getNewStoreId(instanceName, isIncrement, dbseq,
 					this.nodeConfig);
 		}finally{
-			this.writer.freeResource();
+			this.writer.freeResource(false);
 		}  
 		return taskId;
 	}
@@ -120,7 +120,7 @@ public class JobWriter {
 			this.writer.settings(store_main, storeId,
 					getWriteParamMap());
 		}finally{
-			this.writer.freeResource();
+			this.writer.freeResource(false);
 		}  
 	}
 	
@@ -138,7 +138,7 @@ public class JobWriter {
 			this.writer.remove(instance, removeId);
 			this.writer.setAlias(instance, storeId, nodeConfig.getAlias());
 		}finally{
-			this.writer.freeResource();
+			this.writer.freeResource(false);
 		}   
 	}
 
@@ -182,7 +182,7 @@ public class JobWriter {
 						String.valueOf(lastUpdateTime), Common.getNow() - start, "onepage", info); 
 			}finally{
 				this.writer.flush();
-				this.writer.freeResource();
+				this.writer.freeResource(false);
 			}  
 		}
 		flowSocket.freeJobPage();
@@ -369,7 +369,7 @@ public class JobWriter {
 						try{
 							this.writer.remove(indexName, storeId);
 						}finally{
-							this.writer.freeResource();
+							this.writer.freeResource(false);
 						} 
 					} 
 					if(e.getMessage().equals("storeId not found")){

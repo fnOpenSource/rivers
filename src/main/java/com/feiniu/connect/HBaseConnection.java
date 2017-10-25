@@ -8,13 +8,11 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HBaseConnection implements FnConnection<HTable>{
+public class HBaseConnection extends FnConnectionSocket implements FnConnection<HTable>{
 	private final static Logger log = LoggerFactory
 			.getLogger(HBaseConnection.class);
 	private Configuration hbaseConfig; 
-	private HTable conn;
-	private HashMap<String, Object> connectParams;
-	private boolean isShare = false;
+	private HTable conn; 
 
 	public static FnConnection<?> getInstance(HashMap<String, Object> ConnectParams){
 		FnConnection<?> o = new HBaseConnection();
@@ -71,7 +69,7 @@ public class HBaseConnection implements FnConnection<HTable>{
 	@Override
 	public boolean status() {
 		try {
-			if(this.conn != null){
+			if(this.conn != null && !isOutOfTime()){
 				return true;
 			} 
 		} catch (Exception e) { 
@@ -104,15 +102,5 @@ public class HBaseConnection implements FnConnection<HTable>{
 			}
 		}
 		return true;
-	} 
-	
-	@Override
-	public boolean isShare() { 
-		return this.isShare;
-	}
-
-	@Override
-	public void setShare(boolean share) {
-		this.isShare = share;
-	} 
+	}  
 }
