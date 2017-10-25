@@ -60,8 +60,8 @@ public class FnConnectionPool {
 	 * release pools
 	 */
 	private void releasePool(String poolName){
-		if(poolName!=null){
-			if(this.pools.contains(poolName))
+		if(poolName!=null){ 
+			if(this.pools.containsKey(poolName))
 				this.pools.get(poolName).releaseAll();
 		}else{
 			for (Entry<String, ConnectionPool> ent : this.pools.entrySet()) {
@@ -208,10 +208,10 @@ public class FnConnectionPool {
 				if (!conn.free()) { 
 					log.warn("error close one connection in pool " + this.poolName); 
 				}
-			}
-			freeConnections.clear();
+			} 
 			log.info("free connection pool " + this.poolName
 					+ " ,Active Connections:"+activeNum+",Release Connections:"+freeConnections.size());
+			freeConnections.clear();
 		}
 		
 		private FnConnection<?> newConnection() {
