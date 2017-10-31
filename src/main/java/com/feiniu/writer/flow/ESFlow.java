@@ -79,6 +79,16 @@ public class ESFlow extends WriterFlowSocket {
 		PULL(false);
 		this.conn = (Client) this.FC.getConnection();
 	}
+	
+	@Override
+	public void freeResource(boolean releaseConn){
+		if(this.bulkProcessor!=null){
+			this.bulkProcessor.close();
+			this.bulkProcessor=null;
+		}
+		CLOSED(this.FC,releaseConn); 
+		locked.set(false); 
+	}
  
 	@Override
 	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate)
@@ -163,9 +173,9 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void flush(){
+	public void flush() throws Exception{
 		if (this.batch && this.bulkProcessor!=null) {
-			this.bulkProcessor.flush();
+			this.bulkProcessor.flush(); 
 		}
 	}
 

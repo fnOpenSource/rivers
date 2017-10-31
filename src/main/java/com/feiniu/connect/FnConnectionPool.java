@@ -132,9 +132,9 @@ public class FnConnectionPool {
 			this.shareConn.setShare(true);
 		}
 
-		public synchronized FnConnection<?> getConnection() {
-			FnConnection<?> conn = null;
+		public synchronized FnConnection<?> getConnection() { 
 			if (!freeConnections.isEmpty()) {
+				FnConnection<?> conn = null;
 				conn = freeConnections.poll();
 				while(conn.status() == false && !freeConnections.isEmpty()){
 					conn.free();
@@ -145,11 +145,11 @@ public class FnConnectionPool {
 					return conn;
 				}
 			} 
-			if (activeNum.get() < maxConn) {
-				conn = newConnection();
+			if (activeNum.get() < maxConn) { 
 				activeNum.addAndGet(1);
+				return newConnection();
 			} 
-			return conn;
+			return null;
 		}
 		
 		public FnConnection<?> getConnection(long timeout,boolean canShareConn) {

@@ -40,7 +40,7 @@ public class GlobalParam {
 	
 	public static int POOL_SIZE = 6;
 	/** CONNECT_EXPIRED is milliseconds time */
-	public static int CONNECT_EXPIRED = 3600000;
+	public static int CONNECT_EXPIRED = 7200000;
 	
 	public static NodeTreeConfigs nodeTreeConfigs;
 	
