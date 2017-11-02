@@ -47,21 +47,16 @@ public class HBaseFlow extends WriterFlowSocket {
 				this.connectParams.put("columnFamily", strs[1]);
 		}
 		this.poolName = String.valueOf(connectParams.get("poolName"));;
-		locked.set(false);
+		retainer.set(0);
 	} 
 	
 	@Override
-	public void getResource(){
-		while (locked.get()) {
-			try {
-				Thread.sleep(1000);
-			} catch (Exception e) {
-				log.error("getResource Exception", e);
-			}
-		}
-		locked.set(true);
-		PULL(false);
-		this.conn = (HTable) this.FC.getConnection();
+	public synchronized void getResource(){
+		if(retainer.get()==0){
+			PULL(false);
+			this.conn = (HTable) this.FC.getConnection();
+		} 
+		retainer.addAndGet(1); 
 	} 
 	 
 	@Override
@@ -95,6 +90,9 @@ public class HBaseFlow extends WriterFlowSocket {
 					Bytes.toBytes(value)); 	
 		} 
 		data.add(put);
+		synchronized (data) {
+			data.notifyAll();
+		}
 	}
 
 	@Override
@@ -114,8 +112,11 @@ public class HBaseFlow extends WriterFlowSocket {
 
 	@Override
 	public void flush() throws Exception { 
-		this.conn.put(data);
-		data.clear();
+		synchronized (data) {
+			data.wait();
+			this.conn.put(data);
+			data.clear();
+		} 
 	}
 
 	@Override

@@ -167,6 +167,7 @@ public class JobWriter {
 		int count = 0; 
 		if (!reader.getLastUpdateTime().equals("-1")) {
 			this.writer.getResource(); 
+			boolean freeConn = false;
 			try{
 				while (reader.nextLine()) {   
 					this.writer.write(reader.getkeyColumn(),reader.getLineData(),getWriteParamMap(),instance, storeId,isUpdate);
@@ -180,15 +181,21 @@ public class JobWriter {
 				resp.setCount(count);
 				indexLog(" -- "+id+" onepage ",instance, storeId, seq, String.valueOf(count), maxId,
 						String.valueOf(lastUpdateTime), Common.getNow() - start, "onepage", info); 
+			}catch(Exception e){
+				if(e.getMessage().equals("storeId not found")){
+					throw new FNException("storeId not found");
+				}else{
+					freeConn = true;
+					throw new FNException(e.getMessage());
+				}
 			}finally{
 				this.writer.flush();
-				this.writer.freeResource(false);
+				this.writer.freeResource(freeConn);
 			}  
 		}
 		flowSocket.freeJobPage();
 		return resp;
-	} 
-	
+	}  
 	 
 		/**
 		 * write to not db platform
@@ -266,9 +273,9 @@ public class JobWriter {
 		private String doSqlWrite(String instanceName, String storeId, String lastTime,
 				String DataSeq, boolean isFullIndex) throws FNException{
 			String desc = "increment";
-			String indexName = Common.getInstanceName(instanceName,DataSeq); 
+			String destName = Common.getInstanceName(instanceName,DataSeq); 
 			if (isFullIndex) {
-				createStorePosition(indexName, storeId); 
+				createStorePosition(destName, storeId); 
 				desc = "full";
 			} 
 			SQLParam sqlParam = nodeConfig.getTransParam().getSqlParam();
@@ -287,7 +294,7 @@ public class JobWriter {
 			if(!GlobalParam.FLOW_INFOS.containsKey(instanceName+"_"+desc)){
 				GlobalParam.FLOW_INFOS.put(instanceName+"_"+desc,new HashMap<String, String>());
 			} 
-			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(indexName+" seqs nums",String.valueOf(table_seqs.size()));
+			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(destName+" seqs nums",String.valueOf(table_seqs.size()));
 			for (int i = 0; i < table_seqs.size(); i++) {
 				int total = 0;
 				FNWriteResponse resp = null;
@@ -314,15 +321,15 @@ public class JobWriter {
 					param.put("keyColumnType", sqlParam.getKeyColumnType());
 					List<String> pageList = flowSocket.getPageSplit(param); 
 					HashMap<String, String> sqlParams;
-					GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(indexName+tseq,"start count page...");
+					GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(destName+tseq,"start count page...");
 					if (pageList.size() > 0) {
-						indexLog("start " + desc, indexName, storeId, tseq, "",
+						indexLog("start " + desc, destName, storeId, tseq, "",
 								maxId, lastUpdateTime, 0, "start", ",totalpage:"
 										+ pageList.size()); 
 						int processPos = 0;
 						for (String page : pageList) { 
 							processPos++;
-							GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(indexName+tseq,processPos + "/" + pageList.size());
+							GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(destName+tseq,processPos + "/" + pageList.size());
 							maxId = page;
 							sqlParams = null;
 							sqlParams = new HashMap<String, String>();
@@ -333,7 +340,7 @@ public class JobWriter {
 							sqlParams.put(GlobalParam._start_time, (lastUpdateTime.equals("null")?"0":lastUpdateTime));
 							sqlParams.put(GlobalParam._incrementField, incrementField);
 							String sql = buildSql(originalSql, sqlParams);
-							resp = writeDataSet(desc,indexName, storeId, tseq,
+							resp = writeDataSet(desc,destName, storeId, tseq,
 									getSqlPageData(sql,incrementField,keyColumn),
 									",complete:" + processPos + "/" + pageList.size(),false);
 
@@ -341,7 +348,7 @@ public class JobWriter {
 							startId = maxId;
 							
 							if((GlobalParam.FLOW_STATUS.get(instanceName).get()&4)>0){
-								indexLog("kill " + desc, indexName, storeId, tseq,
+								indexLog("kill " + desc, destName, storeId, tseq,
 										String.valueOf(total), maxId, newLastUpdateTime,
 										Common.getNow() - start, "complete", "");
 								break;
@@ -355,11 +362,11 @@ public class JobWriter {
 								Common.saveTaskInfo(instanceName,DataSeq,storeId); 
 							}
 						}  
-						indexLog("complete " + desc, indexName, storeId, tseq,
+						indexLog("complete " + desc, destName, storeId, tseq,
 								String.valueOf(total), maxId, newLastUpdateTime,
 								Common.getNow() - start, "complete", "");
 					} else { 
-						indexLog("start " + desc, indexName, storeId, tseq, "",
+						indexLog("start " + desc, destName, storeId, tseq, "",
 								maxId, lastUpdateTime, 0, "start",
 								" no data job finished!");
 					}
@@ -367,7 +374,7 @@ public class JobWriter {
 					if (isFullIndex) {
 						this.writer.getResource();
 						try{
-							this.writer.remove(indexName, storeId);
+							this.writer.remove(destName, storeId);
 						}finally{
 							this.writer.freeResource(false);
 						} 
@@ -375,19 +382,18 @@ public class JobWriter {
 					if(e.getMessage().equals("storeId not found")){
 						throw new FNException("storeId not found");
 					}  
-					log.error("[" + desc +" "+ indexName + tseq + "_" + storeId
+					log.error("[" + desc +" "+ destName + tseq + "_" + storeId
 							+ " ERROR]", e);
 					GlobalParam.mailSender.sendHtmlMailBySynchronizationMode(
 							" [SearchPlatForm] " + GlobalParam.run_environment,
-							"Job " + indexName +" "+ desc + " Has stopped!");
+							"Job " + destName +" "+ desc + " Has stopped!");
 					newLastUpdateTimes = lastUpdateTimes;
-					TaskManager.startInstance(instanceName, nodeConfig, true);
 					break;
 				}  
 			} 
 			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).clear();
 			if (isFullIndex)
-				switchSearcher(indexName, storeId);  
+				switchSearcher(destName, storeId);  
 			
 			return getTimeString(newLastUpdateTimes);
 		} 

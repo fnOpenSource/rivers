@@ -2,7 +2,10 @@ package com.feiniu.writer.flow;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
@@ -19,13 +22,15 @@ public class WriterFlowSocket implements Flow{
 	protected HashMap<String, Object> connectParams;
 	protected String poolName;  
 	protected FnConnection<?> FC;
-	protected AtomicBoolean locked = new AtomicBoolean(false);
+	protected AtomicInteger retainer = new AtomicInteger(0);
+	private final static Logger log = LoggerFactory.getLogger(WriterFlowSocket.class);
 	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
 		this.poolName = String.valueOf(connectParams.get("poolName"));
 		this.batch = GlobalParam.WRITE_BATCH;
+		retainer.set(0);
 	}
 
 	@Override
@@ -43,8 +48,14 @@ public class WriterFlowSocket implements Flow{
 	public void getResource(){}
 	
 	public void freeResource(boolean releaseConn){
-		CLOSED(this.FC,releaseConn); 
-		locked.set(false);
+		synchronized(retainer){
+			retainer.addAndGet(-1);
+			if(retainer.get()==0){
+				CLOSED(this.FC,releaseConn);   
+			}else{
+				log.info(this.FC+" retainer is "+retainer.get());
+			}
+		} 
 	}
 	
 	public boolean settings(String instantcName, String batchId, Map<String,WriteParam> paramMap) {

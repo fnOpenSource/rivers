@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -53,7 +54,7 @@ import com.feiniu.util.FNException;
 public class ESFlow extends WriterFlowSocket {
 	private final static int BULK_BUFFER = 1000;
 	private final static int BULK_SIZE = 30;
-	private final static int BULK_FLUSH = 3;
+	private final static int BULK_FLUSH_SECONDS = 3;
 	private final static int BULK_CONCURRENT = 1; 
 	
 	private Client conn;  
@@ -68,26 +69,34 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public void getResource() {
-		while (locked.get()) {
-			try {
-				Thread.sleep(1000);
-			} catch (Exception e) {
-				log.error("getResource Exception", e);
+		synchronized (retainer) {
+			if(retainer.get()==0){
+				PULL(false);
+				this.conn = (Client) this.FC.getConnection();
 			}
-		}
-		locked.set(true);
-		PULL(false);
-		this.conn = (Client) this.FC.getConnection();
+			retainer.addAndGet(1); 
+		} 
 	}
 	
 	@Override
 	public void freeResource(boolean releaseConn){
-		if(this.bulkProcessor!=null){
-			this.bulkProcessor.close();
-			this.bulkProcessor=null;
-		}
-		CLOSED(this.FC,releaseConn); 
-		locked.set(false); 
+		synchronized(retainer){
+			retainer.addAndGet(-1);
+			if(retainer.get()==0){ 
+				try{
+					if(this.bulkProcessor!=null){
+						this.bulkProcessor.awaitClose(BULK_FLUSH_SECONDS, TimeUnit.SECONDS);
+						this.bulkProcessor=null;
+					}
+				}catch(Exception e){
+					log.error("freeResource bulkProcessor Exception",e);
+				}finally{
+					CLOSED(this.FC,releaseConn);  
+				} 
+			}else{
+				log.info(this.conn.toString()+" retainer is "+retainer.get());
+			}
+		} 
 	}
  
 	@Override
@@ -465,7 +474,7 @@ public class ESFlow extends WriterFlowSocket {
 					}
 				}).setBulkActions(BULK_BUFFER)
 				.setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
-				.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH))
+				.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
 				.setConcurrentRequests(BULK_CONCURRENT).build();
 	}
 }

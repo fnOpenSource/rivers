@@ -74,17 +74,12 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	
 	@Override
-	public void getResource(){
-		while(locked.get()){
-			try {
-				Thread.sleep(1000);
-			} catch (Exception e) {
-				log.error("getResource Exception",e);
-			} 
+	public synchronized void getResource(){
+		if(retainer.get()==0){
+			PULL(false);
+			this.conn = (CloudSolrClient) this.FC.getConnection();
 		}
-		locked.set(true); 
-		PULL(false);
-		this.conn = (CloudSolrClient) this.FC.getConnection();
+		retainer.addAndGet(1); 
 	}
 	 
 	@Override
@@ -171,6 +166,10 @@ public class SolrFlow extends WriterFlowSocket{
 			this.conn.add(docs);
 			this.conn.commit();
 			docs.clear();
+		}else{
+			synchronized (docs) {
+				docs.notifyAll();
+			}
 		}
 	}
 	 
@@ -219,17 +218,20 @@ public class SolrFlow extends WriterFlowSocket{
 	@Override
 	public void flush() throws FNException { 
 		if(this.batch){
-			try{
-				this.conn.add(docs);
-				this.conn.commit(true, true, true); 
-			}catch(Exception e){
-				if(e.getMessage().contains("Collection not found")){ 
-					throw new FNException("storeId not found");
-				}else{
-					throw new FNException(e.getMessage());
+			synchronized (docs) { 
+				try {
+					docs.wait();
+					this.conn.add(docs);
+					this.conn.commit(true, true, true);
+				} catch (Exception e) {
+					if (e.getMessage().contains("Collection not found")) {
+						throw new FNException("storeId not found");
+					} else {
+						throw new FNException(e.getMessage());
+					}
 				}
-			}		
-			docs.clear();
+				docs.clear();
+			}
 		} 
 	}
 
