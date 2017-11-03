@@ -381,14 +381,15 @@ public class JobWriter {
 					} 
 					if(e.getMessage().equals("storeId not found")){
 						throw new FNException("storeId not found");
-					}  
-					log.error("[" + desc +" "+ destName + tseq + "_" + storeId
-							+ " ERROR]", e);
-					GlobalParam.mailSender.sendHtmlMailBySynchronizationMode(
-							" [SearchPlatForm] " + GlobalParam.run_environment,
-							"Job " + destName +" "+ desc + " Has stopped!");
-					newLastUpdateTimes = lastUpdateTimes;
-					break;
+					}else{
+						log.error("[" + desc +" "+ destName + tseq + "_" + storeId
+								+ " ERROR]", e);
+						GlobalParam.mailSender.sendHtmlMailBySynchronizationMode(
+								" [SearchPlatForm] " + GlobalParam.run_environment,
+								"Job " + destName +" "+ desc + " Has stopped!");
+						newLastUpdateTimes = lastUpdateTimes;
+						throw new FNException("Job Exception,need clean state!");
+					}
 				}  
 			} 
 			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).clear();

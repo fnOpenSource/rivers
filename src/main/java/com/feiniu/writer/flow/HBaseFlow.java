@@ -1,14 +1,15 @@
 package com.feiniu.writer.flow;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +23,11 @@ import com.feiniu.model.param.WriteParam;
  * @author chengwen
  * @version 1.0 
  */
-@NotThreadSafe
+@ThreadSafe
 public class HBaseFlow extends WriterFlowSocket { 
 	 
-	private CopyOnWriteArrayList<Put> data = new CopyOnWriteArrayList<Put>();  
-	private HTable conn;
+	private List<Put> data = new CopyOnWriteArrayList<Put>();  
+	private Table conn;
 	private final static Logger log = LoggerFactory.getLogger(HBaseFlow.class); 
 	
 	public static HBaseFlow getInstance(HashMap<String, Object> connectParams) {
@@ -51,14 +52,16 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 	
 	@Override
-	public synchronized void getResource(){
-		if(retainer.get()==0){
-			PULL(false);
-			this.conn = (HTable) this.FC.getConnection();
+	public void getResource(){
+		synchronized(retainer){
+			if(retainer.get()==0){
+				PULL(false);
+				this.conn = (Table) this.FC.getConnection();
+			} 
+			retainer.addAndGet(1); 
 		} 
-		retainer.addAndGet(1); 
 	} 
-	 
+	  
 	@Override
 	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		if (unit.getData().size() == 0){
@@ -85,15 +88,14 @@ public class HBaseFlow extends WriterFlowSocket {
 			if (indexParam == null)
 				indexParam = writeParamMap.get(field.toUpperCase());
 			if (indexParam == null)
-				continue;
-			put.add(Bytes.toBytes((String)connectParams.get("columnFamily")), Bytes.toBytes(indexParam.getName()),
-					Bytes.toBytes(value)); 	
+				continue; 
+			put.addColumn(Bytes.toBytes((String)connectParams.get("columnFamily")), Bytes.toBytes(indexParam.getName()),
+					Bytes.toBytes(value));  
 		} 
-		data.add(put);
 		synchronized (data) {
-			data.notifyAll();
+			data.add(put); 
 		}
-	}
+	} 
 
 	@Override
 	public void doDelete(WriteUnit unit, String instantcName, String batchId) throws Exception {
@@ -113,7 +115,6 @@ public class HBaseFlow extends WriterFlowSocket {
 	@Override
 	public void flush() throws Exception { 
 		synchronized (data) {
-			data.wait();
 			this.conn.put(data);
 			data.clear();
 		} 

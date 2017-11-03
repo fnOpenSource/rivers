@@ -74,12 +74,14 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	
 	@Override
-	public synchronized void getResource(){
-		if(retainer.get()==0){
-			PULL(false);
-			this.conn = (CloudSolrClient) this.FC.getConnection();
-		}
-		retainer.addAndGet(1); 
+	public void getResource(){
+		synchronized(retainer){
+			if(retainer.get()==0){
+				PULL(false);
+				this.conn = (CloudSolrClient) this.FC.getConnection();
+			}
+			retainer.addAndGet(1); 
+		} 
 	}
 	 
 	@Override
@@ -161,14 +163,12 @@ public class SolrFlow extends WriterFlowSocket{
 				}
 			} 
 		}  
-		docs.add(doc); 
 		if (!this.batch) {
-			this.conn.add(docs);
-			this.conn.commit();
-			docs.clear();
+			this.conn.add(doc);
+			this.conn.commit(); 
 		}else{
 			synchronized (docs) {
-				docs.notifyAll();
+				docs.add(doc); 
 			}
 		}
 	}
@@ -218,9 +218,8 @@ public class SolrFlow extends WriterFlowSocket{
 	@Override
 	public void flush() throws FNException { 
 		if(this.batch){
-			synchronized (docs) { 
-				try {
-					docs.wait();
+			synchronized (docs){
+				try { 
 					this.conn.add(docs);
 					this.conn.commit(true, true, true);
 				} catch (Exception e) {
@@ -231,7 +230,7 @@ public class SolrFlow extends WriterFlowSocket{
 					}
 				}
 				docs.clear();
-			}
+			} 
 		} 
 	}
 

@@ -40,8 +40,12 @@ import com.feiniu.util.SystemInfoUtil;
 import com.feiniu.util.ZKUtil;
 
 /**
- * data-flow router maintain apis
- * 
+ * data-flow router maintain apis,default port 8617,localhost:8617/search.doaction?ac=[actions]
+ * @actions reloadConfig reload instance config and re-add all jobs clean relate pools 
+ * @actions runNow/stopInstance/removeInstance/resumeInstance
+ * start/stop/remove/resume once now instance 
+ * @actions getInstances get all instances in current node
+ * @actions getInstanceInfo get specify instance detail informations
  * @author chengwen
  * @version 1.0
  */
@@ -472,9 +476,9 @@ public class NodeMonitor {
 					&& rq.getParameter("instance").length() > 2) {
 				GlobalParam.nodeTreeConfigs.loadConfig(configString, true, true); 
 			} else {
-				GlobalParam.FLOW_INFOS.put(rq.getParameter("instance")+"_full",new HashMap<String, String>());
-				GlobalParam.FLOW_INFOS.put(rq.getParameter("instance")+"_increment",new HashMap<String, String>());
-				freeInstanceConnectPool(rq.getParameter("instance")); 
+				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance")+"_full"); 
+				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance")+"_increment");  
+				this.freeInstanceConnectPool(rq.getParameter("instance")); 
 				GlobalParam.nodeTreeConfigs.getSearchConfigs().remove(
 						GlobalParam.nodeTreeConfigs.getNodeConfigs().get(rq.getParameter("instance")).getAlias());
 				GlobalParam.nodeTreeConfigs.loadConfig(configString, false, true);
@@ -658,63 +662,41 @@ public class NodeMonitor {
 	}
 
 	private void freeInstanceConnectPool(String instanceName) {
-		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
-		String readFrom = paramConfig.getTransParam().getDataFrom();
-		String writeTo = paramConfig.getTransParam().getWriteTo();
-		if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(readFrom) != null) {
-			Map<String, WarehouseNosqlParam> dataMap = GlobalParam.nodeTreeConfigs
-					.getNoSqlParamMap();
-
-			List<String> seqs = dataMap.get(readFrom).getSeq();
-			if (seqs.size() > 0) {
-				for (String seq : seqs) { 
-					FnConnectionPool.release(dataMap.get(readFrom).getPoolName(
-							seq));
-				}
-			} else {
-				FnConnectionPool.release(dataMap.get(readFrom)
-						.getPoolName(null));
-			}
-
-			if (dataMap.get(writeTo) != null) {
-				seqs = dataMap.get(writeTo).getSeq();
+		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName); 
+		String[] dataSource = {paramConfig.getTransParam().getDataFrom(),paramConfig.getTransParam().getWriteTo()};
+		for(String dt:dataSource){
+			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(dt) != null) {
+				WarehouseNosqlParam dataMap = GlobalParam.nodeTreeConfigs
+						.getNoSqlParamMap().get(dt); 
+				if (dataMap==null){
+					break;
+				}  
+				List<String> seqs = dataMap.getSeq();
 				if (seqs.size() > 0) {
-					for (String seq : seqs) {
-						FnConnectionPool.release(dataMap.get(writeTo)
-								.getPoolName(seq));
+					for (String seq : seqs) { 
+						FnConnectionPool.release(dataMap.getPoolName(
+								seq));
 					}
 				} else {
-					FnConnectionPool.release(dataMap.get(writeTo).getPoolName(
-							null));
-				}
-			}
-		} else {
-			Map<String, WarehouseSqlParam> dataMap = GlobalParam.nodeTreeConfigs
-					.getSqlParamMap();
-
-			List<String> seqs = dataMap.get(readFrom).getSeq();
-			if (seqs.size() > 0) {
-				for (String seq : seqs) {
-					FnConnectionPool.release(dataMap.get(readFrom).getPoolName(
-							seq));
-				}
-			} else {
-				FnConnectionPool.release(dataMap.get(readFrom)
-						.getPoolName(null));
-			}
-			if (dataMap.get(writeTo) != null) {
-				seqs = dataMap.get(writeTo).getSeq();
+					FnConnectionPool.release(dataMap.getPoolName(null));
+				} 
+			} else if(GlobalParam.nodeTreeConfigs.getSqlParamMap().get(dt) != null) {
+				WarehouseSqlParam dataMap = GlobalParam.nodeTreeConfigs
+						.getSqlParamMap().get(dt); 
+				if (dataMap==null){
+					break;
+				} 
+				List<String> seqs = dataMap.getSeq();
 				if (seqs.size() > 0) {
 					for (String seq : seqs) {
-						FnConnectionPool.release(dataMap.get(writeTo)
-								.getPoolName(seq));
+						FnConnectionPool.release(dataMap.getPoolName(
+								seq));
 					}
 				} else {
-					FnConnectionPool.release(dataMap.get(writeTo).getPoolName(
-							null));
-				}
+					FnConnectionPool.release(dataMap.getPoolName(null));
+				} 
 			}
-		}
+		} 
 	}
 
 	private String getBatchId(String path) {

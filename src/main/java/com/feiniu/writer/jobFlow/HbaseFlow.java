@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.CellUtil; 
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -66,7 +66,7 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		this.jobPage.clear();
 		boolean releaseConn = false;
 		try {
-			HTable conn = (HTable) FC.getConnection();
+			Table conn = (Table) FC.getConnection();
 			Scan scan = new Scan();
 			List<Filter> filters = new ArrayList<Filter>();
 			SingleColumnValueFilter range = new SingleColumnValueFilter(
@@ -136,7 +136,7 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 	public List<String> getPageSplit(HashMap<String, String> param) {
 		int i = 0;
 		FnConnection<?> FC = PULL(false);
-		HTable conn = (HTable) FC.getConnection();
+		Table conn = (Table) FC.getConnection();
 		List<String> dt = new ArrayList<String>();
 		boolean releaseConn = false;
 		try {

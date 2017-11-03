@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +17,7 @@ import com.feiniu.flow.Flow;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 
+@NotThreadSafe
 public class WriterFlowSocket implements Flow{
 	
 	/**batch submit documents*/
