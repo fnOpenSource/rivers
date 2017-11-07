@@ -9,7 +9,11 @@
 
 	<url>http://maven.apache.org</url>
 	<dependencies>
-		 
+		<dependency>
+   			 <groupId>org.apache.commons</groupId>
+			 <artifactId>commons-lang3</artifactId>
+   			 <version>3.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
