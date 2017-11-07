@@ -9,11 +9,7 @@
 
 	<url>http://maven.apache.org</url>
 	<dependencies>
-		<dependency>
-			<groupId>com.fn.mq.client</groupId>
-			<artifactId>fnMqClient</artifactId>
-			<version>0.0.3-SNAPSHOT</version>
-		</dependency>
+		 
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
