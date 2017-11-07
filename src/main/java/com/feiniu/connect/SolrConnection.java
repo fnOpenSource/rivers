@@ -54,7 +54,7 @@ public class SolrConnection extends FnConnectionSocket implements FnConnection<C
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || isOutOfTime()) {
+		if (this.conn == null ) {
 			return false;
 		} 
 		return true;

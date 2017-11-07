@@ -56,7 +56,7 @@ public class ZookeeperConnection extends FnConnectionSocket implements FnConnect
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || this.conn.getState().equals(States.CLOSED) || isOutOfTime()) {
+		if (this.conn == null || this.conn.getState().equals(States.CLOSED) ) {
 			return false;
 		}
 		return true;

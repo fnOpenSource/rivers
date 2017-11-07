@@ -53,7 +53,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<Cli
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || this.conn.admin()==null || isOutOfTime()) {
+		if (this.conn == null || this.conn.admin()==null ) {
 			return false;
 		}
 		return true;

@@ -76,7 +76,7 @@ public class MysqlConnection extends FnConnectionSocket implements FnConnection<
 	@Override
 	public boolean status(){
 		try {
-			if(this.conn != null && !this.conn.isClosed() && !isOutOfTime()){
+			if(this.conn != null && !this.conn.isClosed()){
 				return true;
 			} 
 		} catch (Exception e) { 

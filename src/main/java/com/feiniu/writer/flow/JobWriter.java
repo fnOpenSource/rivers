@@ -133,12 +133,26 @@ public class JobWriter {
 			this.optimizeIndex(instance, "b");
 			removeId = "a";
 		}
+		int waittime=0;
+		while ((GlobalParam.FLOW_STATUS.get(instance).get() & 2) > 0) {
+			try {
+				waittime++;
+				Thread.sleep(2000);
+				if (waittime > 300) {
+					GlobalParam.FLOW_STATUS.get(instance).set(4);
+					Thread.sleep(10000);
+				}
+			} catch (InterruptedException e) {
+				log.error("currentThreadState InterruptedException", e);
+			}
+		} 
 		this.writer.getResource();
 		try{
 			this.writer.remove(instance, removeId);
 			this.writer.setAlias(instance, storeId, nodeConfig.getAlias());
 		}finally{
 			this.writer.freeResource(false);
+			GlobalParam.FLOW_STATUS.get(instance).set(1);
 		}   
 	}
 
@@ -186,7 +200,6 @@ public class JobWriter {
 					throw new FNException("storeId not found");
 				}else{
 					freeConn = true;
-					throw new FNException(e.getMessage());
 				}
 			}finally{
 				this.writer.flush();
@@ -340,18 +353,20 @@ public class JobWriter {
 							sqlParams.put(GlobalParam._start_time, (lastUpdateTime.equals("null")?"0":lastUpdateTime));
 							sqlParams.put(GlobalParam._incrementField, incrementField);
 							String sql = buildSql(originalSql, sqlParams);
-							resp = writeDataSet(desc,destName, storeId, tseq,
-									getSqlPageData(sql,incrementField,keyColumn),
-									",complete:" + processPos + "/" + pageList.size(),false);
-
-							total += resp.getCount();
-							startId = maxId;
+							
 							
 							if((GlobalParam.FLOW_STATUS.get(instanceName).get()&4)>0){
 								indexLog("kill " + desc, destName, storeId, tseq,
 										String.valueOf(total), maxId, newLastUpdateTime,
 										Common.getNow() - start, "complete", "");
 								break;
+							}else{
+								resp = writeDataSet(desc,destName, storeId, tseq,
+										getSqlPageData(sql,incrementField,keyColumn),
+										",complete:" + processPos + "/" + pageList.size(),false);
+
+								total += resp.getCount();
+								startId = maxId;
 							}
 							
 							if (newLastUpdateTimes[i]==null || newLastUpdateTimes[i].equals("null")	|| resp.getLastUpdateTime().compareTo(newLastUpdateTimes[i])>0) {
@@ -388,7 +403,6 @@ public class JobWriter {
 								" [SearchPlatForm] " + GlobalParam.run_environment,
 								"Job " + destName +" "+ desc + " Has stopped!");
 						newLastUpdateTimes = lastUpdateTimes;
-						throw new FNException("Job Exception,need clean state!");
 					}
 				}  
 			} 

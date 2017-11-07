@@ -76,7 +76,7 @@ public class HBaseConnection extends FnConnectionSocket implements
 	@Override
 	public boolean status() {
 		try {
-			if (this.conn != null && !isOutOfTime()) {
+			if (this.conn != null ) {
 				return true;
 			}
 		} catch (Exception e) {
