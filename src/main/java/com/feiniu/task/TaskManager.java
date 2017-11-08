@@ -25,8 +25,8 @@ public class TaskManager{
 	private final static Logger log = LoggerFactory
 			.getLogger(TaskManager.class); 
 	@Autowired
-	private TaskJobCenter taskJobCenter; 
-	
+	private TaskJobCenter taskJobCenter;
+ 	
 	private String default_cron = "0 PARAM 01 * * ?";
 	
 	private HashSet<String> cron_exists=new HashSet<String>();
@@ -53,19 +53,23 @@ public class TaskManager{
 			return false;
 		} 
 		boolean state = true;
-		try {
-			if (seqs.size() > 0) {
-				for (String seq : seqs) {
-					if (seq == null)
-						continue;
-					state = jobAction(instanceName + seq, type, "run") && state;
+		if((GlobalParam.FLOW_STATUS.get(instanceName).get()&1)>0){
+			try {
+				if (seqs.size() > 0) {
+					for (String seq : seqs) {
+						if (seq == null)
+							continue;
+						state = jobAction(instanceName + seq, type, "run") && state;
+					}
+				} else {
+					state = jobAction(instanceName, type, "run") && state;
 				}
-			} else {
-				state = jobAction(instanceName, type, "run") && state;
+			} catch (Exception e) {
+				log.error("runIndexJobNow Exception", e);
+				return false;
 			}
-		} catch (Exception e) {
-			log.error("runIndexJobNow Exception", e);
-			return false;
+		}else{
+			state = false;
 		}
 		return state;
 	}
@@ -183,8 +187,8 @@ public class TaskManager{
 	private void initParams(String indexName){
 		GlobalParam.FLOW_STATUS.put(indexName, new AtomicInteger(1));
 		GlobalParam.LAST_UPDATE_TIME.put(indexName, "0");
-	} 
-	
+	}
+ 
 	private boolean removeFlowScheduleJob(String instance,NodeConfig NodeConfig)throws SchedulerException {
 		boolean state = true;
 		if (NodeConfig.getTransParam().getFullCron() != null) { 

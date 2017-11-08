@@ -417,7 +417,7 @@ public class NodeMonitor {
 							+ " job has been started now!");
 				} else {
 					setResponse(0, "Writer " + rq.getParameter("instance")
-							+ " job not exists or run failed!");
+							+ " job not exists or run failed or had been stated!");
 				}
 			} else {
 				setResponse(0, "Writer " + rq.getParameter("instance")
