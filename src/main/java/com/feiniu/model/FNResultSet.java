@@ -10,13 +10,13 @@ public class FNResultSet {
 	private String callDateTime; 
 	private int totalHit;
 	private List<FNDataUnit> unitSet;
-	private Map<String, Map<String, Integer>> facetMap;  
- 	private Object queryDetail = null;
+	private Map<String, Map<String, String>> facetMap;   
+	private Object queryDetail = null;
 	private Object explainInfo;
 
 	public FNResultSet() {
 		unitSet = new ArrayList<FNDataUnit>();
-		facetMap = new HashMap<String, Map<String, Integer>>();   
+		facetMap = new HashMap<String, Map<String, String>>();   
 	}
 
 	public List<FNDataUnit> getUnitSet() {
@@ -51,13 +51,14 @@ public class FNResultSet {
 		this.totalHit = totalHit;
 	}
 
-	public Map<String, Map<String, Integer>> getFacetMap() {
+	public Map<String, Map<String, String>> getFacetMap() {
 		return facetMap;
 	}
 
-	public void setFacetMap(Map<String, Map<String, Integer>> facetMap) {
+	public void setFacetMap(Map<String, Map<String, String>> facetMap) {
 		this.facetMap = facetMap;
-	}   
+	}  
+ 
 
 	public Object getQueryDetail() {
 		return queryDetail;

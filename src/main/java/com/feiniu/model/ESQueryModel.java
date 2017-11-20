@@ -12,7 +12,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 
 public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
@@ -20,7 +19,7 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private List<SortBuilder> sortinfo;
 	private int start = 0;
 	private int count = 5;
-	Map<String, List<String[]>> facetSearchParams;
+	Map<String, String> facetSearchParams;
 	List<AbstractAggregationBuilder> facetsConfig = new ArrayList<AbstractAggregationBuilder>();
 	private Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>(); 
 	private boolean showQueryInfo = false;
@@ -30,6 +29,7 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private String type;
 	private String fl="";
 	private String fq="";
+	private String facet_ext="";
 	
 	public ESQueryModel() {
 		
@@ -86,30 +86,39 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 		this.count = count;
 	}
 	@Override
-	public Map<String, List<String[]>> getFacetSearchParams() {
+	public Map<String, String> getFacetSearchParams() {
 		return facetSearchParams;
 	}
-	public void setFacetSearchParams(Map<String, List<String[]>> facetSearchParams) {
+	public void setFacetSearchParams(Map<String, String> facetSearchParams) {
 		this.facetSearchParams = facetSearchParams;
 	}
+	
+	public void setFacet_ext(String facet_ext) {
+		this.facet_ext = facet_ext;
+	}
+
 
 	@Override
 	public List<AbstractAggregationBuilder> getFacetsConfig() {
 		if (facetSearchParams != null)
 		{
-			for(Map.Entry<String, List<String[]>> e : facetSearchParams.entrySet())
-			{
-				TermsBuilder aggr = AggregationBuilders.terms(e.getKey()).field(e.getKey())
-						.size(1000).order(Order.count(false));
-				facetsConfig.add(aggr);
+			Map<String, String> ext = getFacetExt();
+			String type = (String) (ext.containsKey("type")?ext.get("type"):"terms");
+			for(Map.Entry<String, String> e : facetSearchParams.entrySet())
+			{	 
+				switch (type) {
+				case "cardinality":
+					facetsConfig.add(AggregationBuilders.cardinality(e.getKey()).field(e.getValue()));
+					break; 
+				default:
+					facetsConfig.add(AggregationBuilders.terms(e.getKey()).field(e.getValue())
+					.size(ext.containsKey("size")?Integer.valueOf(ext.get("size")):100).order(Order.count(false)));
+					break;
+				}  
 			}
 		}
 		return facetsConfig;
-	}
-
-	public void setFacetsConfig(List<AbstractAggregationBuilder >  facetsConfig) {
-		this.facetsConfig = facetsConfig;
-	}
+	} 
 	
 	@Override
 	public Map<String, QueryBuilder> getAttrQueryMap() {
@@ -199,6 +208,18 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	@Override
 	public void setFq(String fq) {
 		this.fq = fq;
+	}
+
+	@Override
+	public Map<String, String> getFacetExt() {
+		Map<String, String> ext = new HashMap<String, String>();
+		if(this.facet_ext.length()>0){ 
+			for(String str:this.facet_ext.split(",")){
+				String tmp[] = str.split(":");
+				ext.put(tmp[0], tmp[1]);
+			}
+		} 
+		return ext;
 	}
  
 }

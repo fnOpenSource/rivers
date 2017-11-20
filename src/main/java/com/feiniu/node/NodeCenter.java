@@ -126,5 +126,6 @@ public class NodeCenter{
 		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherInstance(param, paramConfig);
 		searcherMap.put(secname, searcher); 
 		return searcher;
-	} 
-} 
+	}
+	
+}

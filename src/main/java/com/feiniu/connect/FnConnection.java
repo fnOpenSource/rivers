@@ -8,7 +8,7 @@ public interface FnConnection<T>{
 	
 	public boolean connect(); 
 	
-	public T getConnection();
+	public T getConnection(boolean searcher);
 	
 	public boolean status();
 	

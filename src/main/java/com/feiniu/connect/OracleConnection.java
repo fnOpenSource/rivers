@@ -46,7 +46,7 @@ public class OracleConnection extends FnConnectionSocket implements FnConnection
 	}
 
 	@Override
-	public Connection getConnection() {
+	public Connection getConnection(boolean searcher) {
 		int tryTime=0;
 		try {
 			while(tryTime<5 && !connect()){ 

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
+import com.feiniu.correspond.ReportStatus;
 import com.feiniu.model.FNWriteResponse;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
@@ -132,27 +133,13 @@ public class JobWriter {
 		} else {
 			this.optimizeIndex(instance, "b");
 			removeId = "a";
-		}
-		int waittime=0;
-		while ((GlobalParam.FLOW_STATUS.get(instance).get() & 2) > 0) {
-			try {
-				waittime++;
-				Thread.sleep(2000);
-				if (waittime > 300) {
-					GlobalParam.FLOW_STATUS.get(instance).set(4);
-					Thread.sleep(10000);
-				}
-			} catch (InterruptedException e) {
-				log.error("currentThreadState InterruptedException", e);
-			}
 		} 
 		this.writer.getResource();
 		try{
 			this.writer.remove(instance, removeId);
 			this.writer.setAlias(instance, storeId, nodeConfig.getAlias());
 		}finally{
-			this.writer.freeResource(false);
-			GlobalParam.FLOW_STATUS.get(instance).set(1);
+			this.writer.freeResource(false); 
 		}   
 	}
 
@@ -380,6 +367,9 @@ public class JobWriter {
 						indexLog("complete " + desc, destName, storeId, tseq,
 								String.valueOf(total), maxId, newLastUpdateTime,
 								Common.getNow() - start, "complete", "");
+						if(nodeConfig.getTransParam().getNextJob()!=null && nodeConfig.getTransParam().getNextJob().length>0){
+							ReportStatus.report(instanceName,desc);
+						}
 					} else { 
 						indexLog("start " + desc, destName, storeId, tseq, "",
 								maxId, lastUpdateTime, 0, "start",
@@ -407,8 +397,22 @@ public class JobWriter {
 				}  
 			} 
 			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).clear();
-			if (isFullIndex)
+			if (isFullIndex){
+				int waittime=0;
+				while ((GlobalParam.FLOW_STATUS.get(instanceName).get() & 2) > 0) {
+					try {
+						waittime++;
+						Thread.sleep(2000);
+						if (waittime > 300) {
+							GlobalParam.FLOW_STATUS.get(instanceName).set(4);
+							Thread.sleep(10000);
+						}
+					} catch (InterruptedException e) {
+						log.error("currentThreadState InterruptedException", e);
+					}
+				} 
 				switchSearcher(destName, storeId);  
+			} 
 			
 			return getTimeString(newLastUpdateTimes);
 		} 

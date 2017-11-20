@@ -60,7 +60,7 @@ public class HBaseConnection extends FnConnectionSocket implements
 	}
 
 	@Override
-	public Table getConnection() {
+	public Table getConnection(boolean searcher) {
 		int tryTime = 0;
 		try {
 			while (tryTime < 5 && !connect()) {

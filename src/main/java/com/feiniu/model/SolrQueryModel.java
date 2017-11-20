@@ -64,7 +64,7 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	}
 
 	@Override
-	public Map<String, List<String[]>> getFacetSearchParams() {
+	public Map<String, String> getFacetSearchParams() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -128,4 +128,8 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 		this.fq = fq;
 	}
 
+	@Override
+	public Map<String, String> getFacetExt() { 
+		return null;
+	} 
 }

@@ -78,7 +78,7 @@ public class SolrFlow extends WriterFlowSocket{
 		synchronized(retainer){
 			if(retainer.get()==0){
 				PULL(false);
-				this.conn = (CloudSolrClient) this.FC.getConnection();
+				this.conn = (CloudSolrClient) this.FC.getConnection(false);
 			}
 			retainer.addAndGet(1); 
 		} 
@@ -204,14 +204,14 @@ public class SolrFlow extends WriterFlowSocket{
 	public void setAlias(String instanceName, String storeId, String aliasName) { 
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
-			log.info("trying to setting Alais " + instanceName + " to collection " + name);		
+			log.info("trying to setting Alias " + aliasName + " to collection " + name);		
 			CollectionAdminRequest.CreateAlias createAlias = new CollectionAdminRequest.CreateAlias(); 
 			CollectionAdminResponse response = createAlias.setAliasName(instanceName).setAliasedCollections(name).process(this.conn);
 			if (response.isSuccess()){
-				log.info("alias " + instanceName + " setted to " + name);
+				log.info("alias " + aliasName + " setted to " + name);
 			}
 		} catch (Exception e) {
-			log.error("alias " + instanceName + " set to " + name + " Exception,",e); 
+			log.error("alias " + aliasName + " set to " + name + " Exception,",e); 
 		}  
 	} 
 

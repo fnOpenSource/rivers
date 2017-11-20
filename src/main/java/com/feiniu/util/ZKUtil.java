@@ -1,9 +1,12 @@
 package com.feiniu.util;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.slf4j.Logger;
@@ -32,7 +35,7 @@ public class ZKUtil {
 		try {
 			watcher = new Watcher() {
 				public void process(WatchedEvent event) {
-					connectedSemaphore.countDown();
+					connectedSemaphore.countDown(); 
 				}
 			};
 			zk = new ZooKeeper(zkHost, CONNECTION_TIMEOUT, watcher);
@@ -44,6 +47,32 @@ public class ZKUtil {
 
 	public static void setZkHost(String zkString) {
 		zkHost = zkString;
+	} 
+	
+	public static void createPath(String path,boolean PERSISTENT){
+		try{ 
+			if(getZk().exists(path, true)==null){
+				if(PERSISTENT){
+					getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+				}else{
+					getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+				}
+			} 
+		} catch (Exception e) {
+			log.error("createPath Exception", e);
+		}
+	}
+	
+	public static void removePath(String path){ 
+        try {  
+            List<String> nodes = getZk().getChildren(path, false);  
+            for (String node : nodes) {  
+                zk.delete(path + "/" + node, -1);  
+            }  
+            zk.delete(path, -1);  
+        } catch (Exception e) {  
+        	log.error("removePath Exception", e);
+        }  
 	}
 
 	public static void setData(String filename, String Content) {
@@ -53,7 +82,6 @@ public class ZKUtil {
 		} catch (Exception e) {
 			log.error("setData Exception", e);
 		}
-
 	}
 
 	public static byte[] getData(String filename) {
@@ -63,6 +91,5 @@ public class ZKUtil {
 			log.error("getData Exception", e);
 			return null;
 		}
-
 	}
 }

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.analysis.Analyzer;
 
 import com.feiniu.node.NodeCenter;
+import com.feiniu.node.NodeMonitor;
 import com.feiniu.task.Task;
 import com.feiniu.util.email.FNEmailSender;
 /**
@@ -30,7 +31,11 @@ public class GlobalParam {
 	
 	public static String CONFIG_PATH;
 	
+	public static String IP=null;
+	
 	public static NodeCenter NODE_CENTER;
+	
+	public static NodeMonitor nodeMonitor;
 	
 	public static ConcurrentHashMap<String,String> LAST_UPDATE_TIME = new ConcurrentHashMap<String, String>();
 	
@@ -88,8 +93,7 @@ public class GlobalParam {
 	public final static String PARAM_FACET_ORIGINAL = "facet_original";
 	public final static String PARAM_FACET = "facet";
 	public final static String PARAM_FACET_EXT = "facet_ext";
-	public final static String PARAM_SORT = "sort";
-	public final static String PARAM_INVALID = "invalid"; 
+	public final static String PARAM_SORT = "sort"; 
 	public final static String NOT_SUFFIX = "_not";
 	 
 	public static final String _start = "#{start}";

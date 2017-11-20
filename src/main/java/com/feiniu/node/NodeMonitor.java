@@ -543,7 +543,7 @@ public class NodeMonitor {
 		connectParams.put("poolName", param.getPoolName(null));
 		FnConnection<?> FC = FnConnectionPool.getConn(connectParams,
 				param.getIp() + "_" + param.getDefaultValue(), false);
-		Client es = (Client) FC.getConnection();
+		Client es = (Client) FC.getConnection(false);
 		try {
 			DeleteIndexRequest deleteRequest;
 			if (tmpDBParam.getSeq().size() > 0) {

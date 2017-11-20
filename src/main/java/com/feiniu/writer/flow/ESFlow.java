@@ -6,7 +6,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -24,21 +23,15 @@ import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.NodeConfig;
+import com.feiniu.connect.ESConnector;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.util.Common;
@@ -51,14 +44,9 @@ import com.feiniu.util.FNException;
  * @version 1.0 
  */
 @NotThreadSafe
-public class ESFlow extends WriterFlowSocket {
-	private final static int BULK_BUFFER = 1000;
-	private final static int BULK_SIZE = 30;
-	private final static int BULK_FLUSH_SECONDS = 3;
-	private final static int BULK_CONCURRENT = 1; 
+public class ESFlow extends WriterFlowSocket { 
 	
-	private Client conn;  
-	private BulkProcessor bulkProcessor;
+	private ESConnector ESC;   
 	private final static Logger log = LoggerFactory.getLogger(ESFlow.class);
 
 	public static ESFlow getInstance(HashMap<String, Object> connectParams) {
@@ -72,7 +60,7 @@ public class ESFlow extends WriterFlowSocket {
 		synchronized (retainer) {
 			if(retainer.get()==0){
 				PULL(false);
-				this.conn = (Client) this.FC.getConnection();
+				this.ESC = (ESConnector) this.FC.getConnection(false);
 			}
 			retainer.addAndGet(1); 
 		} 
@@ -83,18 +71,9 @@ public class ESFlow extends WriterFlowSocket {
 		synchronized(retainer){
 			retainer.addAndGet(-1);
 			if(retainer.get()==0){ 
-				try{
-					if(this.bulkProcessor!=null){
-						this.bulkProcessor.awaitClose(BULK_FLUSH_SECONDS, TimeUnit.SECONDS);
-						this.bulkProcessor=null;
-					}
-				}catch(Exception e){
-					log.error("freeResource bulkProcessor Exception",e);
-				}finally{
-					CLOSED(this.FC,releaseConn);  
-				} 
+				CLOSED(this.FC,releaseConn); 
 			}else{
-				log.info(this.conn.toString()+" retainer is "+retainer.get());
+				log.info(this.ESC.toString()+" retainer is "+retainer.get());
 			}
 		} 
 	}
@@ -102,10 +81,7 @@ public class ESFlow extends WriterFlowSocket {
 	@Override
 	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate)
 			throws FNException {
-		try {
-			if (this.batch && this.bulkProcessor==null) {
-				this.bulkProcessor = getBulkProcessor(this.conn);
-			}
+		try { 
 			String name = Common.getStoreName(instantcName, storeId);
 			String type = instantcName;
 			if (unit.getData().size() == 0) {
@@ -144,18 +120,18 @@ public class ESFlow extends WriterFlowSocket {
 				UpdateRequest _UR = new UpdateRequest(name, type, id);
 				_UR.doc(cbuilder);
 				if (!batch) {
-					this.conn.update(_UR);
-				} else {
-					this.bulkProcessor.add(_UR);
+					this.ESC.getClient().update(_UR);
+				} else { 
+					this.ESC.getBulkProcessor().add(_UR);
 				}
 			}else{
-				IndexRequestBuilder _IB = this.conn
+				IndexRequestBuilder _IB = this.ESC.getClient()
 						.prepareIndex(name, type, id);
 				_IB.setSource(cbuilder);
 				if (!batch) {
 					_IB.execute().actionGet();
 				} else {
-					this.bulkProcessor.add(_IB.request());
+					this.ESC.getBulkProcessor().add(_IB.request());
 				}
 			}  
 		} catch (Exception e) {
@@ -175,7 +151,7 @@ public class ESFlow extends WriterFlowSocket {
 		Method getMethod = unit.getClass().getMethod("getId", new Class[] {});
 		String id = String.valueOf(getMethod.invoke(unit, new Object[] {}));
 		log.info("doDelete:" + id + "," + name + "," + type);
-		DeleteRequestBuilder builder = conn.prepareDelete(name, type, id);
+		DeleteRequestBuilder builder = this.ESC.getClient().prepareDelete(name, type, id);
 		if (!builder.execute().actionGet().isFound()) {
 			log.info("Delete isFound failed.id=" + id);
 		}
@@ -183,8 +159,8 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public void flush() throws Exception{
-		if (this.batch && this.bulkProcessor!=null) {
-			this.bulkProcessor.flush(); 
+		if (this.batch) {
+			this.ESC.getBulkProcessor().flush(); 
 		}
 	}
 
@@ -201,11 +177,11 @@ public class ESFlow extends WriterFlowSocket {
 		String type = instanceName;
 		try {
 			log.info("setting index " + name + ":" + type);
-			IndicesExistsResponse indicesExistsResponse = this.conn.admin()
+			IndicesExistsResponse indicesExistsResponse = this.ESC.getClient().admin()
 					.indices().exists(new IndicesExistsRequest(name))
 					.actionGet();
 			if (!indicesExistsResponse.isExists()) {
-				CreateIndexResponse createIndexResponse = this.conn.admin()
+				CreateIndexResponse createIndexResponse = this.ESC.getClient().admin()
 						.indices().create(new CreateIndexRequest(name))
 						.actionGet();
 				log.info("create new index " + name
@@ -216,7 +192,7 @@ public class ESFlow extends WriterFlowSocket {
 			PutMappingRequest mappingRequest = new PutMappingRequest(name)
 					.type(type);
 			mappingRequest.source(getSettingMap(paramMap));
-			PutMappingResponse response = this.conn.admin().indices()
+			PutMappingResponse response = this.ESC.getClient().admin().indices()
 					.putMapping(mappingRequest).actionGet();
 			log.info("setting response isAcknowledged:"
 					+ response.isAcknowledged());
@@ -236,7 +212,7 @@ public class ESFlow extends WriterFlowSocket {
 			request.flush(true);
 			request.onlyExpungeDeletes(true);
 
-			ForceMergeResponse response = this.conn.admin().indices()
+			ForceMergeResponse response = this.ESC.getClient().admin().indices()
 					.forceMerge(request).actionGet();
 			int failed_cnt = response.getFailedShards();
 			if (failed_cnt > 0) {
@@ -257,13 +233,13 @@ public class ESFlow extends WriterFlowSocket {
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
 			log.info("trying to remove index " + name);
-			IndicesExistsResponse res = this.conn.admin().indices()
+			IndicesExistsResponse res = this.ESC.getClient().admin().indices()
 					.prepareExists(name).execute().actionGet();
 			if (!res.isExists()) {
 				log.info("index " + name + " didn't exist.");
 			} else {
 				DeleteIndexRequest deleteRequest = new DeleteIndexRequest(name);
-				DeleteIndexResponse deleteResponse = this.conn.admin()
+				DeleteIndexResponse deleteResponse = this.ESC.getClient().admin()
 						.indices().delete(deleteRequest).actionGet();
 				if (deleteResponse.isAcknowledged()) {
 					log.info("index " + name + " removed ");
@@ -280,7 +256,7 @@ public class ESFlow extends WriterFlowSocket {
 		String instanceName = Common.getInstanceName(instance, dbseq);
 		boolean a_alias=false;
 		boolean b_alias=false;
-		boolean a = this.conn
+		boolean a = this.ESC.getClient()
 				.admin()
 				.indices()
 				.exists(new IndicesExistsRequest(
@@ -288,7 +264,7 @@ public class ESFlow extends WriterFlowSocket {
 				.isExists();
 		if(a)
 			a_alias = getIndexAlias(instanceName, "a",nodeConfig.getAlias());
-		boolean b = this.conn
+		boolean b = this.ESC.getClient()
 				.admin()
 				.indices()
 				.exists(new IndicesExistsRequest(
@@ -303,14 +279,14 @@ public class ESFlow extends WriterFlowSocket {
 					if (b_alias) {
 						if (getDocumentNums(instanceName, "a") > this
 								.getDocumentNums(instanceName, "b")) {
-							this.conn
+							this.ESC.getClient()
 									.admin()
 									.indices()
 									.delete(new DeleteIndexRequest(
 											Common.getStoreName(instanceName, "b")));
 							select = "a";
 						} else {
-							this.conn
+							this.ESC.getClient()
 									.admin()
 									.indices()
 									.delete(new DeleteIndexRequest(
@@ -341,14 +317,14 @@ public class ESFlow extends WriterFlowSocket {
 				if (a_alias) {
 					if (b_alias) {
 						if (getDocumentNums(instanceName, "a") > getDocumentNums(instanceName, "b")) {
-							this.conn
+							this.ESC.getClient()
 									.admin()
 									.indices()
 									.delete(new DeleteIndexRequest(
 											Common.getStoreName(instanceName, "b")));
 							select = "b";
 						} else {
-							this.conn
+							this.ESC.getClient()
 									.admin()
 									.indices()
 									.delete(new DeleteIndexRequest(
@@ -374,17 +350,17 @@ public class ESFlow extends WriterFlowSocket {
 	public void setAlias(String instanceName, String storeId, String aliasName) {
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
-			log.info("trying to setting Alais " + instanceName + " to index "
+			log.info("trying to setting Alias " + aliasName + " to index "
 					+ name);
 			IndicesAliasesRequest indicesAliasesRequest = new IndicesAliasesRequest();
 			indicesAliasesRequest.addAlias(aliasName, name);
-			IndicesAliasesResponse indicesAliasesResponse = conn.admin()
+			IndicesAliasesResponse indicesAliasesResponse = this.ESC.getClient().admin()
 					.indices().aliases(indicesAliasesRequest).actionGet();
 			if (indicesAliasesResponse.isAcknowledged()) {
-				log.info("alias " + instanceName + " setted to " + name);
+				log.info("alias " + aliasName + " setted to " + name);
 			}
 		} catch (Exception e) {
-			log.error("alias " + instanceName + " set to " + name
+			log.error("alias " + aliasName + " set to " + name
 					+ " Exception.", e);
 		}
 	}
@@ -437,7 +413,7 @@ public class ESFlow extends WriterFlowSocket {
 
 	private long getDocumentNums(String instanceName, String storeId) {
 		String name = Common.getStoreName(instanceName, storeId);
-		IndicesStatsResponse response = this.conn.admin().indices()
+		IndicesStatsResponse response = this.ESC.getClient().admin().indices()
 				.prepareStats(name).all().get();
 		long res = response.getPrimaries().getDocs().getCount();
 		return res;
@@ -445,36 +421,8 @@ public class ESFlow extends WriterFlowSocket {
 
 	private boolean getIndexAlias(String instanceName, String storeId,String alias) {
 		String name = Common.getStoreName(instanceName, storeId);
-		AliasesExistResponse response = this.conn.admin().indices()
+		AliasesExistResponse response = this.ESC.getClient().admin().indices()
 				.prepareAliasesExist(alias).setIndices(name).get();
 		return response.exists();
-	}
-
-	private BulkProcessor getBulkProcessor(Client _client) {
-		return BulkProcessor
-				.builder(_client, new BulkProcessor.Listener() {
-					@Override
-					public void beforeBulk(long executionId, BulkRequest request) {
-					}
-
-					@Override
-					public void afterBulk(long executionId,
-							BulkRequest request, BulkResponse response) {
-						if (response.hasFailures()) {
-							log.error("BulkProcessor error,"
-									+ response.buildFailureMessage());
-						}
-					}
-
-					@Override
-					public void afterBulk(long executionId,
-							BulkRequest request, Throwable failure) {
-						if (failure != null)
-							failure.printStackTrace();
-					}
-				}).setBulkActions(BULK_BUFFER)
-				.setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
-				.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
-				.setConcurrentRequests(BULK_CONCURRENT).build();
-	}
+	} 
 }

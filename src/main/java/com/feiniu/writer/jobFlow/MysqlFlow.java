@@ -43,7 +43,7 @@ public class MysqlFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		this.jobPage.clear(); 
 		boolean releaseConn = false;
 		try {
-			Connection conn = (Connection) FC.getConnection();
+			Connection conn = (Connection) FC.getConnection(false);
 			PreparedStatement statement = conn.prepareStatement(param.get("sql"));
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE);
 			ResultSet rs = statement.executeQuery();
@@ -99,7 +99,7 @@ public class MysqlFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		if (param.get("seq") != null && param.get("seq").length() > 0)
 			sql = sql.replace(GlobalParam._seq, param.get("seq"));
 		FnConnection<?> FC = PULL(false);
-		Connection conn = (Connection) FC.getConnection();
+		Connection conn = (Connection) FC.getConnection(false);
 		List<String> page = new ArrayList<String>();
 		PreparedStatement statement = null;
 		ResultSet rs  = null;

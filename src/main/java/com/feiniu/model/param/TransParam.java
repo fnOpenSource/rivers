@@ -15,6 +15,7 @@ public class TransParam {
 	private String deltaCron;
 	private String fullCron;
 	private String splitBy;
+	private String[] nextJob;
 	
 	public SQLParam getSqlParam() {
 		return sqlParam;
@@ -37,8 +38,8 @@ public class TransParam {
 	public String getDataFrom() {
 		return dataFrom;
 	}
-	public void setDataFrom(String dataFrom) {
-		this.dataFrom = dataFrom;
+	public String[] getNextJob() {
+		return nextJob;
 	}
 	public String getHandler() {
 		return handler;
@@ -61,20 +62,14 @@ public class TransParam {
 	
 	public String getSplitBy() {
 		return splitBy;
-	}
-	public void setSplitBy(String splitBy) {
-		this.splitBy = splitBy;
-	}
+	} 
 	
 	public String getSearcher() {
 		if(this.searcher==null){
 			this.searcher = this.writeTo;
 		}
 		return this.searcher;
-	}
-	public void setSearcher(String searcher) {
-		this.searcher = searcher;
-	}
+	} 
 	public void setKeyValue(String k,String v){
 		switch (k) {
 		case "writeTo":
@@ -95,6 +90,8 @@ public class TransParam {
 		case "handler":
 			this.handler = v;
 			break;
+		case "nextJob":
+			this.nextJob = v.split(",");
 		case "splitBy":
 			this.splitBy = v;
 			break;

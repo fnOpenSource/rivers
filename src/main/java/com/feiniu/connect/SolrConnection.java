@@ -39,7 +39,7 @@ public class SolrConnection extends FnConnectionSocket implements FnConnection<C
 	}
 
 	@Override
-	public CloudSolrClient getConnection() {
+	public CloudSolrClient getConnection(boolean searcher) {
 		int tryTime=0;
 		try {
 			while(tryTime<5 && !connect()){ 

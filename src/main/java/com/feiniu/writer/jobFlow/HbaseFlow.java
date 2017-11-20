@@ -66,7 +66,7 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		this.jobPage.clear();
 		boolean releaseConn = false;
 		try {
-			Table conn = (Table) FC.getConnection();
+			Table conn = (Table) FC.getConnection(false);
 			Scan scan = new Scan();
 			List<Filter> filters = new ArrayList<Filter>();
 			SingleColumnValueFilter range = new SingleColumnValueFilter(
@@ -136,7 +136,7 @@ public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> {
 	public List<String> getPageSplit(HashMap<String, String> param) {
 		int i = 0;
 		FnConnection<?> FC = PULL(false);
-		Table conn = (Table) FC.getConnection();
+		Table conn = (Table) FC.getConnection(false);
 		List<String> dt = new ArrayList<String>();
 		boolean releaseConn = false;
 		try {

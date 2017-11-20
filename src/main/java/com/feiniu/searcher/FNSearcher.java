@@ -122,6 +122,9 @@ public class FNSearcher {
 		initQuery(request, eq);
 		eq.setSorts(getSortField(request, NodeConfig));
 		eq.setFacetSearchParams(getFacetParams(request, NodeConfig));
+		if(request.getParam("facet_ext")!=null){
+			eq.setFacet_ext(request.getParams().get("facet_ext"));
+		} 
 		Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>();
 		BoolQueryBuilder query = ESQueryBuilder.buildBooleanQuery(request,
 				NodeConfig, analyzer, attrQueryMap);
@@ -183,10 +186,15 @@ public class FNSearcher {
 		return sortList;
 	}
 
-	private Map<String, List<String[]>> getFacetParams(FNRequest request,
+	private Map<String, String> getFacetParams(FNRequest rq,
 			NodeConfig prs) {
-		Map<String, List<String[]>> ret = new HashMap<String, List<String[]>>();
-
+		Map<String, String> ret = new HashMap<String, String>();
+		if(rq.getParam("facet")!=null){
+			for(String pair:rq.getParams().get("facet").split(",")){
+				String tmp[] = pair.split(":");
+				ret.put(tmp[0], tmp[1]);
+			}
+		} 
 		return ret;
 	}
 

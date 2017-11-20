@@ -62,7 +62,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		FnConnection<?> FC = PULL(true);
 		FNResultSet ret = new FNResultSet();
 		try {
-			CloudSolrClient conn = (CloudSolrClient) FC.getConnection();
+			CloudSolrClient conn = (CloudSolrClient) FC.getConnection(true);
 			int start = fq.getStart();
 			int count = fq.getCount();
 			SolrQuery qb = (SolrQuery) fq.getQuery();
@@ -84,13 +84,13 @@ public class SolrFlow extends SearcherFlowSocket {
 			}
 			addResult(ret, response,fq);
 			if (response.getFacetFields() != null) {
-				Map<String, Map<String, Integer>> fc = new HashMap<String, Map<String, Integer>>();
+				Map<String, Map<String, String>> fc = new HashMap<String, Map<String, String>>();
 				List<FacetField> fields = response.getFacetFields();
 				for (FacetField facet : fields) {
-					Map<String, Integer> _row = new HashMap<String, Integer>();
+					Map<String, String> _row = new HashMap<String, String>();
 					List<Count> counts = facet.getValues();
 					for (Count c : counts) {
-						_row.put(c.getName(), (int) c.getCount());
+						_row.put(c.getName(), c.getCount()+"");
 					}
 					fc.put(facet.getName(), _row);
 				}

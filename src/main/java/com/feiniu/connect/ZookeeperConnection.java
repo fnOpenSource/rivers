@@ -41,7 +41,7 @@ public class ZookeeperConnection extends FnConnectionSocket implements FnConnect
 	}
 
 	@Override
-	public ZooKeeper getConnection() {
+	public ZooKeeper getConnection(boolean searcher) {
 		int tryTime = 0;
 		try {
 			while (tryTime < 5 && !connect()) {
