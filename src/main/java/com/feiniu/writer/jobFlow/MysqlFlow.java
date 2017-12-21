@@ -93,11 +93,12 @@ public class MysqlFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				.replace("#{alias}", param.get("alias"))
 				.replace("#{COLUMN}", param.get("column"))
 				.replace("#{column}", param.get("column"))
-				.replace(GlobalParam._start_time, param.get("startTime"))
+				.replace(GlobalParam._start_time, param.get(GlobalParam._start_time))
+				.replace(GlobalParam._end_time, param.get(GlobalParam._end_time))
 				.replace("#{start}", "0")
 				.replace("#{START}", "0");
-		if (param.get("seq") != null && param.get("seq").length() > 0)
-			sql = sql.replace(GlobalParam._seq, param.get("seq"));
+		if (param.get(GlobalParam._seq) != null && param.get(GlobalParam._seq).length() > 0)
+			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
 		FnConnection<?> FC = PULL(false);
 		Connection conn = (Connection) FC.getConnection(false);
 		List<String> page = new ArrayList<String>();

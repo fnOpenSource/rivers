@@ -84,17 +84,17 @@ public class SolrFlow extends SearcherFlowSocket {
 			}
 			addResult(ret, response,fq);
 			if (response.getFacetFields() != null) {
-				Map<String, Map<String, String>> fc = new HashMap<String, Map<String, String>>();
+				Map<String, Map<String, Object>> fc = new HashMap<String, Map<String, Object>>();
 				List<FacetField> fields = response.getFacetFields();
 				for (FacetField facet : fields) {
-					Map<String, String> _row = new HashMap<String, String>();
+					Map<String, Object> _row = new HashMap<String, Object>();
 					List<Count> counts = facet.getValues();
 					for (Count c : counts) {
 						_row.put(c.getName(), c.getCount()+"");
 					}
 					fc.put(facet.getName(), _row);
 				}
-				ret.setFacetMap(fc);
+				ret.setFacetInfo(fc);
 			}
 		}catch(Exception e){ 
 			throw new FNException("Search data from Solr exception!");

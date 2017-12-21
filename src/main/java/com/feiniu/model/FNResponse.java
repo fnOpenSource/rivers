@@ -114,8 +114,8 @@ public class FNResponse {
 		}
 		if (objList.size() > 0)
 			contentMap.put("list", objList); 
-		if (result.getFacetMap().size() > 0)
-			contentMap.put("facet", result.getFacetMap());  
+		if (result.getFacetInfo()!=null)
+			contentMap.put("facet", result.getFacetInfo());  
 		if (result.getQueryDetail() != null)
 			contentMap.put("query", result.getQueryDetail()); 
 		if (result.getExplainInfo() != null)

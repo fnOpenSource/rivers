@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -15,8 +14,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
-import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import com.alibaba.fastjson.JSON;
@@ -92,13 +89,8 @@ public class ESFlow extends SearcherFlowSocket {
 			} 
 			 
 			if (fq.getFacetSearchParams() != null
-					&& response.getAggregations() != null) {
-				Map<String, Aggregation> aggrMap = response.getAggregations().getAsMap(); 
-				Map<String, Map<String, String>> facetRes = new HashMap<String, Map<String,String>>(); 
-				for (Entry<String, Aggregation> r : aggrMap.entrySet()) { 
-					facetRes.put(r.getKey(), getFacets((String) (fq.getFacetExt().containsKey("type")?fq.getFacetExt().get("type"):"terms"),r.getValue()));
-				}
-				res.setFacetMap(facetRes);
+					&& response.getAggregations() != null) {  
+				res.setFacetInfo(JSON.parseObject(response.toString()).get("aggregations"));
 			} 
 		}catch(Exception e){ 
 			throw new FNException("Search data from ES exception!"+e.getLocalizedMessage());
@@ -106,21 +98,7 @@ public class ESFlow extends SearcherFlowSocket {
 			CLOSED(FC,false); 
 		} 
 		return res;
-	}
-	
-	private Map<String, String> getFacets(String type,Aggregation agg){
-		Map<String, String> r = new HashMap<String, String>();
-		switch (type) {
-		case "cardinality":
-			Cardinality v = (Cardinality) agg;
-			r.put("value", v.getValue()+"");
-			break;
-
-		default:
-			break;
-		}
-		return r; 
-	}
+	} 
 	 
 	private SearchResponse getSearchResponse(Client conn,QueryBuilder qb,
 			List<String> returnFields, String instance, int start, int count,

@@ -1,22 +1,19 @@
 package com.feiniu.model;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
  
 public class FNResultSet {
 	private float useTime;
 	private String callDateTime; 
 	private int totalHit;
 	private List<FNDataUnit> unitSet;
-	private Map<String, Map<String, String>> facetMap;   
+	private Object facetInfo=null;   
 	private Object queryDetail = null;
 	private Object explainInfo;
 
 	public FNResultSet() {
 		unitSet = new ArrayList<FNDataUnit>();
-		facetMap = new HashMap<String, Map<String, String>>();   
 	}
 
 	public List<FNDataUnit> getUnitSet() {
@@ -51,12 +48,12 @@ public class FNResultSet {
 		this.totalHit = totalHit;
 	}
 
-	public Map<String, Map<String, String>> getFacetMap() {
-		return facetMap;
+	public Object getFacetInfo() {
+		return facetInfo;
 	}
 
-	public void setFacetMap(Map<String, Map<String, String>> facetMap) {
-		this.facetMap = facetMap;
+	public void setFacetInfo(Object facetInfo) {
+		this.facetInfo = facetInfo;
 	}  
  
 

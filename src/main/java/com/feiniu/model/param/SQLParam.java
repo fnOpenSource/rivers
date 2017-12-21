@@ -7,13 +7,14 @@ import com.feiniu.util.Common;
 
 public class SQLParam {
 	private String sql;
-	private String mainTable;
+	private String mainTable = "";
 	private String mainAlias = "";
 	private String keyColumn;
 	/**value= int or string */
 	private String keyColumnType;
 	private String incrementField = "";
 	private String pageSql;
+	private String handler;
 	private List<String> seq = new ArrayList<String>();
 	
 	public String getSql() {
@@ -67,5 +68,11 @@ public class SQLParam {
 	}
 	public void setKeyColumnType(String keyColumnType) {
 		this.keyColumnType = keyColumnType;
-	}  
+	}
+	public String getHandler() {
+		return handler;
+	}
+	public void setHandler(String handler) {
+		this.handler = handler;
+	}   
 }

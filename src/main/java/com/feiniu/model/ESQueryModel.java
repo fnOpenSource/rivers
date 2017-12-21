@@ -10,8 +10,10 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 
 public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
@@ -19,7 +21,7 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private List<SortBuilder> sortinfo;
 	private int start = 0;
 	private int count = 5;
-	Map<String, String> facetSearchParams;
+	Map<String,List<String[]>> facetSearchParams;
 	List<AbstractAggregationBuilder> facetsConfig = new ArrayList<AbstractAggregationBuilder>();
 	private Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>(); 
 	private boolean showQueryInfo = false;
@@ -86,10 +88,10 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 		this.count = count;
 	}
 	@Override
-	public Map<String, String> getFacetSearchParams() {
+	public Map<String,List<String[]>> getFacetSearchParams() {
 		return facetSearchParams;
 	}
-	public void setFacetSearchParams(Map<String, String> facetSearchParams) {
+	public void setFacetSearchParams(Map<String,List<String[]>> facetSearchParams) {
 		this.facetSearchParams = facetSearchParams;
 	}
 	
@@ -97,24 +99,24 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 		this.facet_ext = facet_ext;
 	}
 
-
+	
 	@Override
 	public List<AbstractAggregationBuilder> getFacetsConfig() {
 		if (facetSearchParams != null)
-		{
-			Map<String, String> ext = getFacetExt();
-			String type = (String) (ext.containsKey("type")?ext.get("type"):"terms");
-			for(Map.Entry<String, String> e : facetSearchParams.entrySet())
+		{ 
+			for(Map.Entry<String,List<String[]>> e : facetSearchParams.entrySet())
 			{	 
-				switch (type) {
-				case "cardinality":
-					facetsConfig.add(AggregationBuilders.cardinality(e.getKey()).field(e.getValue()));
-					break; 
-				default:
-					facetsConfig.add(AggregationBuilders.terms(e.getKey()).field(e.getValue())
-					.size(ext.containsKey("size")?Integer.valueOf(ext.get("size")):100).order(Order.count(false)));
-					break;
+				int i=0;
+				AbstractAggregationBuilder  agg = null ;
+				for(String[] strs:e.getValue()) {
+					if(i==0) {
+						agg = genAgg(strs[0],strs[1],strs[2],true);
+					}else {
+						((AggregationBuilder<?>) agg).subAggregation(genAgg(strs[0],strs[1],strs[2],false));
+					}
+					i++; 
 				}  
+				facetsConfig.add(agg);
 			}
 		}
 		return facetsConfig;
@@ -215,11 +217,46 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 		Map<String, String> ext = new HashMap<String, String>();
 		if(this.facet_ext.length()>0){ 
 			for(String str:this.facet_ext.split(",")){
-				String tmp[] = str.split(":");
+				String[] tmp = str.split(":");
 				ext.put(tmp[0], tmp[1]);
 			}
 		} 
 		return ext;
 	}
- 
+	
+	/**
+	 * get Aggregation
+	 * @param type  true is main , false is sub
+	 * @param name
+	 * @param field
+	 * @param fun
+	 * @return
+	 */
+	private AbstractAggregationBuilder genAgg(String fun,String name,String field,boolean type) {
+		switch (fun) {
+			case "cardinality": 
+				return AggregationBuilders.cardinality(name).field(field); 
+			case "avg":
+				return AggregationBuilders.avg(name).field(field); 
+			case "sum":
+				return AggregationBuilders.sum(name).field(field);
+			case "topHits":
+				return AggregationBuilders.topHits(fun).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(field));
+		} 
+		if(type) {
+			Map<String, String> ext = getFacetExt();
+			TermsBuilder tb = AggregationBuilders.terms(name);
+			if(ext.containsKey("size")) {
+				tb.field(field).size(Integer.valueOf(ext.get("size")));
+			} 
+			if(ext.containsKey("order")) {
+				String[] tmp = ext.get("order").split(" ");
+				if(tmp.length==2)
+					tb.order(Order.aggregation(tmp[0], tmp[1].equals("desc")?false:true));
+			}
+			return tb;
+		}
+		return AggregationBuilders.terms(name).field(field);
+	}
+
 }

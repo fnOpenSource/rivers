@@ -64,7 +64,7 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	}
 
 	@Override
-	public Map<String, String> getFacetSearchParams() {
+	public Map<String,List<String[]>> getFacetSearchParams() {
 		// TODO Auto-generated method stub
 		return null;
 	}

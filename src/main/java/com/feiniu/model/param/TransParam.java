@@ -16,6 +16,8 @@ public class TransParam {
 	private String fullCron;
 	private String splitBy;
 	private String[] nextJob;
+	/**data write into type,full complete data,increment part of data*/
+	private String writeType="full";
 	
 	public SQLParam getSqlParam() {
 		return sqlParam;
@@ -70,6 +72,10 @@ public class TransParam {
 		}
 		return this.searcher;
 	} 
+	
+	public String getWriteType() {
+		return writeType;
+	} 
 	public void setKeyValue(String k,String v){
 		switch (k) {
 		case "writeTo":
@@ -94,6 +100,10 @@ public class TransParam {
 			this.nextJob = v.split(",");
 		case "splitBy":
 			this.splitBy = v;
+			break;
+		case "writeType":
+			if(v.length()>0 && (v.equals("full") || v.equals("increment")))
+				this.writeType = v;
 			break;
 		}
 	}

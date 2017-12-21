@@ -4,7 +4,7 @@
 	<groupId>com.feiniu.fnsearchplatform</groupId>
 	<artifactId>fnsearchplatform</artifactId>
 	<packaging>jar</packaging>
-	<version>1.1</version>
+	<version>1.5</version>
 	<name>fnsearchplatform</name>
 
 	<url>http://maven.apache.org</url>

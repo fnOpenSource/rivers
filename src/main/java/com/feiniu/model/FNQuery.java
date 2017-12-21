@@ -26,7 +26,7 @@ public interface FNQuery<T1, T2, T3> {
 	
 	public Map<String, String> getFacetExt();
 
-	public Map<String, String> getFacetSearchParams();
+	public Map<String,List<String[]>> getFacetSearchParams();
   
 	public void setShowQueryInfo(boolean isshow);
 	
