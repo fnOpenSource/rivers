@@ -187,8 +187,10 @@ public class NodeConfig {
 						log.error(this.filename+" config setting not correct");
 						return;
 					}
-					if(doc.getElementsByTagName("pageSql").getLength() > 0)
-						transParam.getSqlParam().setPageSql(doc.getElementsByTagName("pageSql").item(0).getFirstChild().getTextContent());
+					if(doc.getElementsByTagName("pageSql").getLength() > 0) {
+						SQLParam _sq = (SQLParam) Common.getNode2Obj(doc.getElementsByTagName("pageSql").item(0), SQLParam.class);
+						transParam.getSqlParam().setPageSql(_sq.getPageSql());
+					} 
 				}
 
 				paramlist = params.getElementsByTagName("message");

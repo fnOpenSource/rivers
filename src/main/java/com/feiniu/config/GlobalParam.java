@@ -21,7 +21,7 @@ public class GlobalParam {
 	
 	public static String VERSION;
 	/**node core writer status,0 stop 1 normal 2running 4break running thread */
-	public static HashMap<String,AtomicInteger> FLOW_STATUS = new HashMap<String, AtomicInteger>();
+	public volatile static HashMap<String,AtomicInteger> FLOW_STATUS = new HashMap<String, AtomicInteger>();
 	/**FLOW_INFOS current flow runing state information*/
 	public static HashMap<String,HashMap<String,String>> FLOW_INFOS = new HashMap<String, HashMap<String,String>>();
 	
@@ -66,14 +66,9 @@ public class GlobalParam {
 	
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
 	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f;
-		
-	public final static char FACET_DELIMITER = '/';
-	public final static String FACET_DELIMITER_STR = "/";
+		 
 	public final static int FACET_DEFAULT_COUNT = 200;
-	public final static int FACET_DEAULT_SHOW_COUNT = 3;
-	public final static int FACET_UNLIMITED_SHOW_COUNT = 99; 
-	
-	public final static String FACET_SUFFIX = "_attr";
+	public final static int FACET_DEAULT_SHOW_COUNT = 3; 
 
 	public final static String SORT_ASC = "_asc";
 	public final static String SORT_DESC = "_desc";
@@ -104,4 +99,5 @@ public class GlobalParam {
 	public static final String _column = "#{column}";
 	public static final String _incrementField = "#{update_time}"; 
 	public static final String _start_time =  "#{start_time}"; 
+	public static final String _end_time =  "#{end_time}"; 
 }

@@ -19,7 +19,7 @@ import com.feiniu.config.GlobalParam;
  * @version 1.0 
  */
 @ThreadSafe
-public class FnConnectionPool {
+public final class FnConnectionPool {
 	
 	private static FnConnectionPool FnCPool;
 
@@ -116,7 +116,7 @@ public class FnConnectionPool {
 		private String poolName = null;
 		private HashMap<String, Object> params = null;
 		private ConcurrentLinkedQueue<FnConnection<?>> freeConnections = new ConcurrentLinkedQueue<FnConnection<?>>();
-		private FnConnection<?> shareConn;
+		private volatile FnConnection<?> shareConn;
 		
 		public ConnectionPool(int maxConn, String poolName,
 				HashMap<String, Object> params) {

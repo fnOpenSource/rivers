@@ -3,7 +3,7 @@ package com.feiniu.config;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class FNIocConfig {
+public final class FNIocConfig {
 	private ApplicationContext ctx;
 
 	private static final FNIocConfig m_instance = new FNIocConfig();
