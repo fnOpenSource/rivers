@@ -26,6 +26,7 @@ import com.feiniu.model.FNDataUnit;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNResultSet;
 import com.feiniu.model.param.WriteParam;
+import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
 public class SolrFlow extends SearcherFlowSocket { 
@@ -58,50 +59,41 @@ public class SolrFlow extends SearcherFlowSocket {
 	} 
 
 	@Override
-	public FNResultSet Search(FNQuery<?, ?, ?> fq, String index) throws FNException{
+	public FNResultSet Search(FNQuery<?, ?, ?> fq, String instance,Handler handler) throws FNException{
 		FnConnection<?> FC = PULL(true);
-		FNResultSet ret = new FNResultSet();
+		FNResultSet res = new FNResultSet();
 		try {
 			CloudSolrClient conn = (CloudSolrClient) FC.getConnection(true);
 			int start = fq.getStart();
 			int count = fq.getCount();
 			SolrQuery qb = (SolrQuery) fq.getQuery();
 			qb.setParam("defType", "edismax");
-			QueryResponse response = getSearchResponse(conn, qb, index, start,
+			QueryResponse response = getSearchResponse(conn, qb, instance, start,
 					count, fq);
 			NamedList<Object> commonResponse = response.getResponse();
 			if (fq.isShowQueryInfo()) {
-				ret.setQueryDetail(qb.toString()); 
-				ret.setExplainInfo(response.getExplainMap());
+				res.setQueryDetail(qb.toString()); 
+				res.setExplainInfo(response.getExplainMap());
 			}
 			for (int i = 0; i < commonResponse.size(); i++) {
 				String name = commonResponse.getName(i);
 				Object value = commonResponse.getVal(i);
 				if (name.equals("response")) {
 					SolrDocumentList v = (SolrDocumentList) value;
-					ret.setTotalHit((int) v.getNumFound());
+					res.setTotalHit((int) v.getNumFound());
 				}
 			}
-			addResult(ret, response,fq);
-			if (response.getFacetFields() != null) {
-				Map<String, Map<String, Object>> fc = new HashMap<String, Map<String, Object>>();
-				List<FacetField> fields = response.getFacetFields();
-				for (FacetField facet : fields) {
-					Map<String, Object> _row = new HashMap<String, Object>();
-					List<Count> counts = facet.getValues();
-					for (Count c : counts) {
-						_row.put(c.getName(), c.getCount()+"");
-					}
-					fc.put(facet.getName(), _row);
-				}
-				ret.setFacetInfo(fc);
+			if(handler==null) {
+				addResult(res, response,fq); 
+			}else {
+				handler.Handle(res,response,fq);
 			}
 		}catch(Exception e){ 
 			throw new FNException("Search data from Solr exception!");
 		}finally{
 			CLOSED(FC,false);
 		} 
-		return ret;
+		return res;
 	} 
 	
 	private String getCollection() {
@@ -117,22 +109,22 @@ public class SolrFlow extends SearcherFlowSocket {
 		return this.collectionName;
 	} 
 	
-	private void addResult(FNResultSet rs, QueryResponse qs,FNQuery<?, ?, ?> fq) { 
-		GroupResponse groupResponse = qs.getGroupResponse();
-		NamedList<Object> commonResponse = qs.getResponse();
+	private void addResult(FNResultSet res, QueryResponse rps,FNQuery<?, ?, ?> fq) { 
+		GroupResponse groupResponse = rps.getGroupResponse();
+		NamedList<Object> commonResponse = rps.getResponse();
 		boolean setnum = true;
 		if (groupResponse != null) {
 			List<GroupCommand> groupList = groupResponse.getValues();
 			for (GroupCommand groupCommand : groupList) {
 				if (setnum) {
-					rs.setTotalHit(groupCommand.getNGroups());
+					res.setTotalHit(groupCommand.getNGroups());
 				}
 				setnum = false;
 				List<Group> tmps = groupCommand.getValues();
 				for (Group g : tmps) {
 					FNDataUnit u = FNDataUnit.getInstance();
 					u.addObject(g.getGroupValue(), g.getResult());
-					rs.getUnitSet().add(u);
+					res.getUnitSet().add(u);
 				}
 			}
 		} else {
@@ -142,7 +134,7 @@ public class SolrFlow extends SearcherFlowSocket {
 				if (name.equals("response")) {
 					SolrDocumentList v = (SolrDocumentList) value;
 					if (setnum)
-						rs.setTotalHit((int) v.getNumFound());
+						res.setTotalHit((int) v.getNumFound());
 					setnum = false;
 					for (SolrDocument sd : v) {
 						FNDataUnit u = FNDataUnit.getInstance();
@@ -155,11 +147,24 @@ public class SolrFlow extends SearcherFlowSocket {
 							}
 							u.addObject(n, sd.get(n));
 						}
-						rs.getUnitSet().add(u);
+						res.getUnitSet().add(u);
 					}
 					break;
 				}
 			}
+		}
+		if (rps.getFacetFields() != null) {
+			Map<String, Map<String, Object>> fc = new HashMap<String, Map<String, Object>>();
+			List<FacetField> fields = rps.getFacetFields();
+			for (FacetField facet : fields) {
+				Map<String, Object> _row = new HashMap<String, Object>();
+				List<Count> counts = facet.getValues();
+				for (Count c : counts) {
+					_row.put(c.getName(), c.getCount()+"");
+				}
+				fc.put(facet.getName(), _row);
+			}
+			res.setFacetInfo(fc);
 		}
 	}
 

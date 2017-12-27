@@ -50,11 +50,8 @@ import com.feiniu.util.ZKUtil;
  * @version 1.0
  */
 @Component
-public class NodeMonitor {
-
-	@Autowired
-	private NodeCenter nodeCenter;
-
+public final class NodeMonitor {
+ 
 	@Autowired
 	private TaskManager taskManager;
 

@@ -23,6 +23,7 @@ import com.feiniu.model.FNDataUnit;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNResultSet;
 import com.feiniu.model.param.WriteParam;
+import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
 public class ESFlow extends SearcherFlowSocket { 
@@ -35,7 +36,7 @@ public class ESFlow extends SearcherFlowSocket {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FNResultSet Search(FNQuery<?, ?, ?> fq, String index)
+	public FNResultSet Search(FNQuery<?, ?, ?> fq, String instance,Handler handler)
 			throws FNException {
 		FnConnection<?> FC = PULL(true);
 		FNResultSet res = new FNResultSet();
@@ -60,37 +61,13 @@ public class ESFlow extends SearcherFlowSocket {
 					if (e.getValue().getStored().equalsIgnoreCase("true"))
 						returnFields.add(e.getKey());
 				}
-			}
-
-			SearchResponse response = getSearchResponse(conn,qb, returnFields, index,
-					start, count, sortFields, facetBuilders, fq,res);
-			SearchHits searchHits = response.getHits();
-			res.setTotalHit((int) searchHits.getTotalHits());  
-			SearchHit[] hits = searchHits.getHits();  
-			 
-			for (SearchHit h:hits) {
-				Map<String, SearchHitField> fieldMap = h.getFields(); 
-				FNDataUnit u = FNDataUnit.getInstance();
-				for (Map.Entry<String, SearchHitField> e : fieldMap.entrySet()) {
-					String name = e.getKey();
-					WriteParam param = NodeConfig.getWriteParamMap().get(name);
-					SearchHitField v = e.getValue();  
-					if (param.getSeparator() != null) { 
-						u.addObject(name, v.getValues());
-					} else {
-						u.addObject(name, String.valueOf(v.getValue()));
-					}
-				}
-				if(fq.isShowQueryInfo()){ 
-					u.addObject("_SCORE", h.getExplanation().getValue()); 
-					u.addObject("_EXPLAINS", h.getExplanation().toString().replace("", ""));
-				}
-				res.getUnitSet().add(u);  
 			} 
-			 
-			if (fq.getFacetSearchParams() != null
-					&& response.getAggregations() != null) {  
-				res.setFacetInfo(JSON.parseObject(response.toString()).get("aggregations"));
+			SearchResponse response = getSearchResponse(conn,qb, returnFields, instance,
+					start, count, sortFields, facetBuilders, fq,res);
+			if(handler==null) {
+				addResult(res,response,fq);
+			}else {
+				handler.Handle(res,response,fq,NodeConfig);
 			} 
 		}catch(Exception e){ 
 			throw new FNException("Search data from ES exception!"+e.getLocalizedMessage());
@@ -99,6 +76,37 @@ public class ESFlow extends SearcherFlowSocket {
 		} 
 		return res;
 	} 
+	
+	private void addResult(FNResultSet res,SearchResponse response,FNQuery<?, ?, ?> fq) {
+		SearchHits searchHits = response.getHits();
+		res.setTotalHit((int) searchHits.getTotalHits());  
+		SearchHit[] hits = searchHits.getHits();  
+		 
+		for (SearchHit h:hits) {
+			Map<String, SearchHitField> fieldMap = h.getFields(); 
+			FNDataUnit u = FNDataUnit.getInstance();
+			for (Map.Entry<String, SearchHitField> e : fieldMap.entrySet()) {
+				String name = e.getKey();
+				WriteParam param = NodeConfig.getWriteParamMap().get(name);
+				SearchHitField v = e.getValue();  
+				if (param.getSeparator() != null) { 
+					u.addObject(name, v.getValues());
+				} else {
+					u.addObject(name, String.valueOf(v.getValue()));
+				}
+			}
+			if(fq.isShowQueryInfo()){ 
+				u.addObject("_SCORE", h.getExplanation().getValue()); 
+				u.addObject("_EXPLAINS", h.getExplanation().toString().replace("", ""));
+			}
+			res.getUnitSet().add(u);  
+		} 
+		 
+		if (fq.getFacetSearchParams() != null
+				&& response.getAggregations() != null) {  
+			res.setFacetInfo(JSON.parseObject(response.toString()).get("aggregations"));
+		} 
+	}
 	 
 	private SearchResponse getSearchResponse(Client conn,QueryBuilder qb,
 			List<String> returnFields, String instance, int start, int count,

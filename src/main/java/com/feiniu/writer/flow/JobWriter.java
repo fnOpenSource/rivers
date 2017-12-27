@@ -37,7 +37,7 @@ public final class JobWriter {
 	private NodeConfig nodeConfig;
 	private WriterFlowSocket writer;
 	/**defined custom read flow socket*/
-	private Handler dataHandler; 
+	private Handler dataFromHandler; 
 	private Handler scanHandler; 
 
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -51,8 +51,8 @@ public final class JobWriter {
 		this.nodeConfig = nodeConfig;  
 		this.flowSocket = flowSocket;
 		try {
-			if(nodeConfig.getTransParam().getHandler()!=null){
-				this.dataHandler = (Handler) Class.forName(nodeConfig.getTransParam().getHandler()).newInstance();
+			if(nodeConfig.getTransParam().getDataFromhandler()!=null){
+				this.dataFromHandler = (Handler) Class.forName(nodeConfig.getTransParam().getDataFromhandler()).newInstance();
 			} 
 			if(nodeConfig.getTransParam().getSqlParam().getHandler()!=null) {
 				this.scanHandler = (Handler) Class.forName(nodeConfig.getTransParam().getSqlParam().getHandler()).newInstance();
@@ -243,7 +243,7 @@ public final class JobWriter {
 						pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 						 
 						resp = writeDataSet(desc,indexName, storeId, "",
-								(HashMap<String, Object>) flowSocket.getJobPage(pageParams,getWriteParamMap(),this.dataHandler),
+								(HashMap<String, Object>) flowSocket.getJobPage(pageParams,getWriteParamMap(),this.dataFromHandler),
 								",complete:" + processPos + "/" + pageList.size(),false);
 
 						total += resp.getCount();
@@ -436,7 +436,7 @@ public final class JobWriter {
 		params.put("sql", sql); 
 		params.put("incrementField", incrementField); 
 		params.put("keyColumn", keyColumn); 
-		return (HashMap<String, Object>) flowSocket.getJobPage(params,getWriteParamMap(),this.dataHandler);
+		return (HashMap<String, Object>) flowSocket.getJobPage(params,getWriteParamMap(),this.dataFromHandler);
 	}
 	
 	private String getTimeString(String[] strs) {

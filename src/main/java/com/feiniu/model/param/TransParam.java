@@ -9,9 +9,11 @@ public class TransParam {
 	private SQLParam sqlParam;
 	private NOSQLParam noSqlParam;
 	private String writeTo;
+	private String writeTohandler;
 	private String searcher;
+	private String searcherHandler;
 	private String dataFrom;
-	private String handler;
+	private String dataFromHandler;
 	private String deltaCron;
 	private String fullCron;
 	private String splitBy;
@@ -43,12 +45,15 @@ public class TransParam {
 	public String[] getNextJob() {
 		return nextJob;
 	}
-	public String getHandler() {
-		return handler;
+	public String getDataFromhandler() {
+		return dataFromHandler;
 	}
-	public void setHandler(String handler) {
-		this.handler = handler;
+	public String getWriteTohandler() {
+		return writeTohandler;
 	}
+	public String getSearcherHandler() {
+		return searcherHandler;
+	} 
 	public String getDeltaCron() {
 		return deltaCron;
 	}
@@ -77,31 +82,34 @@ public class TransParam {
 		return writeType;
 	} 
 	public void setKeyValue(String k,String v){
-		switch (k) {
-		case "writeTo":
+		switch (k.toLowerCase()) {
+		case "writeto":
 			this.writeTo = v;
 			break; 
-		case "dataFrom":
+		case "datafrom":
 			this.dataFrom = v;
 			break;
-		case "deltaCron":
+		case "deltacron":
 			this.deltaCron = v;
 			break;
-		case "fullCron":
+		case "fullcron":
 			this.fullCron = v;
 			break;
 		case "searcher":
 			this.searcher = v;
 			break;
-		case "handler":
-			this.handler = v;
+		case "searcherhandler":
+			this.searcherHandler = v;
 			break;
-		case "nextJob":
-			this.nextJob = v.split(",");
-		case "splitBy":
-			this.splitBy = v;
+		case "datafromhandler":
+			this.dataFromHandler = v;
 			break;
-		case "writeType":
+		case "writetohandler":
+			this.writeTohandler = v;
+			break;
+		case "nextjob":
+			this.nextJob = v.split(","); 
+		case "writetype":
 			if(v.length()>0 && (v.equals("full") || v.equals("increment")))
 				this.writeType = v;
 			break;

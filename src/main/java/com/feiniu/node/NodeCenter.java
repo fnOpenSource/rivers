@@ -24,20 +24,32 @@ import com.feiniu.writer.jobFlow.WriteFlowSocket;
 import com.feiniu.writer.jobFlow.WriteFlowSocketFactory;
 
 /**
- * data-flow router reader and writer control center
+ * data-flow router reader searcher and writer control center
  * seq only support for reader to read series data source,and create 
  * one or more instance in writer single destination.
  * @author chengwen
  * @version 1.0 
  */
-public class NodeCenter{  
+public final class NodeCenter{  
 	 
 	private Map<String,JobWriter> writerChannelMap = new ConcurrentHashMap<String, JobWriter>();
 	private Map<String, WriterFlowSocket> destinationWriterMap = new ConcurrentHashMap<String, WriterFlowSocket>();
-	private Map<String, SearcherFlowSocket> searcherMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
+	private Map<String, SearcherFlowSocket> searcherFlowMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
+	private Map<String, FNSearcher> searcherMap = new ConcurrentHashMap<String, FNSearcher>();
 	
 	private final static Logger log = LoggerFactory.getLogger(NodeCenter.class);  
 	  
+	
+	public FNSearcher getSearcher(String instanceName) { 
+		if(!searcherMap.containsKey(instanceName)) {
+			if (!GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(instanceName))
+				return null; 
+			NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(instanceName);
+			FNSearcher searcher = FNSearcher.getInstance(instanceName, paramConfig, getSearcherFlow(instanceName));
+			searcherMap.put(instanceName, searcher);
+		}
+		return searcherMap.get(instanceName);
+	}
 	
 	/**
 	 * get Writer auto look for sql and nosql maps
@@ -69,17 +81,7 @@ public class NodeCenter{
 			writerChannelMap.put(Common.getInstanceName(instanceName, seq), writer);
 		}
 		return writerChannelMap.get(Common.getInstanceName(instanceName, seq)); 
-	} 
- 
-	public FNSearcher getSearcher(String instanceName) {
-		
-		if (!GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(instanceName))
-			return null;
-		
-		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(instanceName);
-		FNSearcher searcher = FNSearcher.getInstance(instanceName, paramConfig, getIndexSearcher(instanceName));
-		return searcher;
-	}
+	}  
  
 	public FNQueryBuilder getQueryBuilder(String instanceName) { 
 		if (!GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(instanceName))
@@ -109,9 +111,9 @@ public class NodeCenter{
 		return destinationWriterMap.get(instanceName);
 	}
 	
-	private SearcherFlowSocket getIndexSearcher(String secname) {
-		if (searcherMap.containsKey(secname))
-			return searcherMap.get(secname);
+	private SearcherFlowSocket getSearcherFlow(String secname) {
+		if (searcherFlowMap.containsKey(secname))
+			return searcherFlowMap.get(secname);
 		String destination = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname).getTransParam().getSearcher(); 
 		WarehouseParam param;
 		if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(destination)!=null){
@@ -123,8 +125,8 @@ public class NodeCenter{
 			return null;
 		
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname);
-		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherInstance(param, paramConfig);
-		searcherMap.put(secname, searcher); 
+		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherFlow(param, paramConfig);
+		searcherFlowMap.put(secname, searcher); 
 		return searcher;
 	}
 	
