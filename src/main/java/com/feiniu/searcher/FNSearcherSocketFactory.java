@@ -13,7 +13,7 @@ import com.feiniu.searcher.flow.SolrFlow;
 
 public class FNSearcherSocketFactory {
 	
-	public static SearcherFlowSocket getSearcherInstance(final WarehouseParam param, final NodeConfig NodeConfig)
+	public static SearcherFlowSocket getSearcherFlow(final WarehouseParam param, final NodeConfig NodeConfig)
 	{
 		SearcherFlowSocket searcher = null;
 		HashMap<String, Object> connectParams = new HashMap<String, Object>();

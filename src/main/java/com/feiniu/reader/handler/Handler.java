@@ -1,5 +1,7 @@
 package com.feiniu.reader.handler;
 
+import java.util.HashMap;
+
 /**
  * user defined read data process function
  * @author chengwen
@@ -7,4 +9,5 @@ package com.feiniu.reader.handler;
  */
 public interface Handler{
 	public <T>T Handle(Object... args);
+	public boolean needLoop(HashMap<String, String> params);
 }

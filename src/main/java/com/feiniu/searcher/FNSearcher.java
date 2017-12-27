@@ -2,6 +2,7 @@ package com.feiniu.searcher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import com.feiniu.model.param.FNParam;
 import com.feiniu.searcher.flow.ESQueryBuilder;
 import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.searcher.flow.SolrQueryBuilder;
+import com.feiniu.searcher.handler.Handler;
 
 /**
  * provide search service
@@ -40,6 +42,7 @@ public class FNSearcher {
 	private SearcherFlowSocket searcher = null;
 	private NodeConfig NodeConfig = null;
 	private String instanceName = null;
+	private Handler handler=null;
 
 	public static FNSearcher getInstance(String instanceName,
 			NodeConfig NodeConfig, SearcherFlowSocket searcher) {
@@ -51,6 +54,13 @@ public class FNSearcher {
 		this.instanceName = instanceName;
 		this.searcher = searcher;
 		this.NodeConfig = NodeConfig;
+		try {
+			if(NodeConfig.getTransParam().getSearcherHandler()!=null) {
+				this.handler = (Handler) Class.forName(NodeConfig.getTransParam().getSearcherHandler()).newInstance();
+			}
+		}catch(Exception e){
+			log.error("FNSearcher Handler Exception",e);
+		}
 	}
 
 	public FNResponse startSearch(FNRequest rq) {
@@ -67,7 +77,7 @@ public class FNSearcher {
 			response.setParams(rq.getParams(), null);
 			return response;
 		}
-		response.setParams(rq.getParams(), NodeConfig);
+		response.setParams(rq.getParams(), this.NodeConfig);
 		Analyzer analyzer = this.searcher.getAnalyzer();
 
 		FNQuery<?, ?, ?> query;
@@ -78,8 +88,9 @@ public class FNSearcher {
 		}
 		try {
 			response.setError_info(rq.getErrors());
-			response.setResult(this.searcher.Search(query, instanceName));
+			response.setResult(this.searcher.Search(query, instanceName,handler));
 		} catch (Exception e) {
+			response.setError_info("search parameter may be error!");
 			log.error("FNResponse error,", e);
 		}
 		return response;
@@ -185,17 +196,27 @@ public class FNSearcher {
 			sortList.add(SortBuilders.scoreSort().order(SortOrder.DESC));
 		return sortList;
 	}
-
-	private Map<String, String> getFacetParams(FNRequest rq,
+/**
+ * main:funciton:field,son:function:field#new_main:funciton:field
+ * @param rq
+ * @param prs
+ * @return
+ */
+	private Map<String,List<String[]>> getFacetParams(FNRequest rq,
 			NodeConfig prs) {
-		Map<String, String> ret = new HashMap<String, String>();
+		Map<String,List<String[]>> res = new LinkedHashMap<String,List<String[]>>();
 		if(rq.getParam("facet")!=null){
-			for(String pair:rq.getParams().get("facet").split(",")){
-				String tmp[] = pair.split(":");
-				ret.put(tmp[0], tmp[1]);
+			for(String pair:rq.getParams().get("facet").split("#")){
+				String[] tmp = pair.split(",");
+				List<String[]> son = new ArrayList<>();
+				for(String str:tmp) {
+					String[] tp = str.split(":");
+					son.add(tp);
+				}
+				res.put(tmp[0].split(":")[0], son);
 			}
 		} 
-		return ret;
+		return res;
 	}
 
 }
