@@ -90,13 +90,13 @@ public class ESFlow extends WriterFlowSocket {
 			} 
 			String id = unit.getKeyColumnVal(); 
 			XContentBuilder cbuilder = jsonBuilder().startObject();
-			
+			StringBuilder routing = new StringBuilder();
 			for(Entry<String, Object> r:unit.getData().entrySet()){
 				String field = r.getKey(); 
 				if (r.getValue() == null)
 					continue;
 				String value = String.valueOf(r.getValue());
-				WriteParam writeParam = writeParamMap.get(field);
+				WriteParam writeParam = writeParamMap.get(field); 
 				if (writeParam == null)
 					writeParam = writeParamMap.get(field.toLowerCase());
 				if (writeParam == null)
@@ -113,12 +113,17 @@ public class ESFlow extends WriterFlowSocket {
 				} else {
 					cbuilder.field(field, value);
 				}
+				if(writeParam.isRouter()) {
+					routing.append(value);
+				}
 			} 
 			cbuilder.field("SYSTEM_UPDATE_TIME", unit.getUpdateTime());
 			cbuilder.endObject();
 			if(isUpdate){
 				UpdateRequest _UR = new UpdateRequest(name, type, id);
 				_UR.doc(cbuilder);
+				if(routing.length()>0)
+					_UR.routing(routing.toString());
 				if (!batch) {
 					this.ESC.getClient().update(_UR);
 				} else { 
@@ -128,6 +133,8 @@ public class ESFlow extends WriterFlowSocket {
 				IndexRequestBuilder _IB = this.ESC.getClient()
 						.prepareIndex(name, type, id);
 				_IB.setSource(cbuilder);
+				if(routing.length()>0)
+					_IB.setRouting(routing.toString());
 				if (!batch) {
 					_IB.execute().actionGet();
 				} else {

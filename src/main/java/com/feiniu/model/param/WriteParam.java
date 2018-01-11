@@ -12,6 +12,7 @@ public class WriteParam {
 	private String indextype = null;
 	private String indexed = "true";
 	private Handler handler;
+	private boolean router=false;
 
 	public String getDefaultvalue() {
 		return defaultvalue;
@@ -78,4 +79,13 @@ public class WriteParam {
 			this.handler = (Handler) Class.forName(handler).newInstance();
 		}
 	}
+
+	public boolean isRouter() {
+		return router;
+	}
+
+	public void setRouter(String router) {
+		this.router = router.toLowerCase().equals("true")?true:false;
+	}
+	
 }
