@@ -70,6 +70,10 @@ public final class JobWriter {
 			return doSqlWrite(instanceName, storeId, lastTime, DataSeq, isFullIndex);
 		}
 	}  
+	
+	public NodeConfig getNodeConfig() {
+		return nodeConfig;
+	}
 
 	/**
 	 * message scan from db write into index 
@@ -208,7 +212,7 @@ public final class JobWriter {
 		private String doNosqlWrite(String instanceName, String storeId, String lastTime,
 				boolean isFullIndex)  throws FNException{  
 			String desc = "increment";
-			String indexName = Common.getInstanceName(instanceName,""); 
+			String indexName = Common.getInstanceName(instanceName,"",nodeConfig.getTransParam().getInstanceName()); 
 			if (isFullIndex) {
 				createStorePosition(indexName, storeId); 
 				desc = "full";
@@ -273,7 +277,7 @@ public final class JobWriter {
 				String DataSeq, boolean isFullIndex) throws FNException{
 			String desc = "increment";
 			boolean isUpdate = nodeConfig.getTransParam().getWriteType().equals("increment")?true:false;
-			String destName = Common.getInstanceName(instanceName,DataSeq); 
+			String destName = Common.getInstanceName(instanceName,DataSeq,nodeConfig.getTransParam().getInstanceName()); 
 			if (isFullIndex) {
 				createStorePosition(destName, storeId); 
 				desc = "full";

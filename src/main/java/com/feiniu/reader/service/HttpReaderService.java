@@ -139,7 +139,7 @@ public class HttpReaderService {
 							try {
 								coreWriter.writeDataSet(
 										"HTTP PUT",
-										Common.getInstanceName(instance, seq),
+										Common.getInstanceName(instance, seq,coreWriter.getNodeConfig().getTransParam().getInstanceName()),
 										storeid,"",
 										getJobPage(rq.getParameter("data"),keycolumn,updatecolumn,coreWriter.getWriteParamMap()), "",isUpdate);
 								response.getWriter().println(

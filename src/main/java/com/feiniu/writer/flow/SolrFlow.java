@@ -251,7 +251,7 @@ public class SolrFlow extends WriterFlowSocket{
 
 	@Override
 	public String getNewStoreId(String instance,boolean isIncrement,String seq, final NodeConfig nodeConfig) { 
-		String instanceName = Common.getInstanceName(instance, seq);
+		String instanceName = Common.getInstanceName(instance, seq,nodeConfig.getTransParam().getInstanceName());
 		String b = Common.getStoreName(instanceName, "b");
 		String a = Common.getStoreName(instanceName, "a");
 		String select="";  

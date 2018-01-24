@@ -118,18 +118,18 @@ public class ESFlow extends WriterFlowSocket {
 				}
 			} 
 			cbuilder.field("SYSTEM_UPDATE_TIME", unit.getUpdateTime());
-			cbuilder.endObject();
+			cbuilder.endObject(); 
 			if(isUpdate){
-				UpdateRequest _UR = new UpdateRequest(name, type, id);
-				_UR.doc(cbuilder);
+				UpdateRequest _UR = new UpdateRequest(name, type, id);  
+				_UR.doc(cbuilder).upsert(cbuilder);
 				if(routing.length()>0)
 					_UR.routing(routing.toString());
 				if (!batch) {
-					this.ESC.getClient().update(_UR);
+					this.ESC.getClient().update(_UR).get();
 				} else { 
 					this.ESC.getBulkProcessor().add(_UR);
 				}
-			}else{
+			}else{ 
 				IndexRequestBuilder _IB = this.ESC.getClient()
 						.prepareIndex(name, type, id);
 				_IB.setSource(cbuilder);
@@ -142,6 +142,7 @@ public class ESFlow extends WriterFlowSocket {
 				}
 			}  
 		} catch (Exception e) {
+			log.error("write Exception",e);
 			if(e.getMessage().contains("IndexNotFoundException")){
 				throw new FNException("storeId not found");
 			}else{
@@ -260,7 +261,7 @@ public class ESFlow extends WriterFlowSocket {
 	@Override
 	public String getNewStoreId(String instance, boolean isIncrement,
 			String dbseq, NodeConfig nodeConfig) {
-		String instanceName = Common.getInstanceName(instance, dbseq);
+		String instanceName = Common.getInstanceName(instance, dbseq,nodeConfig.getTransParam().getInstanceName());
 		boolean a_alias=false;
 		boolean b_alias=false;
 		boolean a = this.ESC.getClient()

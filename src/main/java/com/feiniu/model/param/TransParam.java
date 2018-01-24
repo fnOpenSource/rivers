@@ -17,6 +17,7 @@ public class TransParam {
 	private String deltaCron;
 	private String fullCron;
 	private String splitBy;
+	private String instanceName;
 	private String[] nextJob;
 	/**data write into type,full complete data,increment part of data*/
 	private String writeType="full";
@@ -53,6 +54,9 @@ public class TransParam {
 	}
 	public String getSearcherHandler() {
 		return searcherHandler;
+	} 
+	public String getInstanceName() {
+		return instanceName;
 	} 
 	public String getDeltaCron() {
 		return deltaCron;
@@ -106,6 +110,9 @@ public class TransParam {
 			break;
 		case "writetohandler":
 			this.writeTohandler = v;
+			break;
+		case "instancename":
+			this.instanceName = v;
 			break;
 		case "nextjob":
 			this.nextJob = v.split(","); 
