@@ -136,7 +136,7 @@ public class NodeConfig {
 	private void loadConfigFromZk() {
 		InputStream in;
 		try {
-			byte[] bt = ZKUtil.getData(this.filename);
+			byte[] bt = ZKUtil.getData(this.filename,false);
 			if (bt.length <= 0)
 				return;
 			in = new ByteArrayInputStream(bt, 0, bt.length);

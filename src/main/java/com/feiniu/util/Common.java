@@ -260,7 +260,7 @@ public class Common {
 			boolean reCompute) {
 		if (isIncrement) {
 			String path = Common.getTaskStorePath(instanceName, seq);
-			byte[] b = ZKUtil.getData(path);
+			byte[] b = ZKUtil.getData(path,true);
 			String storeId = "";
 			if (b != null && b.length > 0) {
 				String str = new String(b);

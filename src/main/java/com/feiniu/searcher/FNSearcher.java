@@ -211,7 +211,25 @@ public class FNSearcher {
 				List<String[]> son = new ArrayList<>();
 				for(String str:tmp) {
 					String[] tp = str.split(":");
-					son.add(tp);
+					if(tp.length>3) {
+						String[] tp2= {"","",""};
+						for(int i=0;i<tp.length;i++) {
+							if(i<2) {
+								tp2[i] = tp[i];
+							}else {
+								if(tp2[2].length()>0) {
+									tp2[2] = tp2[2]+":"+tp[i];
+								}else {
+									tp2[2] = tp[i];
+								}
+								
+							} 
+						} 
+						son.add(tp2);
+					}else {
+						son.add(tp);
+					}
+					
 				}
 				res.put(tmp[0].split(":")[0], son);
 			}

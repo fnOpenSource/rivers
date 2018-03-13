@@ -70,7 +70,7 @@ public class ESFlow extends SearcherFlowSocket {
 				handler.Handle(res,response,fq,NodeConfig);
 			} 
 		}catch(Exception e){ 
-			throw new FNException("Search data from ES exception!"+e.getLocalizedMessage());
+			throw e;
 		}finally{
 			CLOSED(FC,false); 
 		} 

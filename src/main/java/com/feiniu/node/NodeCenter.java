@@ -58,7 +58,7 @@ public final class NodeCenter{
 	 */ 
 	public JobWriter getWriterChannel(String instanceName, String seq,boolean needClear) { 
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
-		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,paramConfig.getTransParam().getInstanceName())) || needClear){ 
+		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,null)) || needClear){ 
 			JobWriter writer=null;
 			String readFrom = paramConfig.getTransParam().getDataFrom(); 
 			WriteFlowSocket<?> flowSocket;
@@ -78,9 +78,9 @@ public final class NodeCenter{
 				flowSocket = WriteFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
 			} 
 			writer = JobWriter.getInstance(flowSocket,getDestinationWriter(instanceName), paramConfig);
-			writerChannelMap.put(Common.getInstanceName(instanceName, seq,paramConfig.getTransParam().getInstanceName()), writer);
+			writerChannelMap.put(Common.getInstanceName(instanceName, seq,null), writer);
 		}
-		return writerChannelMap.get(Common.getInstanceName(instanceName, seq,paramConfig.getTransParam().getInstanceName())); 
+		return writerChannelMap.get(Common.getInstanceName(instanceName, seq,null)); 
 	}  
  
 	public FNQueryBuilder getQueryBuilder(String instanceName) { 

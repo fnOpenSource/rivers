@@ -651,7 +651,7 @@ public final class NodeMonitor {
 
 	private String getZkData(String path) {
 		String str = null;
-		byte[] b = ZKUtil.getData(path);
+		byte[] b = ZKUtil.getData(path,false);
 		if (b != null && b.length > 0) {
 			str = new String(b);
 		}

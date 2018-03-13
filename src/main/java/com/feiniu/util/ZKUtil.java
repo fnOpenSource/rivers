@@ -22,7 +22,7 @@ public class ZKUtil {
 	private static Watcher watcher = null;
 	private final static Logger log = LoggerFactory.getLogger(ZKUtil.class);
 
-	private static ZooKeeper getZk() { 
+	public static ZooKeeper getZk() { 
 		synchronized (ZKUtil.class) {
 			if (zk == null || zk.getState().equals(States.CLOSED)) {
 				connection();
@@ -49,18 +49,19 @@ public class ZKUtil {
 		zkHost = zkString;
 	} 
 	
-	public static void createPath(String path,boolean PERSISTENT){
+	public static String createPath(String path,boolean PERSISTENT){
 		try{ 
 			if(getZk().exists(path, true)==null){
 				if(PERSISTENT){
-					getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+					return getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 				}else{
-					getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+					return getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 				}
 			} 
 		} catch (Exception e) {
 			log.error("createPath Exception", e);
 		}
+		return null;
 	}
 	
 	public static void removePath(String path){ 
@@ -84,12 +85,85 @@ public class ZKUtil {
 		}
 	}
 
-	public static byte[] getData(String filename) {
+	public static byte[] getData(String filename,boolean create) {
 		try {
 			return getZk().getData(filename, watcher, null);
 		} catch (Exception e) {
-			log.error("getData Exception", e);
+			if(e.getMessage().contains("NoNode") && create) {
+				createPath(filename, true);
+				return "".getBytes();
+			}
+			log.error("getData Exception",e);
 			return null;
 		}
 	}
+	
+	private static void watchNode(final String path,final Thread current) throws InterruptedException {
+        try {
+            zk.exists(path, new Watcher() {
+                @Override
+                public void process(WatchedEvent watchedEvent) { 
+                    if(watchedEvent.getType() == Event.EventType.NodeDeleted){ 
+                    	current.interrupt();
+                    } 
+                    try {
+                        zk.exists(path,new Watcher() {
+                            @Override
+                            public void process(WatchedEvent watchedEvent) { 
+                                if(watchedEvent.getType() == Event.EventType.NodeDeleted){ 
+                                	current.interrupt();
+                                }
+                                try {
+                                    zk.exists(path,true);
+                                } catch (Exception e) {
+                                	log.error("watchNode Exception", e); 
+                                }  
+                            }
+
+                        });
+                    } catch (Exception e) {
+                    	log.error("watchNode Exception", e); 
+                    } 
+                }
+
+            });
+        } catch (Exception e) {
+        	log.error("watchNode Exception", e); 
+        }
+    }
+ 
+	/**
+	 * distribute locks
+	 * @param path
+	 * @return
+	 * @throws InterruptedException
+	 */
+    public static boolean getDistributeLock(String path) throws InterruptedException { 
+        watchNode(path,Thread.currentThread());
+        while (true) {
+        	String res;
+        	try {
+        		res = getZk().create(path, "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+        	} catch (Exception e) { 
+				log.warn("Waiting get lock!");
+				res=null;
+			}  
+        	try {
+                Thread.sleep(3000);
+            }catch (Exception e){
+            	log.error("lock InterruptedException", e); 
+            }
+            if (res!=null && !res.equals("null")) { 
+                return true;
+            }
+        }
+    } 
+    
+    public static void unDistributeLock(String path){
+        try {
+        	removePath(path);  
+        } catch (Exception e) {
+        	log.error("unlock Exception", e); 
+        } 
+    } 
 }

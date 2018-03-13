@@ -16,42 +16,44 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ESConnection extends FnConnectionSocket implements FnConnection<ESConnector>{ 
- 
-	private Client conn; 
+public class ESConnection extends FnConnectionSocket implements FnConnection<ESConnector> {
+
+	private Client conn;
 	private BulkProcessor bulkProcessor;
 	private ESConnector ESC = new ESConnector();
-	
+
 	private final static int BULK_BUFFER = 1000;
 	private final static int BULK_SIZE = 30;
 	private final static int BULK_FLUSH_SECONDS = 3;
-	private final static int BULK_CONCURRENT = 1; 
-	
-	private final static Logger log = LoggerFactory.getLogger(ESConnection.class);  
-  
-	public static FnConnection<?> getInstance(HashMap<String, Object> ConnectParams){
+	private final static int BULK_CONCURRENT = 1;
+
+	private final static Logger log = LoggerFactory.getLogger(ESConnection.class);
+
+	public static FnConnection<?> getInstance(HashMap<String, Object> ConnectParams) {
 		FnConnection<?> o = new ESConnection();
-		o.init(ConnectParams); 
+		o.init(ConnectParams);
 		o.connect();
 		return o;
-	} 
+	}
 
 	@Override
 	public boolean connect() {
 		if (this.connectParams.get("ip") != null) {
-			if (this.conn == null) {  
-				Settings settings = Settings.builder().put("cluster.name", this.connectParams.get("name")).put("client.transport.sniff", true).build();
-				this.conn = TransportClient.builder().settings(settings).build(); 
+			if (this.conn == null) {
+				Settings settings = Settings.builder().put("cluster.name", this.connectParams.get("name"))
+						.put("client.transport.sniff", true).build();
+				this.conn = TransportClient.builder().settings(settings).build();
 				String Ips = (String) this.connectParams.get("ip");
 				for (String ip : Ips.split(",")) {
 					try {
-						((TransportClient) this.conn).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ip), 9300));
+						((TransportClient) this.conn)
+								.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ip), 9300));
 					} catch (Exception e) {
-						log.error("connect Exception",e);
+						log.error("connect Exception", e);
 					}
 				}
-			} 
-			this.ESC.setClient(this.conn); 
+			}
+			this.ESC.setClient(this.conn);
 		} else {
 			return false;
 		}
@@ -60,19 +62,20 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 
 	@Override
 	public ESConnector getConnection(boolean searcher) {
-		connect(); 
-		if(!searcher){
-			if(this.bulkProcessor==null){
+		connect();
+		if (!searcher) {
+			if (this.bulkProcessor == null) {
 				this.bulkProcessor = getBulkProcessor(this.conn);
 			}
 			this.ESC.setBulkProcessor(this.bulkProcessor);
 		}
+		this.ESC.setRunState(true);
 		return this.ESC;
-	} 
+	}
 
 	@Override
 	public boolean status() {
-		if (this.conn == null || this.conn.admin()==null ) {
+		if (this.conn == null || this.conn.admin() == null) {
 			return false;
 		}
 		return true;
@@ -82,47 +85,48 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	public boolean free() {
 		try {
 			this.conn.close();
-			if(this.bulkProcessor!=null){
+			if (this.bulkProcessor != null) {
 				this.bulkProcessor.close();
 				this.bulkProcessor = null;
-			}  
+			}
 			this.ESC = null;
-			this.conn = null; 
+			this.conn = null;
 			this.connectParams = null;
 		} catch (Exception e) {
 			log.error("free connect Exception,", e);
 			return false;
 		}
 		return true;
-	} 
+	}
+
 	private BulkProcessor getBulkProcessor(Client _client) {
-		if(this.bulkProcessor==null){
-			this.bulkProcessor = BulkProcessor
-					.builder(_client, new BulkProcessor.Listener() {
-						@Override
-						public void beforeBulk(long executionId, BulkRequest request) {
-						}
+		if (this.bulkProcessor == null) {
+			this.bulkProcessor = BulkProcessor.builder(_client, new BulkProcessor.Listener() {
+				@Override
+				public void beforeBulk(long executionId, BulkRequest request) {
+				}
 
-						@Override
-						public void afterBulk(long executionId,
-								BulkRequest request, BulkResponse response) {
-							if (response.hasFailures()) {
-								log.error("BulkProcessor error,"
-										+ response.buildFailureMessage());
-							}
-						}
+				@Override
+				public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+					if (response.hasFailures()) {
+						log.error("BulkProcessor error," + response.buildFailureMessage());
+						ESC.setRunState(false);
+					}else {
+						ESC.setRunState(true);
+					}
+				}
 
-						@Override
-						public void afterBulk(long executionId,
-								BulkRequest request, Throwable failure) {
-							if (failure != null)
-								failure.printStackTrace();
-						}
-					}).setBulkActions(BULK_BUFFER)
-					.setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
+				@Override
+				public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+					if (failure != null) {
+						failure.printStackTrace();
+					}
+				}
+			}).setBulkActions(BULK_BUFFER).setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
 					.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
 					.setConcurrentRequests(BULK_CONCURRENT).build();
+
 		}
-		return this.bulkProcessor;		
+		return this.bulkProcessor;
 	}
 }

@@ -45,7 +45,7 @@ public class GlobalParam {
 	
 	public static int POOL_SIZE = 6;
 	/** CONNECT_EXPIRED is milliseconds time */
-	public static int CONNECT_EXPIRED = 7200000;
+	public static int CONNECT_EXPIRED = 7200000; 
 	
 	public static NodeTreeConfigs nodeTreeConfigs;
 	
@@ -56,7 +56,7 @@ public class GlobalParam {
 	} 
 	
 	public static enum DATA_TYPE{
-		MYSQL, ORACLE, HIVE, ES, SOLR, HBASE,ZOOKEEPER,UNKNOWN
+		MYSQL, ORACLE, HIVE, ES, SOLR, HBASE,ZOOKEEPER,UNKNOWN,H2
 	} 
 	 
 	public static enum QUERY_TYPE {  

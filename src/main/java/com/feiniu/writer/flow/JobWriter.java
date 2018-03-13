@@ -107,8 +107,8 @@ public final class JobWriter {
 
 	public String getNewStoreId(String instanceName, boolean isIncrement,
 			String dbseq) {
-		this.writer.getResource();
 		String taskId = null;
+		this.writer.getResource(); 
 		try{
 			taskId = this.writer.getNewStoreId(instanceName, isIncrement, dbseq,
 					this.nodeConfig);
@@ -143,6 +143,7 @@ public final class JobWriter {
 			this.writer.setAlias(instance, storeId, nodeConfig.getAlias());
 		}finally{
 			this.writer.freeResource(false); 
+			this.writer.freeConnPool();
 		}   
 	}
 
@@ -298,7 +299,7 @@ public final class JobWriter {
 			if(!GlobalParam.FLOW_INFOS.containsKey(instanceName+"_"+desc)){
 				GlobalParam.FLOW_INFOS.put(instanceName+"_"+desc,new HashMap<String, String>());
 			} 
-			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(destName+" seqs nums",String.valueOf(table_seqs.size()));
+			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(instanceName+" seqs nums",String.valueOf(table_seqs.size()));
 			for (int i = 0; i < table_seqs.size(); i++) {
 				int total = 0;
 				FNWriteResponse resp = null;
@@ -332,14 +333,14 @@ public final class JobWriter {
 				do {
 					List<String> pageList = flowSocket.getPageSplit(param);
 					HashMap<String, String> sqlParams;
-					GlobalParam.FLOW_INFOS.get(instanceName + "_" + desc).put(destName + tseq, "start count page...");
+					GlobalParam.FLOW_INFOS.get(instanceName + "_" + desc).put(instanceName + tseq, "start count page...");
 					if (pageList.size() > 0) {
 						indexLog("start " + desc, destName, storeId, tseq, "", maxId, lastUpdateTime, 0, "start",
 								",totalpage:" + pageList.size());
 						int processPos = 0;
 						for (String page : pageList) {
 							processPos++;
-							GlobalParam.FLOW_INFOS.get(instanceName + "_" + desc).put(destName + tseq,
+							GlobalParam.FLOW_INFOS.get(instanceName + "_" + desc).put(instanceName + tseq,
 									processPos + "/" + pageList.size());
 							maxId = page;
 							sqlParams = null;
@@ -354,7 +355,7 @@ public final class JobWriter {
 							String sql = buildSql(originalSql, sqlParams);
 
 							if ((GlobalParam.FLOW_STATUS.get(instanceName).get() & 4) > 0) {
-								indexLog("kill " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
+								indexLog("kill " + desc, instanceName, storeId, tseq, String.valueOf(total), maxId,
 										newLastUpdateTime, Common.getNow() - start, "complete", "");
 								break;
 							} else {

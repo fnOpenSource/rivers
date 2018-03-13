@@ -61,6 +61,10 @@ public class WriterFlowSocket implements Flow{
 		} 
 	}
 	
+	public void freeConnPool() {
+		FnConnectionPool.release(this.poolName);
+	}
+	
 	public boolean settings(String instantcName, String batchId, Map<String,WriteParam> paramMap) {
 		return false;
 	}

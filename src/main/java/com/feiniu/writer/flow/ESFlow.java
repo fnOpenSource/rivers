@@ -169,6 +169,10 @@ public class ESFlow extends WriterFlowSocket {
 	public void flush() throws Exception{
 		if (this.batch) {
 			this.ESC.getBulkProcessor().flush(); 
+			if(this.ESC.getRunState()==false) {
+				this.ESC.setRunState(true);
+				throw new FNException("BulkProcessor Exception!Need Redo!");
+			}
 		}
 	}
 

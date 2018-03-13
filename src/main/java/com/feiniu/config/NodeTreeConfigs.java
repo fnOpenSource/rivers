@@ -88,7 +88,7 @@ public class NodeTreeConfigs {
 	private void parseDatasConfig(String dataSrc,String type){
 		InputStream in = null;
 		try {
-		    byte[] bt = ZKUtil.getData(dataSrc);
+		    byte[] bt = ZKUtil.getData(dataSrc,false);
 		    if (bt.length <= 0)
 		    	return; 
 			in = new ByteArrayInputStream(bt, 0, bt.length);  
