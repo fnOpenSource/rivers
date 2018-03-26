@@ -42,12 +42,10 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		FnConnection<?> FC = PULL(false);
 		this.jobPage.clear(); 
 		boolean releaseConn = false;
-		try {
-			Connection conn = (Connection) FC.getConnection(false);
-			PreparedStatement statement = conn.prepareStatement(param.get("sql"));
-			statement.setFetchSize(GlobalParam.MAX_PER_PAGE);
-			ResultSet rs = statement.executeQuery();
-			try {				
+		Connection conn = (Connection) FC.getConnection(false);
+		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){  
+			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
+			try(ResultSet rs = statement.executeQuery();){				
 				this.jobPage.put("keyColumn", param.get("keyColumn"));
 				this.jobPage.put("IncrementColumn", param.get("incrementField"));  
 				if(handler==null){
@@ -58,9 +56,7 @@ public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				this.jobPage.put("lastUpdateTime", -1);
 				log.error("SqlReader init Exception", e);
-			}
-			statement.close();
-			rs.close();
+			} 
 		} catch (SQLException e){
 			log.error(param.get("sql") + " getJobPage SQLException", e);
 		} catch (Exception e) { 
