@@ -1,6 +1,5 @@
 package com.feiniu.task;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.param.WarehouseParam; 
+import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
 
@@ -224,7 +223,7 @@ public class TaskManager{
 			if(needclear){
 				jobAction(instance, "optimize", "remove");
 			}
-			String cron = NodeConfig.getTransParam().getOptimizeCron().equals("")?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getTransParam().getOptimizeCron();
+			String cron = NodeConfig.getTransParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getTransParam().getOptimizeCron();
 			NodeConfig.getTransParam().setOptimizeCron(cron);
 			if(NodeConfig.getTransParam().getInstanceName()==null) {
 				createOptimizeJob(instance, task,cron); 
