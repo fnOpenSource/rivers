@@ -1,5 +1,6 @@
 package com.feiniu.task;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.param.WarehouseParam;
+import com.feiniu.model.param.WarehouseParam; 
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
 
@@ -25,8 +26,8 @@ public class TaskManager{
 	private final static Logger log = LoggerFactory
 			.getLogger(TaskManager.class); 
 	@Autowired
-	private TaskJobCenter taskJobCenter;
- 	
+	private TaskJobCenter taskJobCenter; 
+	
 	private String default_cron = "0 PARAM 01 * * ?";
 	
 	private HashSet<String> cron_exists=new HashSet<String>();
@@ -37,8 +38,10 @@ public class TaskManager{
 			String instanceName = entry.getKey();
 			NodeConfig NodeConfig = entry.getValue();
 			initParams(instanceName);
-			startInstance(instanceName, NodeConfig,false); 
-		} 
+			if(NodeConfig.getTransParam().getInstanceName()!=null)
+					initParams(NodeConfig.getTransParam().getInstanceName());
+			startInstance(instanceName, NodeConfig,false);
+		}
 	}
 	
 	/**
@@ -188,13 +191,14 @@ public class TaskManager{
 		GlobalParam.FLOW_STATUS.put(indexName, new AtomicInteger(1));
 		GlobalParam.LAST_UPDATE_TIME.put(indexName, "0");
 	}
- 
+	 
+	
 	private boolean removeFlowScheduleJob(String instance,NodeConfig NodeConfig)throws SchedulerException {
 		boolean state = true;
 		if (NodeConfig.getTransParam().getFullCron() != null) { 
 			state= jobAction(instance, "full", "remove") && state;
 		}
-		if(NodeConfig.getTransParam().getFullCron() == null || NodeConfig.getOptimizeCron().equals("")){
+		if(NodeConfig.getTransParam().getFullCron() == null || NodeConfig.getTransParam().getOptimizeCron()!=null){
 			state = jobAction(instance, "optimize", "remove") && state;
 		}
 		if(NodeConfig.getTransParam().getDeltaCron() != null){
@@ -216,13 +220,15 @@ public class TaskManager{
 			taskJobCenter.addJob(_sj); 
 		} 
 		
-		if(NodeConfig.getTransParam().getFullCron() == null || NodeConfig.getOptimizeCron().equals("")){
+		if(NodeConfig.getTransParam().getFullCron() == null || NodeConfig.getTransParam().getOptimizeCron()!=null){
 			if(needclear){
 				jobAction(instance, "optimize", "remove");
 			}
-			String cron = NodeConfig.getOptimizeCron().equals("")?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getOptimizeCron();
-			NodeConfig.setOptimizeCron(cron);
-			createOptimizeJob(instance, task,cron);
+			String cron = NodeConfig.getTransParam().getOptimizeCron().equals("")?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getTransParam().getOptimizeCron();
+			NodeConfig.getTransParam().setOptimizeCron(cron);
+			if(NodeConfig.getTransParam().getInstanceName()==null) {
+				createOptimizeJob(instance, task,cron); 
+			} 
 		}
 		
 		if (NodeConfig.getTransParam().getDeltaCron() != null) { 

@@ -43,8 +43,7 @@ public class NodeConfig {
 	/**
 	 *  1 do index 2 do rabitmq 4 do kafka
 	 */
-	private int indexType = 0;
-	private String optimizeCron = "";
+	private int indexType = 0; 
 	private final static Logger log = LoggerFactory.getLogger(NodeConfig.class);
 
 	public NodeConfig(String fileName, int indexType) {
@@ -123,15 +122,7 @@ public class NodeConfig {
 
 	public String getAlias() {
 		return this.alias;
-	}
-
-	public String getOptimizeCron() {
-		return optimizeCron;
-	}
-
-	public void setOptimizeCron(String optimizeCron) {
-		this.optimizeCron = optimizeCron;
-	}
+	} 
  
 	private void loadConfigFromZk() {
 		InputStream in;
@@ -167,11 +158,7 @@ public class NodeConfig {
 			if (params != null) { 
 				if (!params.getAttribute("alias").equals("")) {
 					this.alias = params.getAttribute("alias");
-				}
-
-				if (!params.getAttribute("optimizeCron").equals("")) {
-					this.optimizeCron = params.getAttribute("optimizeCron");
-				}
+				} 
 			 
 				paramlist = params.getElementsByTagName("configs");
 				if (paramlist.getLength() > 0) {

@@ -375,7 +375,7 @@ public final class NodeMonitor {
 			NodeConfig config = entry.getValue();
 			StringBuffer sb = new StringBuffer();
 			sb.append(entry.getKey() + ":[Alias]" + config.getAlias());
-			sb.append(":[OptimizeCron]" + config.getOptimizeCron());
+			sb.append(":[OptimizeCron]" + config.getTransParam().getOptimizeCron());
 			sb.append(":[DeltaCron]" + config.getTransParam().getDeltaCron());
 			sb.append(":[FullCron]" + config.getTransParam().getFullCron());
 			sb.append(":[Searcher]" + config.getTransParam().getSearcher());

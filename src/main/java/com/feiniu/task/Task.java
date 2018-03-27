@@ -57,8 +57,8 @@ public class Task{
 	}
 	
 	public void startFullJob() {
-		if((this.runState.get()&2)==0){  
-			this.runState.set(this.runState.get()+2); 
+		if((this.runState.get()&2)==0){   
+			this.runState.getAndAdd(2); 
 			try{  
 				Common.getStoreId(instanceName,seq,jobWriter,true,false);
 				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName);
@@ -67,12 +67,13 @@ public class Task{
 				jobWriter.write(instanceName, storeId, "-1", seq, true);
 				GlobalParam.LAST_UPDATE_TIME.put(instanceName, keepCurrentUpdateTime);
 				GlobalParam.FLOW_STATUS.get(instanceName).set(4); 
-				Common.saveTaskInfo(instanceName,seq,storeId);
-				this.runState.set(this.runState.get()-2);
-				GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+				Common.saveTaskInfo(instanceName,seq,storeId); 
 			}catch(Exception e){
 				log.error(instanceName+" Full Exception",e);
-			}  
+			}finally{
+				this.runState.getAndAdd(-2);
+				GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+			}
 		}else{
 			log.info(instanceName+" full job is running, ignore this time job!");
 		}
@@ -80,33 +81,37 @@ public class Task{
 	
 	
 	public void startIncrementJob() {
-		if((this.runState.get()&1)==0){    
-			if((GlobalParam.FLOW_STATUS.get(instanceName).get()&1)>0){  
-				this.runState.set(this.runState.get()+1);
-				GlobalParam.FLOW_STATUS.get(instanceName).set(3);
-				String storeId = Common.getStoreId(instanceName,seq,jobWriter,true,recompute);
-				String lastUpdateTime; 
-				try {
-					lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName), seq,false);
-					GlobalParam.LAST_UPDATE_TIME.put(instanceName, lastUpdateTime); 
-				} catch (Exception e) { 
-					storeId = Common.getStoreId(instanceName,seq,jobWriter,true,true);
+		synchronized (this.runState) {
+			if((this.runState.get()&1)==0){    
+				if((GlobalParam.FLOW_STATUS.get(instanceName).get()&1)>0){  
+					this.runState.getAndAdd(1);
+					GlobalParam.FLOW_STATUS.get(instanceName).set(3);
+					String storeId = Common.getStoreId(instanceName,seq,jobWriter,true,recompute);
+					String lastUpdateTime; 
 					try {
 						lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName), seq,false);
 						GlobalParam.LAST_UPDATE_TIME.put(instanceName, lastUpdateTime); 
-					}catch (Exception ex) {
-						log.error(instanceName+" Increment Exception",e);
-					}
-				}finally{
-					recompute = false;
-					GlobalParam.FLOW_STATUS.get(instanceName).set(1);
-					this.runState.set(this.runState.get()-1);
-				} 
+					} catch (Exception e) { 
+						if(e.getMessage().equals("storeId not found")){
+							storeId = Common.getStoreId(instanceName,seq,jobWriter,true,true);
+							try {
+								lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName), seq,false);
+								GlobalParam.LAST_UPDATE_TIME.put(instanceName, lastUpdateTime); 
+							}catch (Exception ex) {
+								log.error(instanceName+" Increment Exception",e);
+							}
+						}
+					}finally{
+						recompute = false;
+						GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+						this.runState.getAndAdd(-1); 
+					} 
+				}else{
+					log.info(instanceName+" job have been stopped!startIncrement JOB failed!");
+				}
 			}else{
-				log.info(instanceName+" job have been stopped!startIncrement JOB failed!");
+				log.info(instanceName+" increment job is running, ignore this time job!");
 			}
-		}else{
-			log.info(instanceName+" increment job is running, ignore this time job!");
 		}
 	} 
 }
