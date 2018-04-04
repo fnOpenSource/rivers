@@ -90,6 +90,7 @@ public class GlobalParam {
 	public final static String PARAM_FACET_EXT = "facet_ext";
 	public final static String PARAM_SORT = "sort"; 
 	public final static String NOT_SUFFIX = "_not";
+	public final static String PARAM_REQUEST_HANDLER = "request_handler";
 	 
 	public static final String _start = "#{start}";
 	public static final String _end = "#{end}"; 

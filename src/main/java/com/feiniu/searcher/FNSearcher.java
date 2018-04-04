@@ -118,6 +118,8 @@ public class FNSearcher {
 			fq.setFl(request.getParam(GlobalParam.PARAM_FL));
 		if (request.getParams().containsKey(GlobalParam.PARAM_FQ))
 			fq.setFq(request.getParam(GlobalParam.PARAM_FQ));
+		if (request.getParams().containsKey(GlobalParam.PARAM_REQUEST_HANDLER))
+			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 
 	private SolrQueryModel getSolrQuery(FNRequest request, Analyzer analyzer) {

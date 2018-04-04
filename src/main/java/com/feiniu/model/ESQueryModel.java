@@ -14,7 +14,8 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
-import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilder; 
+import org.elasticsearch.script.Script;
 
 public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
 	private QueryBuilder query;
@@ -32,6 +33,7 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private String fl="";
 	private String fq="";
 	private String facet_ext="";
+	private String requesthandler="";
 	
 	public ESQueryModel() {
 		
@@ -224,6 +226,16 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 		return ext;
 	}
 	
+	@Override
+	public void setRequestHandler(String handler) {
+		this.requesthandler = handler; 
+	}
+
+	@Override
+	public String getRequestHandler() { 
+		return this.requesthandler;
+	} 
+	
 	/**
 	 * get Aggregation
 	 * @param type  true is main , false is sub
@@ -239,7 +251,11 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 			case "avg":
 				return AggregationBuilders.avg(name).field(field); 
 			case "sum":
-				return AggregationBuilders.sum(name).field(field);
+				if(field.contains("(script(")) {
+					return AggregationBuilders.sum(name).script(getScript(field)); 
+				}else {
+					return AggregationBuilders.sum(name).field(field); 
+				} 
 			case "topHits":
 				return AggregationBuilders.topHits(fun).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(field));
 		} 
@@ -258,5 +274,12 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 		}
 		return AggregationBuilders.terms(name).field(field);
 	}
+	
+ private org.elasticsearch.script.Script getScript(String str) {
+	 str = str.replace("(script(", "");
+	 str = str.substring(0, str.length()-2); 
+	 Script script = new Script(str); 
+	 return script;
+ }
 
 }

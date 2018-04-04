@@ -18,6 +18,10 @@ public interface FNQuery<T1, T2, T3> {
 	
 	public String getFl();
 	
+	public void setRequestHandler(String handler);
+	
+	public String getRequestHandler();
+	
 	public void setFl(String fl);
 	
 	public String getFq();

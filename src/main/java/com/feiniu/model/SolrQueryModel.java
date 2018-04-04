@@ -15,6 +15,7 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	private String fq = "";
 	private String fl="";
 	private boolean cached=false;
+	private String requesthandler="select";
 	
 	Map<String, List<String[]>> facetSearchParams;
 	List<String> facetsConfig = new ArrayList<String>();
@@ -131,5 +132,15 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	@Override
 	public Map<String, String> getFacetExt() { 
 		return null;
+	}
+
+	@Override
+	public void setRequestHandler(String handler) {
+		this.requesthandler = handler; 
+	}
+
+	@Override
+	public String getRequestHandler() { 
+		return this.requesthandler;
 	} 
 }

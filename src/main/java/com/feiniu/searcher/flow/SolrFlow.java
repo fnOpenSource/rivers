@@ -12,6 +12,7 @@ import org.apache.solr.client.solrj.response.FacetField.Count;
 import org.apache.solr.client.solrj.response.Group;
 import org.apache.solr.client.solrj.response.GroupCommand;
 import org.apache.solr.client.solrj.response.GroupResponse;
+import org.apache.solr.client.solrj.response.PivotField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -68,6 +69,7 @@ public class SolrFlow extends SearcherFlowSocket {
 			int count = fq.getCount();
 			SolrQuery qb = (SolrQuery) fq.getQuery();
 			qb.setParam("defType", "edismax");
+			qb.setRequestHandler(fq.getRequestHandler());
 			QueryResponse response = getSearchResponse(conn, qb, instance, start,
 					count, fq);
 			NamedList<Object> commonResponse = response.getResponse();
@@ -88,8 +90,8 @@ public class SolrFlow extends SearcherFlowSocket {
 			}else {
 				handler.Handle(res,response,fq);
 			}
-		}catch(Exception e){ 
-			throw new FNException("Search data from Solr exception!");
+		}catch(Exception e){   
+			throw new FNException("Search data from Solr exception!"+e.getMessage());
 		}finally{
 			CLOSED(FC,false);
 		} 
@@ -155,7 +157,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		}
 		if (rps.getFacetFields() != null) {
 			Map<String, Map<String, Object>> fc = new HashMap<String, Map<String, Object>>();
-			List<FacetField> fields = rps.getFacetFields();
+			List<FacetField> fields = rps.getFacetFields(); 
 			for (FacetField facet : fields) {
 				Map<String, Object> _row = new HashMap<String, Object>();
 				List<Count> counts = facet.getValues();
@@ -163,14 +165,22 @@ public class SolrFlow extends SearcherFlowSocket {
 					_row.put(c.getName(), c.getCount()+"");
 				}
 				fc.put(facet.getName(), _row);
-			}
+			}  
+			if(rps.getFacetPivot()!=null && rps.getFacetPivot().size()>0) {
+				NamedList<List<PivotField>> namedList = rps.getFacetPivot();  
+				for(int i=0;i<namedList.size();i++){    
+					HashMap<String, Object> _r = new HashMap<>();
+					_r.put("data", namedList.getVal(i));
+	                fc.put(namedList.getName(i), _r);
+				}
+			} 
 			res.setFacetInfo(fc);
 		}
 	}
 
 	private QueryResponse getSearchResponse(CloudSolrClient conn,SolrQuery qb, String index,
 			int start, int count, FNQuery<?, ?, ?> fq) {
-		conn.setDefaultCollection(getCollection());
+		conn.setDefaultCollection(getCollection()); 
 		qb.setParam("wt", "json");
 		qb.setRows(count);
 		qb.setStart(start);
