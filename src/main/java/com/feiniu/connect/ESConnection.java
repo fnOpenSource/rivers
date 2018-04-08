@@ -64,9 +64,8 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	public ESConnector getConnection(boolean searcher) {
 		connect();
 		if (!searcher) {
-			if (this.bulkProcessor == null) {
-				this.bulkProcessor = getBulkProcessor(this.conn);
-			}
+			freeBP();
+			this.bulkProcessor = getBulkProcessor(this.conn);
 			this.ESC.setBulkProcessor(this.bulkProcessor);
 		}
 		this.ESC.setRunState(true);
@@ -84,11 +83,8 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	@Override
 	public boolean free() {
 		try {
-			this.conn.close();
-			if (this.bulkProcessor != null) {
-				this.bulkProcessor.close();
-				this.bulkProcessor = null;
-			}
+			this.conn.close(); 
+			freeBP();
 			this.ESC = null;
 			this.conn = null;
 			this.connectParams = null;
@@ -97,6 +93,13 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 			return false;
 		}
 		return true;
+	}
+	
+	private void freeBP() {
+		if (this.bulkProcessor != null) {
+			this.bulkProcessor.close();
+			this.bulkProcessor = null;
+		}
 	}
 
 	private BulkProcessor getBulkProcessor(Client _client) {
