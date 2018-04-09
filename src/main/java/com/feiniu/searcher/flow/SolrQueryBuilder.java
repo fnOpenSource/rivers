@@ -1,10 +1,12 @@
 package com.feiniu.searcher.flow;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.solr.client.solrj.SolrQuery;
 
@@ -44,7 +46,11 @@ public class SolrQueryBuilder {
 				}
 				continue;
 			}
-			if(k.equals(GlobalParam.PARAM_DEFINEDSEARCH)){
+			
+			if(k.equals(GlobalParam.PARAM_DEFINEDSEARCH)){ 
+				if (!start) {
+					qr.append(" AND ");
+				} 
 				qr.append("("+v+")");
 				start=false;
 				continue;
@@ -53,7 +59,7 @@ public class SolrQueryBuilder {
 			FNParam pr = prs.getParam(k);
 			if (pr == null){
 				continue; 
-			} 
+			}  
 			if (!start) {
 				qr.append(" AND ");
 			} 
@@ -114,28 +120,20 @@ public class SolrQueryBuilder {
 	}
 
 	static String getFacetInfo(String strs, SolrQuery sq) {
-		for (String s : strs.split(",")) {
+		for (String s : strs.split(";")) {
 			String[] tmp = s.split(":");
-			if (tmp.length != 2) {
+			if (tmp.length <2) {
 				continue;
 			}
-			if (tmp[0].equals("facet.query")) {
-				sq.setParam("facet.query", tmp[1]);
-			}
-			if (tmp[0].equals("facet.field")) {
-				sq.setParam("facet.field", tmp[1]);
-			}
-			if (tmp[0].equals("facet.limit")) {
-				sq.setParam("facet.limit", tmp[1]);
-			}
-			if (tmp[0].equals("facet.limit")) {
-				sq.setParam("facet.limit", tmp[1]);
-			}
-			if (tmp[0].equals("facet.sort")) {
-				sq.setParam("facet.sort", tmp[1]);
-			} 
-			if (tmp[0].equals("facet.mincount")) {
-				sq.setParam("facet.mincount", tmp[1]);
+			String key = tmp[0].toLowerCase();
+			tmp = Arrays.copyOfRange(tmp, 1, tmp.length);
+			switch (key) {
+			case "facet.query": 
+				sq.setParam(key, StringUtils.join(tmp, ":").split(","));
+				break; 
+			default:
+				sq.setParam(key, StringUtils.join(tmp, ":"));
+				break;
 			} 
 		}
 		return "true";

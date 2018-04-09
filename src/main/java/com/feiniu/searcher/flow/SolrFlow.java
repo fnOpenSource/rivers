@@ -174,6 +174,11 @@ public class SolrFlow extends SearcherFlowSocket {
 	                fc.put(namedList.getName(i), _r);
 				}
 			} 
+			if(rps.getFacetQuery()!=null && rps.getFacetQuery().size()>0) {
+				HashMap<String, Object> _r = new HashMap<>();
+				_r.put("data", rps.getFacetQuery());
+				fc.put("facet_query", _r);
+			}
 			res.setFacetInfo(fc);
 		}
 	}
