@@ -99,8 +99,6 @@ public class ESFlow extends WriterFlowSocket {
 				if (writeParam == null)
 					writeParam = writeParamMap.get(field.toLowerCase());
 				if (writeParam == null)
-					writeParam = writeParamMap.get(field.toUpperCase());
-				if (writeParam == null)
 					continue;
 
 				if (writeParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))) {
