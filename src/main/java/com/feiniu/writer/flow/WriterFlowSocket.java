@@ -14,6 +14,7 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
+import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 
@@ -76,7 +77,7 @@ public class WriterFlowSocket implements Flow{
 	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap,String instantcName, String batchId,boolean isUpdate) throws Exception {
 	}
 
-	public void doDelete(WriteUnit unit, String instantcName, String batchId) throws Exception {
+	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {
 	}
   
 	public void remove(String instanceName, String batchId) {

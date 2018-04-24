@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.FNIocConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
+import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.util.Common;
@@ -174,12 +174,8 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	 
 	@Override
-	public void doDelete(WriteUnit unit, String instantcName, String storeId) throws Exception {  
-		String name = Common.getStoreName(instantcName,storeId); 
-		Method getMethod = unit.getClass().getMethod("getId", new Class[] {});
-		String id = String.valueOf(getMethod.invoke(unit, new Object[] {}));
-		log.info("doDelete " + id + "," + name); 
-		this.conn.deleteById(id); 
+	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {  
+	 
 	} 
 
 	@Override

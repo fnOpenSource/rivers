@@ -2,7 +2,9 @@ package com.feiniu.writer;
 
 import java.util.HashMap;
 
-import com.feiniu.config.GlobalParam.DATA_TYPE;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.writer.flow.ESFlow;
 import com.feiniu.writer.flow.HBaseFlow;
@@ -10,6 +12,9 @@ import com.feiniu.writer.flow.SolrFlow;
 import com.feiniu.writer.flow.WriterFlowSocket;
 
 public class WriterFactory {
+	
+	private final static Logger log = LoggerFactory
+			.getLogger(WriterFactory.class);
 	
 	public static WriterFlowSocket getWriter(final WarehouseNosqlParam param) {
 		WriterFlowSocket writer = null; 
@@ -20,14 +25,20 @@ public class WriterFactory {
 		connectParams.put("name", param.getName()); 
 		connectParams.put("type", param.getType()); 
 		connectParams.put("poolName", param.getPoolName(null));
-		if (param.getType() == DATA_TYPE.ES) {
-			writer = ESFlow.getInstance(connectParams);
-		} else if (param.getType() == DATA_TYPE.SOLR) {
-			writer = SolrFlow.getInstance(connectParams);
-		} else if (param.getType() == DATA_TYPE.HBASE) {
-			writer = HBaseFlow.getInstance(connectParams);
+		switch (param.getType()) {
+			case ES:
+				writer = ESFlow.getInstance(connectParams);
+				break;
+			case SOLR:
+				writer = SolrFlow.getInstance(connectParams);
+				break;
+			case HBASE:
+				writer = HBaseFlow.getInstance(connectParams);
+				break;
+			default:
+				log.error("WriterFlowSocket getWriter Type Not Support!");
+				break; 
 		} 
 		return writer;
 	}
-	
 }

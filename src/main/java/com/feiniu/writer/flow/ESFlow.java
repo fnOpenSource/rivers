@@ -2,7 +2,6 @@ package com.feiniu.writer.flow;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,7 +22,6 @@ import org.elasticsearch.action.admin.indices.forcemerge.ForceMergeResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
 import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -32,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.ESConnector;
+import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.util.Common;
@@ -152,17 +151,10 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void doDelete(WriteUnit unit, String instantcName, String storeId)
+	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId)
 			throws Exception {
-		String name = Common.getStoreName(instantcName, storeId);
-		String type = instantcName;
-		Method getMethod = unit.getClass().getMethod("getId", new Class[] {});
-		String id = String.valueOf(getMethod.invoke(unit, new Object[] {}));
-		log.info("doDelete:" + id + "," + name + "," + type);
-		DeleteRequestBuilder builder = this.ESC.getClient().prepareDelete(name, type, id);
-		if (!builder.execute().actionGet().isFound()) {
-			log.info("Delete isFound failed.id=" + id);
-		}
+		 
+		 
 	}
 
 	@Override

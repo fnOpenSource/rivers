@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.DATA_TYPE;
 
 /**
  * all source connection manager
@@ -216,25 +217,30 @@ public final class FnConnectionPool {
 		
 		private FnConnection<?> newConnection() {
 			FnConnection<?> conn = null;
-			if (params != null) {
-				if (params.get("type").equals(GlobalParam.DATA_TYPE.ORACLE)) {
+			if (params != null) { 
+				switch ((DATA_TYPE) params.get("type")) {
+				case ORACLE:
 					conn = OracleConnection.getInstance(params);
-				}else
-				if (params.get("type").equals(GlobalParam.DATA_TYPE.MYSQL)) {
+					break;
+				case MYSQL:
 					conn = MysqlConnection.getInstance(params);
-				}else
-				if (params.get("type").equals(GlobalParam.DATA_TYPE.SOLR)) {
+					break;
+				case SOLR:
 					conn = SolrConnection.getInstance(params);
-				}else
-				if (params.get("type").equals(GlobalParam.DATA_TYPE.ES)) {
+					break;
+				case ES:
 					conn = ESConnection.getInstance(params);
-				}else
-				if (params.get("type").equals(GlobalParam.DATA_TYPE.HBASE)) {
+					break;
+				case HBASE:
 					conn = HBaseConnection.getInstance(params);
-				}else
-				if (params.get("type").equals(GlobalParam.DATA_TYPE.ZOOKEEPER)) {
+					break;
+				case ZOOKEEPER:
 					conn = ZookeeperConnection.getInstance(params);
-				}
+					break;
+				default:
+					log.error("Connection Type Not Support!");
+					break;
+				}  
 			} else {
 				log.error("Parameter error can't create new " + this.poolName
 						+ " connection!");

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.correspond.ReportStatus;
+import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNWriteResponse;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
@@ -200,6 +201,19 @@ public final class JobWriter {
 		flowSocket.freeJobPage();
 		return resp;
 	}  
+	
+		public void deleteByQuery(FNQuery<?, ?, ?> query,String instance, String storeId) {
+			this.writer.getResource(); 
+			boolean freeConn = false;
+			try{
+				this.writer.doDelete(query, instance, storeId);
+			}catch(Exception e){
+				log.error("DeleteByQuery Exception",e);
+				freeConn = true;
+			}finally{
+				this.writer.freeResource(freeConn);
+			}
+		}
 	 
 		/**
 		 * write to not db platform

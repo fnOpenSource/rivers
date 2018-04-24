@@ -22,7 +22,6 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNRequest;
 import com.feiniu.model.FNResponse;
 import com.feiniu.node.NodeCenter;
-import com.feiniu.node.NodeMonitor;
 import com.feiniu.searcher.FNSearcher;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
@@ -38,10 +37,7 @@ public class SearcherService{
 	private NodeCenter nodeCenter;  
 
 	private final static Logger log = LoggerFactory
-			.getLogger(SearcherService.class);
-
-	@Autowired
-	NodeMonitor indexManagerImpl;
+			.getLogger(SearcherService.class); 
  
 	@Value("#{globalConfigBean['http_service_thread_pool']}")
 	private String http_service_thread_pool;
