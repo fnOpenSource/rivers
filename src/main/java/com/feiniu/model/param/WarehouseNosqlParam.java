@@ -1,6 +1,7 @@
 package com.feiniu.model.param;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
  
 
@@ -76,5 +77,18 @@ public class WarehouseNosqlParam implements WarehouseParam{
 	@Override
 	public String getPoolName(String seq) { 
 		return ((seq != null) ? this.alias.replace("#{seq}", seq):this.alias)+"_"+this.type+"_"+this.ip;
-	}	
+	}
+
+	@Override
+	public HashMap<String, Object> getConnectParams(String seq) {
+		HashMap<String, Object> connectParams = new HashMap<String, Object>();
+		String name = (seq != null) ? getName().replace("#{seq}", seq) : getName();
+		connectParams.put("alias", getAlias());
+		connectParams.put("defaultValue", getDefaultValue()); 
+		connectParams.put("ip", getIp());
+		connectParams.put("name", name); 
+		connectParams.put("type", getType()); 
+		connectParams.put("poolName", getPoolName(seq));
+		return connectParams;
+	}	 
 }

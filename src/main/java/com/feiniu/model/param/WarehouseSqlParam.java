@@ -1,11 +1,17 @@
 package com.feiniu.model.param;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ *
+ */
 public class WarehouseSqlParam implements WarehouseParam{
 	
 	private String name = "";
@@ -95,5 +101,18 @@ public class WarehouseSqlParam implements WarehouseParam{
 	@Override
 	public String getPoolName(String seq) {  
 		return this.alias+"_"+this.type+"_"+this.host+"_"+((seq != null) ? this.dbname.replace("#{seq}", seq):this.dbname);
-	}	
+	}
+	@Override
+	public HashMap<String, Object> getConnectParams(String seq) {
+		HashMap<String, Object> connectParams = new HashMap<String, Object>();
+		String dbname = (seq != null) ? getDbname().replace("#{seq}", seq) : getDbname();
+		connectParams.put("host", getHost());
+		connectParams.put("port", String.valueOf(getPort()));
+		connectParams.put("dbname", dbname);
+		connectParams.put("user", getUser());
+		connectParams.put("password", getPassword()); 
+		connectParams.put("type", getType());
+		connectParams.put("poolName", getPoolName(seq));
+		return connectParams;
+	}	 
 }

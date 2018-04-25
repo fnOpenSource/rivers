@@ -15,7 +15,8 @@ public class FNParam {
 	private String analyzer = "";
 	private float boost = 1.0f;
 	private String stored = "false";
-	private boolean isClosedInvterval = true;
+	private boolean includeLower = true;
+	private boolean includeUpper = true;
 	private String separator = null;
 	private String indextype = null;//for data storetype
 
@@ -63,11 +64,7 @@ public class FNParam {
 
 	public void setBoost(float boost) {
 		this.boost = boost;
-	}
-
-	public void setClosedInvterval(boolean isClosedInvterval) {
-		this.isClosedInvterval = isClosedInvterval;
-	}
+	} 
 
 	public String getName() {
 		return name;
@@ -83,16 +80,7 @@ public class FNParam {
 
 	public void setBoost(String boost) {
 		this.boost = Float.valueOf(boost);
-	}
-
-	public boolean isClosedInvterval() {
-		return isClosedInvterval;
-	}
-
-	public void setIsClosedInvterval(String isClosedInvterval) {
-		if (isClosedInvterval.equalsIgnoreCase("false"))
-			this.isClosedInvterval = false;
-	}
+	} 
 	
 	public String getStored() {
 		return stored;
@@ -124,6 +112,23 @@ public class FNParam {
 	public void setFields(String fields) {
 		this.fields = fields;
 	}
-	
+
+	public boolean isIncludeLower() {
+		return includeLower;
+	}
+
+	public void setIncludeLower(String includeLower) {
+		if(includeLower.toLowerCase().equals("false"))
+			this.includeUpper = false;
+	}
+
+	public boolean isIncludeUpper() {
+		return includeUpper;
+	}
+
+	public void setIncludeUpper(String includeUpper) {
+		if(includeUpper.toLowerCase().equals("false"))
+			this.includeUpper = false;
+	} 
 	
 }

@@ -5,7 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.solr.client.solrj.SolrQuery;
+
+import com.feiniu.config.NodeConfig;
+import com.feiniu.searcher.flow.SolrQueryBuilder;
+import com.feiniu.util.SearchParamUtil;
 
 public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	private SolrQuery query ; 
@@ -21,19 +26,15 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	List<String> facetsConfig = new ArrayList<String>();
 	private Map<String, SolrQuery> attrQueryMap = new HashMap<String, SolrQuery>(); 
 	private List<String> sortinfo;
-
-	public SolrQueryModel() {
+	
+	public static SolrQueryModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+		SolrQueryModel sq = new SolrQueryModel();
+		SearchParamUtil.reWriteParam(request, sq,nodeConfig);
+		sq.setQuery(SolrQueryBuilder.queryBuilder(request, nodeConfig,
+				analyzer, new HashMap<String, String>()));
+		return sq;
 	}
-
-	public SolrQueryModel(SolrQuery query, List<String> sortinfo,
-			int start, int count) {
-		super();
-		this.query = query;
-		this.sortinfo = sortinfo;
-		this.start = start;
-		this.count = count;
-	}
-
+ 
 	@Override
 	public SolrQuery getQuery() {
 		return this.query;

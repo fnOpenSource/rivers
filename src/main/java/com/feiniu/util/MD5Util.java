@@ -27,5 +27,9 @@ public class MD5Util {
 			e.printStackTrace(); 
 		}
 		return "";
-	} 
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(SaltMd5("compare_price"));
+	}
 }

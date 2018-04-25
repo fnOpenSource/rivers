@@ -10,6 +10,11 @@ import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.WarehouseSqlParam;
  
+/**
+ * 
+ * @author chengwen
+ *
+ */
 public class WriteFlowSocketFactory {
 	
 	private final static Logger log = LoggerFactory
@@ -25,35 +30,21 @@ public class WriteFlowSocketFactory {
 			return null;
 		}
 	}
-	static WriteFlowSocket<?> sqlChannel(final WarehouseSqlParam wParam, String seq){
-		String dbname = (seq != null) ? wParam.getDbname().replace("#{seq}", seq) : wParam.getDbname();
-		HashMap<String, Object> connectParams = new HashMap<String, Object>();
-		connectParams.put("host", wParam.getHost());
-		connectParams.put("port", String.valueOf(wParam.getPort()));
-		connectParams.put("dbname", dbname);
-		connectParams.put("user", wParam.getUser());
-		connectParams.put("password", wParam.getPassword()); 
-		connectParams.put("type", wParam.getType());
-		connectParams.put("poolName", wParam.getPoolName(seq));
+	static WriteFlowSocket<?> sqlChannel(final WarehouseSqlParam wParam, String seq){ 
+		HashMap<String, Object> connectParams = wParam.getConnectParams(seq);
 		if (wParam.getType() == DATA_TYPE.MYSQL){ 
-			return MysqlFlow.getInstance(connectParams);
+			return MysqlJobFlow.getInstance(connectParams);
 		}else if((wParam.getType() == DATA_TYPE.ORACLE)){ 
 			connectParams.put("sid", "CORD"); 
-			return OracleFlow.getInstance(connectParams);
+			return OracleJobFlow.getInstance(connectParams);
 		}
 		return null;
 	}
 	
 	static WriteFlowSocket<?> noSqlChannel(WarehouseNosqlParam wParam, String seq){
-		HashMap<String, Object> connectParams = new HashMap<String, Object>();
-		connectParams.put("alias", wParam.getAlias());
-		connectParams.put("defaultValue", wParam.getDefaultValue()); 
-		connectParams.put("ip", wParam.getIp());
-		connectParams.put("name", wParam.getName()); 
-		connectParams.put("type", wParam.getType()); 
-		connectParams.put("poolName", wParam.getPoolName(null));
+		HashMap<String, Object> connectParams = wParam.getConnectParams(seq); 
 		if (wParam.getType() == DATA_TYPE.HBASE){ 
-			return HbaseFlow.getInstance(connectParams);
+			return HbaseJobFlow.getInstance(connectParams);
 		} 
 		return null;
 	}

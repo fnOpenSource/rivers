@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
-import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
 import org.elasticsearch.action.admin.indices.alias.exists.AliasesExistResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -40,62 +39,62 @@ import com.feiniu.util.FNException;
  * ElasticSearch Writer Manager
  * 
  * @author chengwen
- * @version 1.0 
+ * @version 1.0
  */
 @NotThreadSafe
-public class ESFlow extends WriterFlowSocket { 
-	
-	private ESConnector ESC;   
+public class ESFlow extends WriterFlowSocket {
+
+	private ESConnector ESC;
 	private final static Logger log = LoggerFactory.getLogger(ESFlow.class);
 
 	public static ESFlow getInstance(HashMap<String, Object> connectParams) {
 		ESFlow o = new ESFlow();
 		o.INIT(connectParams);
 		return o;
-	} 
+	}
 
 	@Override
 	public void getResource() {
 		synchronized (retainer) {
-			if(retainer.get()==0){
+			if (retainer.get() == 0) {
 				PULL(false);
 				this.ESC = (ESConnector) this.FC.getConnection(false);
 			}
-			retainer.addAndGet(1); 
-		} 
+			retainer.addAndGet(1);
+		}
 	}
-	
+
 	@Override
-	public void freeResource(boolean releaseConn){
-		synchronized(retainer){
+	public void freeResource(boolean releaseConn) {
+		synchronized (retainer) {
 			retainer.addAndGet(-1);
-			if(retainer.get()==0){ 
-				CLOSED(this.FC,releaseConn); 
-			}else{
-				log.info(this.ESC.toString()+" retainer is "+retainer.get());
+			if (retainer.get() == 0) {
+				CLOSED(this.FC, releaseConn);
+			} else {
+				log.info(this.ESC.toString() + " retainer is " + retainer.get());
 			}
-		} 
+		}
 	}
- 
+
 	@Override
-	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate)
-			throws FNException {
-		try { 
+	public void write(String keyColumn, WriteUnit unit, Map<String, WriteParam> writeParamMap, String instantcName,
+			String storeId, boolean isUpdate) throws FNException {
+		try {
 			String name = Common.getStoreName(instantcName, storeId);
 			String type = instantcName;
 			if (unit.getData().size() == 0) {
 				log.info("Empty IndexUnit for " + name + " " + type);
 				return;
-			} 
-			String id = unit.getKeyColumnVal(); 
+			}
+			String id = unit.getKeyColumnVal();
 			XContentBuilder cbuilder = jsonBuilder().startObject();
 			StringBuilder routing = new StringBuilder();
-			for(Entry<String, Object> r:unit.getData().entrySet()){
-				String field = r.getKey(); 
+			for (Entry<String, Object> r : unit.getData().entrySet()) {
+				String field = r.getKey();
 				if (r.getValue() == null)
 					continue;
 				String value = String.valueOf(r.getValue());
-				WriteParam writeParam = writeParamMap.get(field); 
+				WriteParam writeParam = writeParamMap.get(field);
 				if (writeParam == null)
 					writeParam = writeParamMap.get(field.toLowerCase());
 				if (writeParam == null)
@@ -103,63 +102,60 @@ public class ESFlow extends WriterFlowSocket {
 
 				if (writeParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))) {
 					if (writeParam.getSeparator() != null) {
-						String[] vs = value.split(writeParam.getSeparator()); 
+						String[] vs = value.split(writeParam.getSeparator());
 						cbuilder.array(field, vs);
 					} else
 						cbuilder.field(field, value);
 				} else {
 					cbuilder.field(field, value);
 				}
-				if(writeParam.isRouter()) {
+				if (writeParam.isRouter()) {
 					routing.append(value);
 				}
-			} 
+			}
 			cbuilder.field("SYSTEM_UPDATE_TIME", unit.getUpdateTime());
-			cbuilder.endObject(); 
-			if(isUpdate){
-				UpdateRequest _UR = new UpdateRequest(name, type, id);  
+			cbuilder.endObject();
+			if (isUpdate) {
+				UpdateRequest _UR = new UpdateRequest(name, type, id);
 				_UR.doc(cbuilder).upsert(cbuilder);
-				if(routing.length()>0)
+				if (routing.length() > 0)
 					_UR.routing(routing.toString());
 				if (!batch) {
 					this.ESC.getClient().update(_UR).get();
-				} else { 
+				} else {
 					this.ESC.getBulkProcessor().add(_UR);
 				}
-			}else{ 
-				IndexRequestBuilder _IB = this.ESC.getClient()
-						.prepareIndex(name, type, id);
+			} else {
+				IndexRequestBuilder _IB = this.ESC.getClient().prepareIndex(name, type, id);
 				_IB.setSource(cbuilder);
-				if(routing.length()>0)
+				if (routing.length() > 0)
 					_IB.setRouting(routing.toString());
 				if (!batch) {
 					_IB.execute().actionGet();
 				} else {
 					this.ESC.getBulkProcessor().add(_IB.request());
 				}
-			}  
+			}
 		} catch (Exception e) {
-			log.error("write Exception",e);
-			if(e.getMessage().contains("IndexNotFoundException")){
+			log.error("write Exception", e);
+			if (e.getMessage().contains("IndexNotFoundException")) {
 				throw new FNException("storeId not found");
-			}else{
+			} else {
 				throw new FNException(e.getMessage());
-			} 
-		} 
+			}
+		}
 	}
 
 	@Override
-	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId)
-			throws Exception {
-		 
-		 
+	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {
+ 
 	}
 
 	@Override
-	public void flush() throws Exception{
+	public void flush() throws Exception {
 		if (this.batch) {
-			this.ESC.getBulkProcessor().flush(); 
-			if(this.ESC.getRunState()==false) {
+			this.ESC.getBulkProcessor().flush();
+			if (this.ESC.getRunState() == false) {
 				this.ESC.setRunState(true);
 				throw new FNException("BulkProcessor Exception!Need Redo!");
 			}
@@ -169,35 +165,30 @@ public class ESFlow extends WriterFlowSocket {
 	/**
 	 * add index
 	 * 
-	 * @param seq for series data source sequence
-	 * @param instanceName data source main tag name
+	 * @param seq
+	 *            for series data source sequence
+	 * @param instanceName
+	 *            data source main tag name
 	 */
 	@Override
-	public boolean settings(String instanceName, String storeId,
-			Map<String, WriteParam> paramMap) {
+	public boolean settings(String instanceName, String storeId, Map<String, WriteParam> paramMap) {
 		String name = Common.getStoreName(instanceName, storeId);
 		String type = instanceName;
 		try {
 			log.info("setting index " + name + ":" + type);
-			IndicesExistsResponse indicesExistsResponse = this.ESC.getClient().admin()
-					.indices().exists(new IndicesExistsRequest(name))
-					.actionGet();
+			IndicesExistsResponse indicesExistsResponse = this.ESC.getClient().admin().indices()
+					.exists(new IndicesExistsRequest(name)).actionGet();
 			if (!indicesExistsResponse.isExists()) {
-				CreateIndexResponse createIndexResponse = this.ESC.getClient().admin()
-						.indices().create(new CreateIndexRequest(name))
-						.actionGet();
-				log.info("create new index " + name
-						+ " response isAcknowledged:"
+				CreateIndexResponse createIndexResponse = this.ESC.getClient().admin().indices()
+						.create(new CreateIndexRequest(name)).actionGet();
+				log.info("create new index " + name + " response isAcknowledged:"
 						+ createIndexResponse.isAcknowledged());
 			}
 
-			PutMappingRequest mappingRequest = new PutMappingRequest(name)
-					.type(type);
+			PutMappingRequest mappingRequest = new PutMappingRequest(name).type(type);
 			mappingRequest.source(getSettingMap(paramMap));
-			PutMappingResponse response = this.ESC.getClient().admin().indices()
-					.putMapping(mappingRequest).actionGet();
-			log.info("setting response isAcknowledged:"
-					+ response.isAcknowledged());
+			PutMappingResponse response = this.ESC.getClient().admin().indices().putMapping(mappingRequest).actionGet();
+			log.info("setting response isAcknowledged:" + response.isAcknowledged());
 			return true;
 		} catch (Exception e) {
 			log.error("setting index " + name + ":" + type + " failed.", e);
@@ -214,12 +205,10 @@ public class ESFlow extends WriterFlowSocket {
 			request.flush(true);
 			request.onlyExpungeDeletes(true);
 
-			ForceMergeResponse response = this.ESC.getClient().admin().indices()
-					.forceMerge(request).actionGet();
+			ForceMergeResponse response = this.ESC.getClient().admin().indices().forceMerge(request).actionGet();
 			int failed_cnt = response.getFailedShards();
 			if (failed_cnt > 0) {
-				log.warn("index " + name + " optimize getFailedShards "
-						+ failed_cnt);
+				log.warn("index " + name + " optimize getFailedShards " + failed_cnt);
 			} else {
 				log.info("index " + name + " optimize Success!");
 			}
@@ -235,14 +224,14 @@ public class ESFlow extends WriterFlowSocket {
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
 			log.info("trying to remove index " + name);
-			IndicesExistsResponse res = this.ESC.getClient().admin().indices()
-					.prepareExists(name).execute().actionGet();
+			IndicesExistsResponse res = this.ESC.getClient().admin().indices().prepareExists(name).execute()
+					.actionGet();
 			if (!res.isExists()) {
 				log.info("index " + name + " didn't exist.");
 			} else {
 				DeleteIndexRequest deleteRequest = new DeleteIndexRequest(name);
-				DeleteIndexResponse deleteResponse = this.ESC.getClient().admin()
-						.indices().delete(deleteRequest).actionGet();
+				DeleteIndexResponse deleteResponse = this.ESC.getClient().admin().indices().delete(deleteRequest)
+						.actionGet();
 				if (deleteResponse.isAcknowledged()) {
 					log.info("index " + name + " removed ");
 				}
@@ -253,65 +242,48 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public String getNewStoreId(String instance, boolean isIncrement,
-			String dbseq, NodeConfig nodeConfig) {
-		String instanceName = Common.getInstanceName(instance, dbseq,nodeConfig.getTransParam().getInstanceName());
-		boolean a_alias=false;
-		boolean b_alias=false;
-		boolean a = this.ESC.getClient()
-				.admin()
-				.indices()
-				.exists(new IndicesExistsRequest(
-						Common.getStoreName(instanceName, "a"))).actionGet()
-				.isExists();
-		if(a)
-			a_alias = getIndexAlias(instanceName, "a",nodeConfig.getAlias());
-		boolean b = this.ESC.getClient()
-				.admin()
-				.indices()
-				.exists(new IndicesExistsRequest(
-						Common.getStoreName(instanceName, "b"))).actionGet()
-				.isExists();
-		if(b)
-			b_alias = getIndexAlias(instanceName, "b",nodeConfig.getAlias());
+	public String getNewStoreId(String instance, boolean isIncrement, String dbseq, NodeConfig nodeConfig) {
+		String instanceName = Common.getInstanceName(instance, dbseq, nodeConfig.getTransParam().getInstanceName());
+		boolean a_alias = false;
+		boolean b_alias = false;
+		boolean a = this.ESC.getClient().admin().indices()
+				.exists(new IndicesExistsRequest(Common.getStoreName(instanceName, "a"))).actionGet().isExists();
+		if (a)
+			a_alias = getIndexAlias(instanceName, "a", nodeConfig.getAlias());
+		boolean b = this.ESC.getClient().admin().indices()
+				.exists(new IndicesExistsRequest(Common.getStoreName(instanceName, "b"))).actionGet().isExists();
+		if (b)
+			b_alias = getIndexAlias(instanceName, "b", nodeConfig.getAlias());
 		String select = "";
 		if (isIncrement) {
 			if (a && b) {
 				if (a_alias) {
 					if (b_alias) {
-						if (getDocumentNums(instanceName, "a") > this
-								.getDocumentNums(instanceName, "b")) {
-							this.ESC.getClient()
-									.admin()
-									.indices()
-									.delete(new DeleteIndexRequest(
-											Common.getStoreName(instanceName, "b")));
+						if (getDocumentNums(instanceName, "a") > this.getDocumentNums(instanceName, "b")) {
+							this.ESC.getClient().admin().indices()
+									.delete(new DeleteIndexRequest(Common.getStoreName(instanceName, "b")));
 							select = "a";
 						} else {
-							this.ESC.getClient()
-									.admin()
-									.indices()
-									.delete(new DeleteIndexRequest(
-											Common.getStoreName(instanceName, "a")));
+							this.ESC.getClient().admin().indices()
+									.delete(new DeleteIndexRequest(Common.getStoreName(instanceName, "a")));
 							select = "b";
 						}
 					} else {
 						select = "a";
 					}
-				}else{
+				} else {
 					select = "b";
-				} 
+				}
 			} else {
 				select = a ? "a" : (b ? "b" : "a");
-			} 
+			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)) {
-				this.settings(instanceName, select,
-						nodeConfig.getWriteParamMap());
+				this.settings(instanceName, select, nodeConfig.getWriteParamMap());
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)
-					|| !this.getIndexAlias(instanceName, select,nodeConfig.getAlias())) {
+					|| !this.getIndexAlias(instanceName, select, nodeConfig.getAlias())) {
 				setAlias(instanceName, select, nodeConfig.getAlias());
 			}
 		} else {
@@ -319,18 +291,12 @@ public class ESFlow extends WriterFlowSocket {
 				if (a_alias) {
 					if (b_alias) {
 						if (getDocumentNums(instanceName, "a") > getDocumentNums(instanceName, "b")) {
-							this.ESC.getClient()
-									.admin()
-									.indices()
-									.delete(new DeleteIndexRequest(
-											Common.getStoreName(instanceName, "b")));
+							this.ESC.getClient().admin().indices()
+									.delete(new DeleteIndexRequest(Common.getStoreName(instanceName, "b")));
 							select = "b";
 						} else {
-							this.ESC.getClient()
-									.admin()
-									.indices()
-									.delete(new DeleteIndexRequest(
-											Common.getStoreName(instanceName, "a")));
+							this.ESC.getClient().admin().indices()
+									.delete(new DeleteIndexRequest(Common.getStoreName(instanceName, "a")));
 							select = "a";
 						}
 					} else {
@@ -340,33 +306,28 @@ public class ESFlow extends WriterFlowSocket {
 				select = "a";
 			} else {
 				select = "b";
-				if(b && b_alias){
+				if (b && b_alias) {
 					select = "a";
-				} 
+				}
 			}
 		}
 		return select;
-	} 
+	}
 
 	@Override
 	public void setAlias(String instanceName, String storeId, String aliasName) {
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
-			log.info("trying to setting Alias " + aliasName + " to index "
-					+ name);
-			IndicesAliasesRequest indicesAliasesRequest = new IndicesAliasesRequest();
-			indicesAliasesRequest.addAlias(aliasName, name);
-			IndicesAliasesResponse indicesAliasesResponse = this.ESC.getClient().admin()
-					.indices().aliases(indicesAliasesRequest).actionGet();
-			if (indicesAliasesResponse.isAcknowledged()) {
+			log.info("trying to setting Alias " + aliasName + " to index " + name);
+			IndicesAliasesResponse response = this.ESC.getClient().admin().indices().prepareAliases().addAlias(name,
+					aliasName).execute().actionGet();
+			if (response.isAcknowledged()) {
 				log.info("alias " + aliasName + " setted to " + name);
 			}
 		} catch (Exception e) {
-			log.error("alias " + aliasName + " set to " + name
-					+ " Exception.", e);
+			log.error("alias " + aliasName + " set to " + name + " Exception.", e);
 		}
 	}
- 
 
 	private Map<String, Object> getSettingMap(Map<String, WriteParam> paramMap) {
 		Map<String, Object> config_map = new HashMap<String, Object>();
@@ -387,7 +348,7 @@ public class ESFlow extends WriterFlowSocket {
 							map.put("index", "not_analyzed");
 						else {
 							map.put("index", "analyzed");
-							map.put("analyzer", p.getAnalyzer()); 
+							map.put("analyzer", p.getAnalyzer());
 							Map<String, Boolean> enabledMap = new HashMap<String, Boolean>();
 							enabledMap.put("enabled", false);
 							map.put("norms", enabledMap);
@@ -396,7 +357,7 @@ public class ESFlow extends WriterFlowSocket {
 					}
 				} else {
 					map.put("index", "not_analyzed");
-				} 
+				}
 				config_map.put(p.getName(), map);
 			}
 		} catch (Exception e) {
@@ -408,23 +369,22 @@ public class ESFlow extends WriterFlowSocket {
 		_source_map.put("enabled", "true");
 		root_map.put("_source", _source_map);
 		Map<String, Object> _all_map = new HashMap<String, Object>();
-		_all_map.put("enabled", "false"); 
+		_all_map.put("enabled", "false");
 		root_map.put("_all", _all_map);
 		return root_map;
 	}
 
 	private long getDocumentNums(String instanceName, String storeId) {
 		String name = Common.getStoreName(instanceName, storeId);
-		IndicesStatsResponse response = this.ESC.getClient().admin().indices()
-				.prepareStats(name).all().get();
+		IndicesStatsResponse response = this.ESC.getClient().admin().indices().prepareStats(name).all().get();
 		long res = response.getPrimaries().getDocs().getCount();
 		return res;
 	}
 
-	private boolean getIndexAlias(String instanceName, String storeId,String alias) {
+	private boolean getIndexAlias(String instanceName, String storeId, String alias) {
 		String name = Common.getStoreName(instanceName, storeId);
-		AliasesExistResponse response = this.ESC.getClient().admin().indices()
-				.prepareAliasesExist(alias).setIndices(name).get();
+		AliasesExistResponse response = this.ESC.getClient().admin().indices().prepareAliasesExist(alias)
+				.setIndices(name).get();
 		return response.exists();
-	} 
+	}
 }

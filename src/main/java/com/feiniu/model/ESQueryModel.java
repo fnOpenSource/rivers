@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -14,7 +15,12 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
-import org.elasticsearch.search.sort.SortBuilder; 
+import org.elasticsearch.search.sort.SortBuilder;
+
+import com.feiniu.config.NodeConfig;
+import com.feiniu.searcher.flow.ESQueryBuilder;
+import com.feiniu.util.SearchParamUtil;
+
 import org.elasticsearch.script.Script;
 
 public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
@@ -35,18 +41,22 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private String facet_ext="";
 	private String requesthandler="";
 	
-	public ESQueryModel() {
-		
+	public static ESQueryModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+		ESQueryModel eq = new ESQueryModel();
+		SearchParamUtil.reWriteParam(request, eq,nodeConfig);
+		eq.setSorts(SearchParamUtil.getSortField(request, nodeConfig));
+		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, nodeConfig));
+		if(request.getParam("facet_ext")!=null){
+			eq.setFacet_ext(request.getParams().get("facet_ext"));
+		} 
+		Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>();
+		BoolQueryBuilder query = ESQueryBuilder.buildBooleanQuery(request,
+				nodeConfig, analyzer, attrQueryMap);
+		eq.setQuery(query);
+		eq.setAttrQueryMap(attrQueryMap);
+		return eq;
 	}
-	
-	public ESQueryModel(QueryBuilder query, List<SortBuilder> sortinfo, int start,
-			int count) {
-		super();
-		this.query = query;
-		this.sortinfo = sortinfo;
-		this.start = start;
-		this.count = count;
-	} 
+ 
 	
 	@Override
 	public QueryBuilder getQuery() {

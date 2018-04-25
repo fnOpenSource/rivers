@@ -1,5 +1,6 @@
 package com.feiniu.model.param;
 
+import java.util.HashMap;
 import java.util.List;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
@@ -21,4 +22,5 @@ public interface WarehouseParam {
 	
 	public String getPoolName(String seq);
 	
+	public HashMap<String, Object> getConnectParams(String seq);	
 }

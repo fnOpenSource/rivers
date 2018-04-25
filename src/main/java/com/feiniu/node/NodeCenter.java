@@ -77,7 +77,7 @@ public final class NodeCenter{
 				}   
 				flowSocket = WriteFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
 			} 
-			writer = JobWriter.getInstance(flowSocket,getDestinationWriter(instanceName), paramConfig);
+			writer = JobWriter.getInstance(flowSocket,getDestinationWriter(instanceName,seq), paramConfig);
 			writerChannelMap.put(Common.getInstanceName(instanceName, seq,null), writer);
 		}
 		return writerChannelMap.get(Common.getInstanceName(instanceName, seq,null)); 
@@ -101,31 +101,35 @@ public final class NodeCenter{
 			return null;
 	}
 	
-	public WriterFlowSocket getDestinationWriter(String instanceName) {
+	public WarehouseParam getWHP(String destination) {
+		WarehouseParam param=null;
+		if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().containsKey(destination)) {
+			param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(destination);
+		}else if(GlobalParam.nodeTreeConfigs.getSqlParamMap().containsKey(destination)) {
+			param = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(destination);
+		}
+		return param;
+	}
+	
+	public WriterFlowSocket getDestinationWriter(String instanceName,String seq) {
 		if (!destinationWriterMap.containsKey(instanceName)){
-			WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getTransParam().getWriteTo());
+			WarehouseParam param = getWHP(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getTransParam().getWriteTo()); 
 			if (param == null)
 				return null;
-			destinationWriterMap.put(instanceName, WriterFactory.getWriter(param));
+			destinationWriterMap.put(instanceName, WriterFactory.getWriter(param,seq));
 		}    
 		return destinationWriterMap.get(instanceName);
 	}
 	
 	private SearcherFlowSocket getSearcherFlow(String secname) {
 		if (searcherFlowMap.containsKey(secname))
-			return searcherFlowMap.get(secname);
-		String destination = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname).getTransParam().getSearcher(); 
-		WarehouseParam param;
-		if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(destination)!=null){
-			param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(destination);
-		}else{
-			param = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(destination);
-		}
+			return searcherFlowMap.get(secname); 
+		WarehouseParam param = getWHP(GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname).getTransParam().getSearcher());
 		if (param == null)
 			return null;
 		
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname);
-		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherFlow(param, paramConfig);
+		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherFlow(param, paramConfig,null);
 		searcherFlowMap.put(secname, searcher); 
 		return searcher;
 	}

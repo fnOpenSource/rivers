@@ -166,10 +166,9 @@ public class ESQueryBuilder implements FNQueryBuilder{
 				query = fieldParserQuery(field, String.valueOf(v),fuzzy, analyzer);
 			}else if (pr.getIndextype().equalsIgnoreCase("long") || pr.getIndextype().equalsIgnoreCase("double") || pr.getIndextype().equalsIgnoreCase("int")){
 				Object val = request.get(key, pr);
-				if (val instanceof LongRangeType){
-					boolean isClosedInvterval = pr.isClosedInvterval(); 
+				if (val instanceof LongRangeType){ 
 					LongRangeType longRangeValue = LongRangeType.valueOf(v);
-					query = QueryBuilders.rangeQuery(field).from(longRangeValue.getMin()).to(longRangeValue.getMax()).includeLower(isClosedInvterval).includeUpper(isClosedInvterval);
+					query = QueryBuilders.rangeQuery(field).from(longRangeValue.getMin()).to(longRangeValue.getMax()).includeLower(pr.isIncludeLower()).includeUpper(pr.isIncludeUpper());
 				}
 				else
 					query = QueryBuilders.termQuery(field, String.valueOf(v));

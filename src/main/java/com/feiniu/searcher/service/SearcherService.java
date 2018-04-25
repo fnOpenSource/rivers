@@ -72,7 +72,7 @@ public class SearcherService{
 		return true;
 	}
   
-	public FNRequest parseRequest(Object input) {
+	public static FNRequest parseRequest(Object input) {
 		FNRequest rq = FNRequest.getInstance(); 
 		Request base_request = (Request) input;
 		String path = base_request.getPathInfo();

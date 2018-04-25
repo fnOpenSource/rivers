@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
+ 
 import org.mortbay.jetty.HttpConnection;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
@@ -21,7 +21,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.model.ESQueryModel;
+import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
+import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
@@ -29,6 +32,7 @@ import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.MD5Util;
 import com.feiniu.writer.flow.JobWriter;
+import com.feiniu.searcher.service.SearcherService;
 
 /**
  * Reader open http port support data read
@@ -107,7 +111,7 @@ public class HttpReaderService {
 							String updatecolumn = rq.getParameter("updatecolumn");
 							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false);
 							if (coreWriter == null) {
-								response.getWriter().println("{\"status\":0,\"info\":\"参数错误!\"}");
+								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
 							}
 							String storeid;
@@ -160,11 +164,23 @@ public class HttpReaderService {
 						}
 						break;
 					case "switch":
-						if (rq.getParameterMap().get("storeid") != null && rq.getParameterMap().get("instance") != null
+						if (rq.getParameterMap().get("instance") != null
 								&& rq.getParameterMap().get("seq") != null) {
+							String storeid;
+							String instance = rq.getParameter("instance");
+							String seq = rq.getParameter("seq");
+							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false);
+							if(rq.getParameterMap().get("storeid")!=null) {
+								storeid = rq.getParameter("storeid");
+							}else {
+								storeid = Common.getStoreId(instance, seq,
+										coreWriter, false, false);
+								coreWriter.createStorePosition(instance, storeid);
+							}
 							GlobalParam.NODE_CENTER
-									.getWriterChannel(rq.getParameter("instance"), rq.getParameter("seq"), false)
-									.switchSearcher(rq.getParameter("instance"), rq.getParameter("storeid"));
+									.getWriterChannel(instance, seq, false)
+									.switchSearcher(instance, storeid);
+							coreWriter.write(instance, storeid, "-1", seq, true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"切换索引失败!\"}");
@@ -172,8 +188,25 @@ public class HttpReaderService {
 						break;
 					case "delete":
 						if (rq.getParameterMap().get("instance") != null
-								&& rq.getParameterMap().get("seq") != null && rq.getParameterMap().get("search_dsl") != null) {
-							 
+								&& rq.getParameterMap().get("seq") != null && rq.getParameterMap().get("search_dsl") != null) { 
+							FNQuery<?, ?, ?> query=null;
+							String instance = rq.getParameter("instance");
+							String seq = rq.getParameter("seq");
+							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false); 
+							if (coreWriter == null) {
+								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
+								break;
+							}
+							String storeid = Common.getStoreId(instance,seq, coreWriter, true, true);
+							WarehouseParam param = GlobalParam.NODE_CENTER.getWHP(coreWriter.getNodeConfig().getTransParam().getWriteTo());
+							switch (param.getType()) {
+							case ES:
+								query = ESQueryModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
+								break; 
+							default:
+								break;
+							}
+							coreWriter.deleteByQuery(query, instance, storeid);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"instance,seq,search_dsl not set!\"}");

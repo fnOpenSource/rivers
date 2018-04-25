@@ -143,7 +143,7 @@ public final class JobWriter {
 			this.writer.remove(instance, removeId);
 			this.writer.setAlias(instance, storeId, nodeConfig.getAlias());
 		}finally{
-			this.writer.freeResource(false); 
+			this.writer.freeResource(true); 
 			this.writer.freeConnPool();
 		}   
 	}
