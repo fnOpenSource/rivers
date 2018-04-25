@@ -20,12 +20,12 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.handler.Handler;
 
-public class OracleFlow extends WriteFlowSocket<HashMap<String, Object>> { 
+public class OracleJobFlow extends WriteFlowSocket<HashMap<String, Object>> { 
   
-	private final static Logger log = LoggerFactory.getLogger(OracleFlow.class);
+	private final static Logger log = LoggerFactory.getLogger(OracleJobFlow.class);
 
-	public static OracleFlow getInstance(HashMap<String, Object> connectParams) {
-		OracleFlow o = new OracleFlow();
+	public static OracleJobFlow getInstance(HashMap<String, Object> connectParams) {
+		OracleJobFlow o = new OracleJobFlow();
 		o.INIT(connectParams);
 		return o;
 	} 

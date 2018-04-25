@@ -26,12 +26,12 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.handler.Handler;
 
-public class HbaseFlow extends WriteFlowSocket<HashMap<String, Object>> { 
+public class HbaseJobFlow extends WriteFlowSocket<HashMap<String, Object>> { 
 	 
-	private final static Logger log = LoggerFactory.getLogger(HbaseFlow.class);
+	private final static Logger log = LoggerFactory.getLogger(HbaseJobFlow.class);
 
-	public static HbaseFlow getInstance(HashMap<String, Object> connectParams) {
-		HbaseFlow o = new HbaseFlow();
+	public static HbaseJobFlow getInstance(HashMap<String, Object> connectParams) {
+		HbaseJobFlow o = new HbaseJobFlow();
 		o.INIT(connectParams);
 		return o;
 	}

@@ -20,12 +20,12 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.handler.Handler;
 
-public class MysqlFlow extends WriteFlowSocket<HashMap<String, Object>> {   
+public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {   
 
-	private final static Logger log = LoggerFactory.getLogger(MysqlFlow.class);  
+	private final static Logger log = LoggerFactory.getLogger(MysqlJobFlow.class);  
 
-	public static MysqlFlow getInstance(HashMap<String, Object> connectParams) {
-		MysqlFlow o = new MysqlFlow();
+	public static MysqlJobFlow getInstance(HashMap<String, Object> connectParams) {
+		MysqlJobFlow o = new MysqlJobFlow();
 		o.INIT(connectParams);
 		return o;
 	} 
