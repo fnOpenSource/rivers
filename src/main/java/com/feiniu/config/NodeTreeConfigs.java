@@ -9,8 +9,6 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -33,9 +31,7 @@ public class NodeTreeConfigs {
 	private Map<String, WarehouseSqlParam> SqlParamMap = new HashMap<String, WarehouseSqlParam>();
 	private Map<String, WarehouseNosqlParam> NoSqlParamMap = new HashMap<String, WarehouseNosqlParam>(); 
 	private String noSqlFileName = null;
-	private String sqlFileName = null;
-	
-	private final static Logger log = LoggerFactory.getLogger(NodeTreeConfigs.class);   
+	private String sqlFileName = null; 
 
 	/**
 	 * load config from zk
@@ -105,14 +101,14 @@ public class NodeTreeConfigs {
 				parseNode(paramlist,WarehouseSqlParam.class); 
 			} 
 		} catch (Exception e) {
-			log.error("parseNoSqlConfig(" + dataSrc + ") error,",e);
+			GlobalParam.LOG.error("parseNoSqlConfig(" + dataSrc + ") error,",e);
 		} finally{
 			try {
 				if (null != in) {
 					in.close();
 				}
 			} catch (Exception e) {
-				log.error("parseNoSqlConfig(" + dataSrc + ") error,",e);
+				GlobalParam.LOG.error("parseNoSqlConfig(" + dataSrc + ") error,",e);
 			}
 		}
 	} 

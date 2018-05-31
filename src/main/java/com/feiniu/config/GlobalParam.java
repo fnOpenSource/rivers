@@ -5,6 +5,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.feiniu.node.NodeCenter;
 import com.feiniu.node.NodeMonitor;
@@ -26,6 +28,8 @@ public class GlobalParam {
 	public static HashMap<String,HashMap<String,String>> FLOW_INFOS = new HashMap<String, HashMap<String,String>>();
 	
 	public static boolean WRITE_BATCH = false;
+	
+	public static int SERVICE_LEVEL;
 	
 	public static Analyzer SEARCH_ANALYZER; 
 	
@@ -63,6 +67,7 @@ public class GlobalParam {
 		BOOLEAN_QUERY, DISJUNCTION_QUERY 
 	}   
 	
+	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
 	
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
 	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f;

@@ -6,8 +6,6 @@ import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 
@@ -17,8 +15,7 @@ import com.feiniu.config.GlobalParam;
  * @version 1.0 
  */
 @DisallowConcurrentExecution  
-public class JobRunFactory implements Job {  	
-	private final static Logger log = LoggerFactory.getLogger(JobRunFactory.class);  
+public class JobRunFactory implements Job {  
 	
     @Override  
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -34,7 +31,7 @@ public class JobRunFactory implements Job {
         Object object = scheduleJob.getObject();  
         Class<?> clazz = null;  
         if (object == null) {  
-            log.error("job [" + scheduleJob.getJobName() + "] not exists!");  
+        	GlobalParam.LOG.error("job [" + scheduleJob.getJobName() + "] not exists!");  
             return false;  
         }  
         clazz = object.getClass();  
@@ -44,7 +41,7 @@ public class JobRunFactory implements Job {
             method.invoke(object); 
             return true;
         } catch (Exception e) {  
-            log.error(scheduleJob.getJobName()+" invokMethod "+method+" Exception ",e);  
+        	GlobalParam.LOG.error(scheduleJob.getJobName()+" invokMethod "+method+" Exception ",e);  
         } 
         return false;
     }  

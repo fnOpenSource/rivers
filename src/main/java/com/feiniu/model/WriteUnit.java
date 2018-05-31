@@ -8,7 +8,7 @@ import com.feiniu.model.param.WriteParam;
 public class WriteUnit {  
 	public String key_column_val;
 	private HashMap<String,Object> data;  
-	private double SYSTEM_UPDATE_TIME; 
+	private long SYSTEM_UPDATE_TIME; 
 	
 	public static WriteUnit getInstance(){
 		return new WriteUnit();
@@ -45,7 +45,7 @@ public class WriteUnit {
 		return key_column_val;
 	}
  
-	public double getUpdateTime(){
+	public long getUpdateTime(){
 		return this.SYSTEM_UPDATE_TIME;
 	} 
 }

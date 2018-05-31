@@ -41,13 +41,17 @@ public class SearcherFlowSocket implements Flow{
 	}
 	
 	@Override
-	public FnConnection<?> PULL(boolean canSharePipe) {  
+	public FnConnection<?> LINK(boolean canSharePipe) {  
 		return FnConnectionPool.getConn(this.connectParams,
 				this.poolName,canSharePipe);
 	}
 	
 	@Override
-	public void CLOSED(FnConnection<?> FC,boolean releaseConn) { 
+	public void UNLINK(FnConnection<?> FC,boolean releaseConn) { 
 		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
+	}
+
+	@Override
+	public void MONOPOLY() { 
 	}
 }

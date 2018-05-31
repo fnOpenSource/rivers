@@ -56,7 +56,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	public void getResource(){
 		synchronized(retainer){
 			if(retainer.get()==0){
-				PULL(false);
+				LINK(false);
 				this.conn = (Table) this.FC.getConnection(false);
 			} 
 			retainer.addAndGet(1); 

@@ -11,7 +11,9 @@ import com.feiniu.connect.FnConnection;
 public interface Flow {
 	public void INIT(HashMap<String, Object> connectParams);
 
-	public FnConnection<?> PULL(boolean canSharePipe);
+	public FnConnection<?> LINK(boolean canSharePipe);
 
-	public void CLOSED(FnConnection<?> FC,boolean releaseConn);
+	public void UNLINK(FnConnection<?> FC,boolean releaseConn);
+	
+	public void MONOPOLY();
 }

@@ -61,7 +61,7 @@ public class SolrFlow extends SearcherFlowSocket {
 
 	@Override
 	public FNResultSet Search(FNQuery<?, ?, ?> fq, String instance,Handler handler) throws FNException{
-		FnConnection<?> FC = PULL(true);
+		FnConnection<?> FC = LINK(true);
 		FNResultSet res = new FNResultSet();
 		try {
 			CloudSolrClient conn = (CloudSolrClient) FC.getConnection(true);
@@ -93,7 +93,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		}catch(Exception e){   
 			throw new FNException("Search data from Solr exception!"+e.getMessage());
 		}finally{
-			CLOSED(FC,false);
+			UNLINK(FC,false);
 		} 
 		return res;
 	} 

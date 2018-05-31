@@ -77,7 +77,7 @@ public class SolrFlow extends WriterFlowSocket{
 	public void getResource(){
 		synchronized(retainer){
 			if(retainer.get()==0){
-				PULL(false);
+				LINK(false);
 				this.conn = (CloudSolrClient) this.FC.getConnection(false);
 			}
 			retainer.addAndGet(1); 

@@ -38,16 +38,20 @@ public class WriterFlowSocket implements Flow{
 	}
 
 	@Override
-	public FnConnection<?> PULL(boolean canSharePipe) {  
+	public FnConnection<?> LINK(boolean canSharePipe) {  
 		this.FC = FnConnectionPool.getConn(this.connectParams,
 				this.poolName,canSharePipe);
 		return this.FC;
 	}
 	
 	@Override
-	public void CLOSED(FnConnection<?> FC,boolean releaseConn) { 
+	public void UNLINK(FnConnection<?> FC,boolean releaseConn) { 
 		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
 	}
+	
+	@Override
+	public void MONOPOLY() {  
+	} 
 	
 	public void getResource(){}
 	
@@ -55,7 +59,7 @@ public class WriterFlowSocket implements Flow{
 		synchronized(retainer){
 			retainer.addAndGet(-1);
 			if(retainer.get()==0){
-				CLOSED(this.FC,releaseConn);   
+				UNLINK(this.FC,releaseConn);   
 			}else{
 				log.info(this.FC+" retainer is "+retainer.get());
 			}
@@ -91,4 +95,5 @@ public class WriterFlowSocket implements Flow{
 
 	public void optimize(String instantcName, String batchId) {
 	} 
+	
 }

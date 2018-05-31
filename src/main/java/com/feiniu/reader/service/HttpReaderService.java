@@ -126,24 +126,32 @@ public class HttpReaderService {
 								}
 							}
 							boolean isUpdate = false;
+							boolean monopoly = false;
+							
 							if (rq.getParameterMap().get("fn_is_update") != null
 									&& rq.getParameter("fn_is_update").equals("true"))
 								isUpdate = true;
+							
+							if (rq.getParameterMap().get("fn_is_monopoly") != null
+									&& rq.getParameter("fn_is_monopoly").equals("true"))
+								monopoly = true;
+							
 							try {
 								coreWriter.writeDataSet("HTTP PUT",
 										Common.getInstanceName(instance, seq,
 												coreWriter.getNodeConfig().getTransParam().getInstanceName()),
 										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
 												coreWriter.getWriteParamMap()),
-										"", isUpdate);
+										"", isUpdate,monopoly);
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
-								e.printStackTrace();
+								GlobalParam.LOG.error("Http Write Exception,",e);
 								response.getWriter().println("{\"status\":0,\"info\":\"写入失败!参数错误，instance:" + instance
 										+ ",seq:" + seq + "\"}");
 								try {
 									throw new FNException("写入参数错误，instance:" + instance + ",seq:" + seq);
 								} catch (FNException fe) {
+									e.printStackTrace();
 								}
 							}
 						} else {

@@ -2,7 +2,9 @@ package com.feiniu.node.startup;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Resource;
 
@@ -13,13 +15,16 @@ import org.wltea.analyzer.dic.Dictionary;
 
 import com.feiniu.config.FNIocConfig;
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.NodeConfig;
 import com.feiniu.config.NodeTreeConfigs;
 import com.feiniu.node.NodeCenter;
+import com.feiniu.node.NodeMonitor;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.Task;
 import com.feiniu.task.TaskManager;
 import com.feiniu.util.IKAnalyzer5;
+import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
 
 /**
@@ -27,7 +32,7 @@ import com.feiniu.util.email.FNEmailSender;
  * @author chengwen
  * @version 1.0 
  */
-public class Run {
+public final class Run {
 	@Autowired
 	private NodeTreeConfigs NodeTreeConfigs;
 	@Autowired
@@ -49,34 +54,71 @@ public class Run {
 	private String version;
 	
 	@Autowired
-	private FNEmailSender mailSender;  
+	private FNEmailSender mailSender; 
 	
-	private void loadConfiguration(){ 
-		NodeTreeConfigs.init();
-		GlobalParam.nodeTreeConfigs = NodeTreeConfigs;
-	}
- 
-	private void start(){ 
-		GlobalParam.run_environment = String.valueOf(globalConfigBean.get("run_environment")); 
-		GlobalParam.mailSender = mailSender;
-		GlobalParam.tasks = new HashMap<String, Task>();
-		GlobalParam.NODE_CENTER = nodeCenter;
-		GlobalParam.VERSION = version;
-		loadConfiguration();  
-		int service_level = Integer.parseInt(globalConfigBean.get("service_level").toString()); 
-		if((service_level&1)>0){
-			GlobalParam.SEARCH_ANALYZER = IKAnalyzer5.getInstance(true);
-			SearcherService.start();
-		} 
-		if((service_level&2)>0)
-			TaskManager.start(); 
-		if((service_level&4)>0)
-			HttpReaderService.start();
-	}
+	@Autowired
+	NodeMonitor nodeMonitor;
 	
 	public static void main(String[] args) throws URISyntaxException{	
 		Run run = (Run)FNIocConfig.getInstance().getBean("FNStart");
 		Dictionary.initial(new Configuration(run.configPath));
 		run.start();
 	}
-}
+	
+	private void start(){ 
+		GlobalParam.run_environment = String.valueOf(globalConfigBean.get("run_environment")); 
+		GlobalParam.mailSender = mailSender;
+		GlobalParam.tasks = new HashMap<String, Task>();
+		GlobalParam.NODE_CENTER = nodeCenter;
+		GlobalParam.VERSION = version;
+		GlobalParam.nodeMonitor = nodeMonitor;
+		environmentCheck();
+		init();   
+		if((GlobalParam.SERVICE_LEVEL&1)>0){
+			GlobalParam.SEARCH_ANALYZER = IKAnalyzer5.getInstance(true);
+			SearcherService.start();
+		} 
+		if((GlobalParam.SERVICE_LEVEL&2)>0)
+			TaskManager.start(); 
+		if((GlobalParam.SERVICE_LEVEL&4)>0)
+			HttpReaderService.start();  
+		 
+	} 
+	 
+	private void init(){ 
+		NodeTreeConfigs.init();
+		GlobalParam.nodeTreeConfigs = NodeTreeConfigs;
+		GlobalParam.SERVICE_LEVEL = Integer.parseInt(globalConfigBean.get("service_level").toString()); 
+		
+		if((GlobalParam.SERVICE_LEVEL&6)>0) {
+			Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
+			for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) {
+				String instanceName = entry.getKey();
+				NodeConfig NodeConfig = entry.getValue();
+				initParams(instanceName);
+				if(NodeConfig.getTransParam().getInstanceName()!=null)
+						initParams(NodeConfig.getTransParam().getInstanceName()); 
+			}
+		} 
+	}
+	
+	private void environmentCheck() {
+		try {
+			if(ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH, true)==null) { 
+				String path="";
+				for(String str:GlobalParam.CONFIG_PATH.split("/")) {
+					path+="/"+str;
+					ZKUtil.createPath(path, true);
+				} 
+				ZKUtil.createPath(path+"/RIVER_LOCKS", true);
+			}
+		} catch (Exception e) { 
+			GlobalParam.LOG.error("environmentCheck Exception",e);
+		}
+	}  
+	
+	private void initParams(String indexName){
+		GlobalParam.FLOW_STATUS.put(indexName, new AtomicInteger(1));
+		GlobalParam.LAST_UPDATE_TIME.put(indexName, "0");
+	}
+} 

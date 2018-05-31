@@ -12,8 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.mortbay.jetty.HttpConnection;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -34,10 +32,7 @@ import com.feiniu.service.HttpService;
 public class SearcherService{
 	 
 	@Autowired
-	private NodeCenter nodeCenter;  
-
-	private final static Logger log = LoggerFactory
-			.getLogger(SearcherService.class); 
+	private NodeCenter nodeCenter;   
  
 	@Value("#{globalConfigBean['http_service_thread_pool']}")
 	private String http_service_thread_pool;
@@ -127,7 +122,7 @@ public class SearcherService{
 				try {
 					_response = process(_request);
 				} catch (Exception e) {
-					log.error("httpHandle error,",e);
+					GlobalParam.LOG.error("httpHandle error,",e);
 				}
 				if (_response != null)
 					response.getWriter().println(_response.toJson());

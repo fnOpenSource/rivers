@@ -3,7 +3,6 @@ package com.feiniu.task;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -35,12 +34,10 @@ public class TaskManager{
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
 		for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) {
 			String instanceName = entry.getKey();
-			NodeConfig NodeConfig = entry.getValue();
-			initParams(instanceName);
-			if(NodeConfig.getTransParam().getInstanceName()!=null)
-					initParams(NodeConfig.getTransParam().getInstanceName());
-			startInstance(instanceName, NodeConfig,false);
+			NodeConfig NodeConfig = entry.getValue(); 
+			startInstance(instanceName, NodeConfig,false); 
 		}
+		//startRabbitmqMessage(MQconsumerMonitorMap);
 	}
 	
 	/**
@@ -184,14 +181,17 @@ public class TaskManager{
 			seqs = whParam.getSeq();
 		}  
 		return seqs;
-	}
-
-	private void initParams(String indexName){
-		GlobalParam.FLOW_STATUS.put(indexName, new AtomicInteger(1));
-		GlobalParam.LAST_UPDATE_TIME.put(indexName, "0");
-	}
+	} 
 	 
-	
+	/*
+	private void startRabbitmqMessage(
+			Map<String, IMessageHandler> MQconsumerMonitorMap) {
+		log.info("start Rabbitmq Message...");
+		RabbitmqConsumerClient RC = new RabbitmqConsumerClient(rabbitmqConfig,
+				MQconsumerMonitorMap);
+		RC.init();
+	}
+	*/
 	private boolean removeFlowScheduleJob(String instance,NodeConfig NodeConfig)throws SchedulerException {
 		boolean state = true;
 		if (NodeConfig.getTransParam().getFullCron() != null) { 

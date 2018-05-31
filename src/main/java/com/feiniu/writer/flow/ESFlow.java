@@ -24,6 +24,7 @@ import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.VersionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,26 +56,42 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public void getResource() {
-		synchronized (retainer) {
-			if (retainer.get() == 0) {
-				PULL(false);
-				this.ESC = (ESConnector) this.FC.getConnection(false);
+		synchronized (this) {
+			boolean renew = false;
+			if(this.ESC==null) {
+				retainer.set(0);
+				renew = true;
 			}
-			retainer.addAndGet(1);
+			if(retainer.incrementAndGet() == 1)
+				renew = true;
+			if (renew) {
+				LINK(false);
+				this.ESC = (ESConnector) this.FC.getConnection(false);
+			} 
 		}
 	}
 
 	@Override
-	public void freeResource(boolean releaseConn) {
-		synchronized (retainer) {
-			retainer.addAndGet(-1);
-			if (retainer.get() == 0) {
-				CLOSED(this.FC, releaseConn);
-			} else {
+	public void freeResource(boolean releaseConn) { 
+		synchronized (this) {  
+			if (retainer.decrementAndGet() == 0) {
+				this.ESC = null;
+				UNLINK(this.FC, releaseConn);
+			}else {
 				log.info(this.ESC.toString() + " retainer is " + retainer.get());
 			}
-		}
+		} 
 	}
+	
+	@Override
+	public void MONOPOLY() {  
+		synchronized (this) {
+			if(this.ESC==null) {
+				LINK(false);
+				this.ESC = (ESConnector) this.FC.getConnection(false);
+			}
+		}
+	} 
 
 	@Override
 	public void write(String keyColumn, WriteUnit unit, Map<String, WriteParam> writeParamMap, String instantcName,
@@ -126,7 +143,7 @@ public class ESFlow extends WriterFlowSocket {
 					this.ESC.getBulkProcessor().add(_UR);
 				}
 			} else {
-				IndexRequestBuilder _IB = this.ESC.getClient().prepareIndex(name, type, id);
+				IndexRequestBuilder _IB = this.ESC.getClient().prepareIndex(name, type, id).setVersionType(VersionType.EXTERNAL).setVersion(unit.getUpdateTime());
 				_IB.setSource(cbuilder);
 				if (routing.length() > 0)
 					_IB.setRouting(routing.toString());

@@ -33,7 +33,7 @@ import com.feiniu.writer.jobFlow.WriteFlowSocket;
  */
 public final class JobWriter {
 
-	private final static Logger log = LoggerFactory.getLogger(JobWriter.class); 
+	private final static Logger log = LoggerFactory.getLogger("JOB STATE"); 
 	private WriteFlowSocket<?> flowSocket; 
 	private NodeConfig nodeConfig;
 	private WriterFlowSocket writer;
@@ -91,7 +91,7 @@ public final class JobWriter {
 				indexName = instanceName + dbseq;
 			}
 			writeDataSet("Message",indexName, storeId, "",
-					getSqlPageData(buildSql(originalSql, params),"",""), ",Message",false);
+					getSqlPageData(buildSql(originalSql, params),"",""), ",Message",false,false);
 		}
 	} 
 	 
@@ -161,18 +161,24 @@ public final class JobWriter {
  * @param sql
  * @param info log info
  * @param incrementField for SQL scan job
+ * @param isUpdate write with update method
+ * @param monopoly monopoly resource not release
  * @return FNWriteResponse 
  * @throws Exception
  */  
 	public FNWriteResponse writeDataSet(String id,String instance, String storeId,
-			String seq, HashMap<String, Object> dataSet, String info,boolean isUpdate) throws Exception {
+			String seq, HashMap<String, Object> dataSet, String info,boolean isUpdate,boolean monopoly) throws Exception {
 		FNWriteResponse resp = new FNWriteResponse(); 
 		Reader<HashMap<String, Object>> reader = new DataSetReader();
 		reader.init(dataSet);
 		long start = Common.getNow();
 		int count = 0; 
 		if (!reader.getLastUpdateTime().equals("-1")) {
-			this.writer.getResource(); 
+			if(monopoly) {
+				this.writer.MONOPOLY();
+			}else {
+				this.writer.getResource();
+			} 
 			boolean freeConn = false;
 			try{
 				while (reader.nextLine()) {   
@@ -195,7 +201,8 @@ public final class JobWriter {
 				}
 			}finally{
 				this.writer.flush();
-				this.writer.freeResource(freeConn);
+				if(!monopoly) 
+					this.writer.freeResource(freeConn);
 			}  
 		}
 		flowSocket.freeJobPage();
@@ -263,7 +270,7 @@ public final class JobWriter {
 						 
 						resp = writeDataSet(desc,indexName, storeId, "",
 								(HashMap<String, Object>) flowSocket.getJobPage(pageParams,getWriteParamMap(),this.dataFromHandler),
-								",complete:" + processPos + "/" + pageList.size(),false);
+								",complete:" + processPos + "/" + pageList.size(),false,false);
 
 						total += resp.getCount();
 						startId = endId;
@@ -375,7 +382,7 @@ public final class JobWriter {
 							} else {
 								resp = writeDataSet(desc, destName, storeId, tseq,
 										getSqlPageData(sql, incrementField, keyColumn),
-										",complete:" + processPos + "/" + pageList.size(), isUpdate);
+										",complete:" + processPos + "/" + pageList.size(), isUpdate,false);
 
 								total += resp.getCount();
 								startId = maxId;

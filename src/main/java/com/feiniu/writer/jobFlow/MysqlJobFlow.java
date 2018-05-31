@@ -39,7 +39,7 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		} catch (Exception e) {
 		} 
 		isLocked.set(true);
-		FnConnection<?> FC = PULL(false);
+		FnConnection<?> FC = LINK(false);
 		this.jobPage.clear(); 
 		boolean releaseConn = false;
 		Connection conn = (Connection) FC.getConnection(false);
@@ -63,7 +63,7 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			releaseConn = true;
 			log.error("getJobPage Exception so free connection,details ", e);
 		}finally{
-			CLOSED(FC,releaseConn);
+			UNLINK(FC,releaseConn);
 		} 
 		return this.jobPage;
 	} 
@@ -95,7 +95,7 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				.replace("#{START}", "0");
 		if (param.get(GlobalParam._seq) != null && param.get(GlobalParam._seq).length() > 0)
 			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
-		FnConnection<?> FC = PULL(false);
+		FnConnection<?> FC = LINK(false);
 		Connection conn = (Connection) FC.getConnection(false);
 		List<String> page = new ArrayList<String>();
 		PreparedStatement statement = null;
@@ -142,7 +142,7 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			CLOSED(FC,releaseConn);  
+			UNLINK(FC,releaseConn);  
 		}  
 		return page;
 	} 

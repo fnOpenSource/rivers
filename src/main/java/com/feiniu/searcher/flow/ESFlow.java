@@ -38,7 +38,7 @@ public class ESFlow extends SearcherFlowSocket {
 	@Override
 	public FNResultSet Search(FNQuery<?, ?, ?> fq, String instance,Handler handler)
 			throws FNException {
-		FnConnection<?> FC = PULL(true);
+		FnConnection<?> FC = LINK(true);
 		FNResultSet res = new FNResultSet();
 		try{
 			ESConnector ESC = (ESConnector) FC.getConnection(true);
@@ -72,7 +72,7 @@ public class ESFlow extends SearcherFlowSocket {
 		}catch(Exception e){ 
 			throw e;
 		}finally{
-			CLOSED(FC,false); 
+			UNLINK(FC,false); 
 		} 
 		return res;
 	} 

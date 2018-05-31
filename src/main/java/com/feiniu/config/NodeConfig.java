@@ -9,8 +9,6 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -18,11 +16,11 @@ import org.w3c.dom.NodeList;
 
 import com.feiniu.model.param.BasicParam;
 import com.feiniu.model.param.FNParam;
-import com.feiniu.model.param.NOSQLParam;
-import com.feiniu.model.param.WriteParam;
 import com.feiniu.model.param.MessageParam;
+import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
 import com.feiniu.model.param.TransParam;
+import com.feiniu.model.param.WriteParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
@@ -43,8 +41,7 @@ public class NodeConfig {
 	/**
 	 *  1 do index 2 do rabitmq 4 do kafka
 	 */
-	private int indexType = 0; 
-	private final static Logger log = LoggerFactory.getLogger(NodeConfig.class);
+	private int indexType = 0;  
 
 	public NodeConfig(String fileName, int indexType) {
 		this.filename = fileName;
@@ -57,11 +54,11 @@ public class NodeConfig {
 		this.messageParam = new MessageParam();
 		this.writeParamTypes = new LinkedHashMap<String, WriteParam>();
 		loadConfigFromZk();
-		log.info(filename + " config loaded");
+		GlobalParam.LOG.info(filename + " config loaded");
 	}
 
 	public void reload() {
-		log.info("starting reload " + filename);
+		GlobalParam.LOG.info("starting reload " + filename);
 		init();
 	} 
 	
@@ -135,7 +132,7 @@ public class NodeConfig {
 			in.close();
 		} catch (Exception e) {
 			in = null;
-			log.error("loadConfigFromZk error,",e);
+			GlobalParam.LOG.error("loadConfigFromZk error,",e);
 		}
 	}
 	
@@ -171,7 +168,7 @@ public class NodeConfig {
 					if (tmp!=null) {
 						parseNode(tmp.getElementsByTagName("param"), "transParam", BasicParam.class);
 					}else{
-						log.error(this.filename+" config setting not correct");
+						GlobalParam.LOG.error(this.filename+" config setting not correct");
 						return;
 					}
 					if(doc.getElementsByTagName("pageSql").getLength() > 0) {
@@ -198,7 +195,7 @@ public class NodeConfig {
 			paramlist = params.getElementsByTagName("param");
 			parseNode(paramlist, "FNParam", FNParam.class);
 		} catch (Exception e) {
-			log.error(this.filename+" configParse error,",e);
+			GlobalParam.LOG.error(this.filename+" configParse error,",e);
 		}
 	}
 	

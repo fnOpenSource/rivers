@@ -16,7 +16,9 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
+import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.searcher.flow.ESQueryBuilder;
 import com.feiniu.util.SearchParamUtil;
@@ -267,7 +269,21 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 					return AggregationBuilders.sum(name).field(field); 
 				} 
 			case "topHits":
-				return AggregationBuilders.topHits(fun).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(field));
+				String[] tmp = field.split(":");
+				if(tmp.length>1) { 
+					String sortField;
+					SortOrder sod;
+					if(tmp[1].endsWith(GlobalParam.SORT_ASC)) {
+						sortField = tmp[1].substring(0, tmp[1].indexOf(GlobalParam.SORT_ASC));
+						sod = SortOrder.ASC;
+					}else {
+						sortField = tmp[1].substring(0, tmp[1].indexOf(GlobalParam.SORT_DESC));
+						sod = SortOrder.DESC;
+					}
+					return AggregationBuilders.topHits(fun).addSort(sortField, sod).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(tmp[0]));
+				}else {
+					return AggregationBuilders.topHits(fun).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(field));
+				} 
 		} 
 		if(type) {
 			Map<String, String> ext = getFacetExt();

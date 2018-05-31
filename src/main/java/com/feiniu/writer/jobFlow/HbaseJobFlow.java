@@ -62,7 +62,7 @@ public class HbaseJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			return null;
 		}
 		isLocked.set(true);
-		FnConnection<?> FC = PULL(false);
+		FnConnection<?> FC = LINK(false);
 		this.jobPage.clear();
 		boolean releaseConn = false;
 		try {
@@ -127,7 +127,7 @@ public class HbaseJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			releaseConn = true;
 			log.error("getJobPage Exception", e);
 		}finally{
-			CLOSED(FC,releaseConn);
+			UNLINK(FC,releaseConn);
 		} 
 		return this.jobPage;
 	}
@@ -135,7 +135,7 @@ public class HbaseJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 	@Override
 	public List<String> getPageSplit(HashMap<String, String> param) {
 		int i = 0;
-		FnConnection<?> FC = PULL(false);
+		FnConnection<?> FC = LINK(false);
 		Table conn = (Table) FC.getConnection(false);
 		List<String> dt = new ArrayList<String>();
 		boolean releaseConn = false;
@@ -172,7 +172,7 @@ public class HbaseJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			releaseConn = true;
 			log.error("getPageSplit Exception", e);
 		}finally{ 
-			CLOSED(FC,releaseConn);
+			UNLINK(FC,releaseConn);
 		}
 		return dt;
 	}
