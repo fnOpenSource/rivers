@@ -24,7 +24,6 @@ import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.index.VersionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,8 +98,8 @@ public class ESFlow extends WriterFlowSocket {
 		try {
 			String name = Common.getStoreName(instantcName, storeId);
 			String type = instantcName;
-			if (unit.getData().size() == 0) {
-				log.info("Empty IndexUnit for " + name + " " + type);
+			if (unit==null || unit.getData().size() == 0) {
+				log.info(instantcName+" WriteUnit contain Dirty data!");
 				return;
 			}
 			String id = unit.getKeyColumnVal();
@@ -143,7 +142,7 @@ public class ESFlow extends WriterFlowSocket {
 					this.ESC.getBulkProcessor().add(_UR);
 				}
 			} else {
-				IndexRequestBuilder _IB = this.ESC.getClient().prepareIndex(name, type, id).setVersionType(VersionType.EXTERNAL).setVersion(unit.getUpdateTime());
+				IndexRequestBuilder _IB = this.ESC.getClient().prepareIndex(name, type, id);
 				_IB.setSource(cbuilder);
 				if (routing.length() > 0)
 					_IB.setRouting(routing.toString());
