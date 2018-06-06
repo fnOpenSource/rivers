@@ -80,14 +80,10 @@ public class SearchParamUtil {
 							new Script("random()"), "number"));
 					break;
 
-				default:
-					FNParam sortpr = config.getParam(fieldname);
-					if (sortpr == null)
+				default: 
+					if (fieldname == null || fieldname.length() <= 0)
 						continue;
-					String realFieldName = sortpr.getName();
-					if (realFieldName == null || realFieldName.length() <= 0)
-						continue;
-					sortList.add(SortBuilders.fieldSort(realFieldName).order(
+					sortList.add(SortBuilders.fieldSort(fieldname).order(
 							reverse ? SortOrder.DESC : SortOrder.ASC));
 					break;
 				}
