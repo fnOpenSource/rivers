@@ -45,28 +45,27 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder> getSortField(FNRequest request, NodeConfig config) { 
-		FNParam pr = config.getParam(KEY_PARAM.sort.toString());
-		String sortby = (String) request.get(KEY_PARAM.sort.toString(), pr);
+	public static List<SortBuilder> getSortField(FNRequest request, NodeConfig nodeConfig) {  
+		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
 		List<SortBuilder> sortList = new ArrayList<SortBuilder>();
 		boolean useScore = false;
-		if (sortby != null && sortby.length() > 0) { 
+		if (sortstrs != null && sortstrs.length() > 0) { 
 			boolean reverse = false;
-			String[] sortstrs = sortby.split(",");
+			String[] sortArr = sortstrs.split(",");
 			String fieldname = ""; 
-			for (String sortstr : sortstrs) {
-				sortstr = sortstr.trim();
-				if (sortstr.endsWith(GlobalParam.SORT_DESC)) {
+			for (String str : sortArr) {
+				str = str.trim();
+				if (str.endsWith(GlobalParam.SORT_DESC)) {
 					reverse = true;
-					fieldname = sortstr.substring(0,
-							sortstr.indexOf(GlobalParam.SORT_DESC));
-				} else if (sortstr.endsWith(GlobalParam.SORT_ASC)) {
+					fieldname = str.substring(0,
+							str.indexOf(GlobalParam.SORT_DESC));
+				} else if (str.endsWith(GlobalParam.SORT_ASC)) {
 					reverse = false;
-					fieldname = sortstr.substring(0,
-							sortstr.indexOf(GlobalParam.SORT_ASC));
+					fieldname = str.substring(0,
+							str.indexOf(GlobalParam.SORT_ASC));
 				} else {
 					reverse = false;
-					fieldname = sortstr;
+					fieldname = str;
 				}
 
 				switch (fieldname) {
@@ -80,11 +79,15 @@ public class SearchParamUtil {
 							new Script("random()"), "number"));
 					break;
 
-				default: 
-					if (fieldname == null || fieldname.length() <= 0)
-						continue;
-					sortList.add(SortBuilders.fieldSort(fieldname).order(
-							reverse ? SortOrder.DESC : SortOrder.ASC));
+				default:
+					FNParam sortpr = nodeConfig.getParam(fieldname); 
+					if (sortpr != null) { 
+						sortList.add(SortBuilders.fieldSort(sortpr.getName()).order(
+								reverse ? SortOrder.DESC : SortOrder.ASC));
+					}else if(fieldname.equals("SYSTEM_UPDATE_TIME")) { 
+						sortList.add(SortBuilders.fieldSort(fieldname).order(
+								reverse ? SortOrder.DESC : SortOrder.ASC));
+					} 
 					break;
 				}
 			}
