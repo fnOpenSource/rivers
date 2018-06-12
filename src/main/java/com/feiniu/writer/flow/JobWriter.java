@@ -19,12 +19,12 @@ import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
 import com.feiniu.model.param.WriteParam;
-import com.feiniu.reader.flow.DataSetReader;
-import com.feiniu.reader.flow.Reader;
+import com.feiniu.reader.Reader;
+import com.feiniu.reader.flow.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
+import com.feiniu.reader.util.DataSetReader;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
-import com.feiniu.writer.jobFlow.WriteFlowSocket;
 
 /**
  * write data from source A to Source B
@@ -34,7 +34,7 @@ import com.feiniu.writer.jobFlow.WriteFlowSocket;
 public final class JobWriter {
 
 	private final static Logger log = LoggerFactory.getLogger("JOB STATE"); 
-	private WriteFlowSocket<?> flowSocket; 
+	private ReaderFlowSocket<?> flowSocket; 
 	private NodeConfig nodeConfig;
 	private WriterFlowSocket writer;
 	/**defined custom read flow socket*/
@@ -43,11 +43,11 @@ public final class JobWriter {
 
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	public static JobWriter getInstance(WriteFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig){
+	public static JobWriter getInstance(ReaderFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig){
 		return new JobWriter(flowSocket,writer,nodeConfig);
 	}
  
-	private JobWriter(WriteFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig) {
+	private JobWriter(ReaderFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig) {
 		this.writer = writer;
 		this.nodeConfig = nodeConfig;  
 		this.flowSocket = flowSocket;

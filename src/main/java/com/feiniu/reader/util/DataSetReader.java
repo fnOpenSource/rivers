@@ -1,9 +1,10 @@
-package com.feiniu.reader.flow;
+package com.feiniu.reader.util;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 
 import com.feiniu.model.WriteUnit;
+import com.feiniu.reader.Reader;
 /**
  * pass data set in argument,writer will auto get each line
  * @author chengwen
@@ -52,6 +53,10 @@ public class DataSetReader implements Reader<HashMap<String, Object>> {
 
 	@Override
 	public void close() {
+		lastUpdateTime = "";
+		maxId = "";
+		keyColumn = null;
+		IncrementColumn = null;
 	}
 
 	@Override

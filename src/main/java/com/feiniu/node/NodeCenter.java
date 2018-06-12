@@ -12,6 +12,8 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.WarehouseSqlParam;
+import com.feiniu.reader.flow.ReaderFlowSocket;
+import com.feiniu.reader.flow.ReaderFlowSocketFactory;
 import com.feiniu.searcher.FNQueryBuilder;
 import com.feiniu.searcher.FNSearcher;
 import com.feiniu.searcher.FNSearcherSocketFactory;
@@ -20,8 +22,6 @@ import com.feiniu.util.Common;
 import com.feiniu.writer.WriterFactory;
 import com.feiniu.writer.flow.JobWriter;
 import com.feiniu.writer.flow.WriterFlowSocket;
-import com.feiniu.writer.jobFlow.WriteFlowSocket;
-import com.feiniu.writer.jobFlow.WriteFlowSocketFactory;
 
 /**
  * data-flow router reader searcher and writer control center
@@ -63,21 +63,21 @@ public final class NodeCenter{
 		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,null)+tag) || needClear){ 
 			JobWriter writer=null;
 			String readFrom = paramConfig.getTransParam().getDataFrom(); 
-			WriteFlowSocket<?> flowSocket;
+			ReaderFlowSocket<?> flowSocket;
 			if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(readFrom)!=null){ 
 				Map<String, WarehouseNosqlParam> dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap();
 				if (!dataMap.containsKey(readFrom)){
 					log.error("data source config " + readFrom + " not exists");
 					return null;
 				}   
-				flowSocket = WriteFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
+				flowSocket = ReaderFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
 			}else{ 
 				Map<String, WarehouseSqlParam> dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap();
 				if (!dataMap.containsKey(readFrom)){
 					log.error("data source config " + readFrom + " not exists");
 					return null;
 				}   
-				flowSocket = WriteFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
+				flowSocket = ReaderFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
 			} 
 			writer = JobWriter.getInstance(flowSocket,getDestinationWriter(instanceName,seq), paramConfig);
 			writerChannelMap.put(Common.getInstanceName(instanceName, seq,null), writer);

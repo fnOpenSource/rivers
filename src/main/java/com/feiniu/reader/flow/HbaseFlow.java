@@ -1,4 +1,4 @@
-package com.feiniu.writer.jobFlow;
+package com.feiniu.reader.flow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,12 +26,12 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.handler.Handler;
 
-public class HbaseJobFlow extends WriteFlowSocket<HashMap<String, Object>> { 
+public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
 	 
-	private final static Logger log = LoggerFactory.getLogger(HbaseJobFlow.class);
+	private final static Logger log = LoggerFactory.getLogger(HbaseFlow.class);
 
-	public static HbaseJobFlow getInstance(HashMap<String, Object> connectParams) {
-		HbaseJobFlow o = new HbaseJobFlow();
+	public static HbaseFlow getInstance(HashMap<String, Object> connectParams) {
+		HbaseFlow o = new HbaseFlow();
 		o.INIT(connectParams);
 		return o;
 	}

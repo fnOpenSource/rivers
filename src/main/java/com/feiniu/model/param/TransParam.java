@@ -17,7 +17,7 @@ public class TransParam {
 	private String deltaCron;
 	private String fullCron;
 	private String optimizeCron;
-	private String splitBy;
+	private String splitCron;
 	private String instanceName;
 	private String[] nextJob;
 	/**data write into type,full complete data,increment part of data*/
@@ -77,9 +77,9 @@ public class TransParam {
 	public void setOptimizeCron(String optimizeCron) {
 		this.optimizeCron = optimizeCron;
 	} 
-	
-	public String getSplitBy() {
-		return splitBy;
+ 
+	public String getSplitCron() {
+		return splitCron;
 	} 
 	
 	public String getSearcher() {
@@ -108,6 +108,9 @@ public class TransParam {
 			break;
 		case "optimizecron":
 			this.optimizeCron = v;
+			break;
+		case "splitcron":
+			this.splitCron = v;
 			break;
 		case "searcher":
 			this.searcher = v;

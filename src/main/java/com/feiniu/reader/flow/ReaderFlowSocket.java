@@ -1,4 +1,4 @@
-package com.feiniu.writer.jobFlow;
+package com.feiniu.reader.flow;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,7 +13,7 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.handler.Handler;
 
-public class WriteFlowSocket<T> implements Flow{ 
+public class ReaderFlowSocket<T> implements Flow{ 
 	
 	protected HashMap<String, Object> connectParams;
 

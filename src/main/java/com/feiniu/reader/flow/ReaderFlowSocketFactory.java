@@ -1,4 +1,4 @@
-package com.feiniu.writer.jobFlow;
+package com.feiniu.reader.flow;
 
 import java.util.HashMap;
 
@@ -15,12 +15,12 @@ import com.feiniu.model.param.WarehouseSqlParam;
  * @author chengwen
  *
  */
-public class WriteFlowSocketFactory {
+public class ReaderFlowSocketFactory {
 	
 	private final static Logger log = LoggerFactory
-			.getLogger(WriteFlowSocketFactory.class);
+			.getLogger(ReaderFlowSocketFactory.class);
 	 
-	public static WriteFlowSocket<?> getChannel(final WarehouseParam wParam, String seq){ 
+	public static ReaderFlowSocket<?> getChannel(final WarehouseParam wParam, String seq){ 
 		if (wParam.getType() == DATA_TYPE.MYSQL || wParam.getType() == DATA_TYPE.ORACLE){
 			return sqlChannel((WarehouseSqlParam) wParam,seq);
 		}else if(wParam.getType() == DATA_TYPE.HBASE){
@@ -30,21 +30,21 @@ public class WriteFlowSocketFactory {
 			return null;
 		}
 	}
-	static WriteFlowSocket<?> sqlChannel(final WarehouseSqlParam wParam, String seq){ 
+	static ReaderFlowSocket<?> sqlChannel(final WarehouseSqlParam wParam, String seq){ 
 		HashMap<String, Object> connectParams = wParam.getConnectParams(seq);
 		if (wParam.getType() == DATA_TYPE.MYSQL){ 
-			return MysqlJobFlow.getInstance(connectParams);
+			return MysqlFlow.getInstance(connectParams);
 		}else if((wParam.getType() == DATA_TYPE.ORACLE)){ 
 			connectParams.put("sid", "CORD"); 
-			return OracleJobFlow.getInstance(connectParams);
+			return OracleFlow.getInstance(connectParams);
 		}
 		return null;
 	}
 	
-	static WriteFlowSocket<?> noSqlChannel(WarehouseNosqlParam wParam, String seq){
+	static ReaderFlowSocket<?> noSqlChannel(WarehouseNosqlParam wParam, String seq){
 		HashMap<String, Object> connectParams = wParam.getConnectParams(seq); 
 		if (wParam.getType() == DATA_TYPE.HBASE){ 
-			return HbaseJobFlow.getInstance(connectParams);
+			return HbaseFlow.getInstance(connectParams);
 		} 
 		return null;
 	}

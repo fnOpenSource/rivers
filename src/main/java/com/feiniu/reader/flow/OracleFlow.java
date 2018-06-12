@@ -1,4 +1,4 @@
-package com.feiniu.writer.jobFlow;
+package com.feiniu.reader.flow;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,12 +20,12 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.handler.Handler;
 
-public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {   
+public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
+  
+	private final static Logger log = LoggerFactory.getLogger(OracleFlow.class);
 
-	private final static Logger log = LoggerFactory.getLogger(MysqlJobFlow.class);  
-
-	public static MysqlJobFlow getInstance(HashMap<String, Object> connectParams) {
-		MysqlJobFlow o = new MysqlJobFlow();
+	public static OracleFlow getInstance(HashMap<String, Object> connectParams) {
+		OracleFlow o = new OracleFlow();
 		o.INIT(connectParams);
 		return o;
 	} 
@@ -43,11 +43,11 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 		this.jobPage.clear(); 
 		boolean releaseConn = false;
 		Connection conn = (Connection) FC.getConnection(false);
-		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
+		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){  
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
 			try(ResultSet rs = statement.executeQuery();){				
 				this.jobPage.put("keyColumn", param.get("keyColumn"));
-				this.jobPage.put("IncrementColumn", param.get("incrementField"));
+				this.jobPage.put("IncrementColumn", param.get("incrementField"));  
 				if(handler==null){
 					getAllData(rs,writeParamMap); 
 				}else{
@@ -66,22 +66,22 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			UNLINK(FC,releaseConn);
 		} 
 		return this.jobPage;
-	} 
-	
+	}
+
 	@Override
 	public List<String> getPageSplit(final HashMap<String, String> param) {
 		String sql;
 		if(param.get("pageSql")!=null){
-			sql = " select #{COLUMN} as id,(@a:=@a+1) AS FN_ROW_ID from ("
+			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
 					+ param.get("pageSql")
-					+ ") FN_FPG_MAIN join (SELECT @a := -1) FN_FPG_ROW order by #{COLUMN} desc";
+					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
 		}else{
-			sql = " select #{COLUMN} as id,(@a:=@a+1) AS FN_ROW_ID from ("
+			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
 					+ param.get("originalSql")
-					+ ") FN_FPG_MAIN join (SELECT @a := -1) FN_FPG_ROW order by #{COLUMN} desc"; 
-		}
-		sql = " select id from (" + sql
-				+ ") FN_FPG_END where MOD(FN_ROW_ID, "+GlobalParam.MAX_PER_PAGE+") = 0";
+					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
+		} 
+		sql = " select id from (" + sql + ") FN_FPG_END where MOD(FN_ROW_ID, "
+				+ GlobalParam.MAX_PER_PAGE + ") = 0";
 		sql = sql
 				.replace("#{TABLE}", param.get("table"))
 				.replace("#{table}", param.get("table"))
@@ -95,14 +95,14 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				.replace("#{START}", "0");
 		if (param.get(GlobalParam._seq) != null && param.get(GlobalParam._seq).length() > 0)
 			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
-		FnConnection<?> FC = LINK(false);
+		FnConnection<?> FC = LINK(false);;
 		Connection conn = (Connection) FC.getConnection(false);
 		List<String> page = new ArrayList<String>();
 		PreparedStatement statement = null;
 		ResultSet rs  = null;
 		boolean releaseConn = false;
 		try {
-			boolean autoSelect = true; 
+			boolean autoSelect = true;
 			if(param.get("keyColumnType") != null){
 				autoSelect = false;
 				if(param.get("keyColumnType").equals("int")){
@@ -130,11 +130,11 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 				}
 			}
 			Collections.reverse(page);  
-		}catch(SQLException e){
-			log.error("getJobPage SQLException "+sql, e);
-		}catch (Exception e) {
+		} catch (SQLException e){
+			log.error(param.get("sql") + " getPageSplit SQLException", e);
+		} catch (Exception e) { 
 			releaseConn = true;
-			log.error("getJobPage Exception so free connection,details ", e);
+			log.error("getPageSplit Exception so free connection,details ", e);
 		}finally{ 
 			try {
 				statement.close();
@@ -142,11 +142,12 @@ public class MysqlJobFlow extends WriteFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			UNLINK(FC,releaseConn);  
+			UNLINK(FC,releaseConn);
 		}  
 		return page;
 	} 
-	
+	 
+
 	private void getAllData(ResultSet rs,Map<String, WriteParam> writeParamMap) {  
 		this.datas.clear();
 		String maxId = null;

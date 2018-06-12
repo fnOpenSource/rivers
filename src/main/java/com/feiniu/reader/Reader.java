@@ -1,4 +1,4 @@
-package com.feiniu.reader.flow;
+package com.feiniu.reader;
 
 import com.feiniu.model.WriteUnit; 
 /**
