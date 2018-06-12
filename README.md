@@ -2,7 +2,7 @@
     Rivers是一个支持在任意类型数据源之间进行可定时定量交换数据的中间件。 
 
 
-![image](https://github.com/fnOpenSource/rivers/blob/master/Instruction.png)
+![image](https://github.com/fnOpenSource/rivers/blob/master/flowchart.png)
 
 # Rivers用来解决什么?
 
