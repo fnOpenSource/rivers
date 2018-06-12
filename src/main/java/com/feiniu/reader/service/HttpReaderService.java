@@ -109,7 +109,12 @@ public class HttpReaderService {
 							String seq = rq.getParameter("seq");
 							String keycolumn = rq.getParameter("keycolumn");
 							String updatecolumn = rq.getParameter("updatecolumn");
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false);
+							boolean monopoly = false;
+							if (rq.getParameterMap().get("fn_is_monopoly") != null
+									&& rq.getParameter("fn_is_monopoly").equals("true"))
+								monopoly = true;
+							
+							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
@@ -125,16 +130,12 @@ public class HttpReaderService {
 									storeid = Common.getStoreId(instance, seq, coreWriter, true, true);
 								}
 							}
-							boolean isUpdate = false;
-							boolean monopoly = false;
+							boolean isUpdate = false; 
 							
 							if (rq.getParameterMap().get("fn_is_update") != null
 									&& rq.getParameter("fn_is_update").equals("true"))
-								isUpdate = true;
+								isUpdate = true; 
 							
-							if (rq.getParameterMap().get("fn_is_monopoly") != null
-									&& rq.getParameter("fn_is_monopoly").equals("true"))
-								monopoly = true;
 							
 							try {
 								coreWriter.writeDataSet("HTTP PUT",
@@ -161,7 +162,7 @@ public class HttpReaderService {
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
 							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(rq.getParameter("instance"),
-									rq.getParameter("seq"), false);
+									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
 									coreWriter, false, false);
 							coreWriter.createStorePosition(rq.getParameter("instance"), storeid);
@@ -177,7 +178,7 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false);
+							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
@@ -186,7 +187,7 @@ public class HttpReaderService {
 								coreWriter.createStorePosition(instance, storeid);
 							}
 							GlobalParam.NODE_CENTER
-									.getWriterChannel(instance, seq, false)
+									.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG)
 									.switchSearcher(instance, storeid);
 							coreWriter.write(instance, storeid, "-1", seq, true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
@@ -200,7 +201,7 @@ public class HttpReaderService {
 							FNQuery<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false); 
+							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;

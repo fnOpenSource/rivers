@@ -101,6 +101,7 @@ public class Task{
 								log.error(instanceName+" Increment Exception",e);
 							}
 						}
+						log.error(instanceName+" startIncrementJob Exception",e);
 					}finally{
 						recompute = false;
 						GlobalParam.FLOW_STATUS.get(instanceName).set(1);

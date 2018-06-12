@@ -125,7 +125,7 @@ public class TaskManager{
 						continue; 
 					if(!GlobalParam.tasks.containsKey(instanceName+seq) || needClear){
 						GlobalParam.tasks.put(instanceName+seq, Task.createTask(instanceName,
-								GlobalParam.NODE_CENTER.getWriterChannel(instanceName, seq,needClear), seq));
+								GlobalParam.NODE_CENTER.getWriterChannel(instanceName, seq,needClear,GlobalParam.DEFAULT_RESOURCE_TAG), seq));
 					}  
 					createFlowScheduleJob(instanceName + seq, GlobalParam.tasks.get(instanceName+seq),
 							NodeConfig,needClear);
@@ -133,7 +133,7 @@ public class TaskManager{
 			} else { 
 				if(!GlobalParam.tasks.containsKey(instanceName) || needClear){
 					GlobalParam.tasks.put(instanceName, Task.createTask(instanceName,
-							GlobalParam.NODE_CENTER.getWriterChannel(instanceName, null,needClear)));
+							GlobalParam.NODE_CENTER.getWriterChannel(instanceName, null,needClear,GlobalParam.DEFAULT_RESOURCE_TAG)));
 				} 
 				createFlowScheduleJob(instanceName, GlobalParam.tasks.get(instanceName), NodeConfig,needClear);
 			} 

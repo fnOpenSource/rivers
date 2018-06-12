@@ -67,6 +67,8 @@ public class GlobalParam {
 		BOOLEAN_QUERY, DISJUNCTION_QUERY 
 	}   
 	
+	public final static String DEFAULT_RESOURCE_TAG = "_DEFAULT";
+	
 	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
 	
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 

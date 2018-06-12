@@ -85,8 +85,9 @@ public class ESFlow extends WriterFlowSocket {
 	@Override
 	public void MONOPOLY() {  
 		synchronized (this) {
-			if(this.ESC==null) {
-				LINK(false);
+			if(this.ESC==null) { 
+				LINK(false); 
+				retainer.set(1);
 				this.ESC = (ESConnector) this.FC.getConnection(false);
 			}
 		}

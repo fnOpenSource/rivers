@@ -55,10 +55,12 @@ public final class NodeCenter{
 	 * get Writer auto look for sql and nosql maps
 	 * @param seq for series data source sequence
 	 * @param instanceName data source main tag name
+	 * @param needClear for reset resource
+	 * @param tag  Marking resource
 	 */ 
-	public JobWriter getWriterChannel(String instanceName, String seq,boolean needClear) { 
+	public JobWriter getWriterChannel(String instanceName, String seq,boolean needClear,String tag) { 
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
-		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,null)) || needClear){ 
+		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,null)+tag) || needClear){ 
 			JobWriter writer=null;
 			String readFrom = paramConfig.getTransParam().getDataFrom(); 
 			WriteFlowSocket<?> flowSocket;
