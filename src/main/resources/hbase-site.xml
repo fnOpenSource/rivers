@@ -92,7 +92,7 @@
   </property>
   <property>
     <name>hbase.zookeeper.quorum</name>
-    <value>10.200.42.1,10.200.42.2,10.200.42.3</value>
+    <value>100.100.100.100,100.100.100.101,100.100.100.102</value>
   </property>
   <property>
     <name>hbase.zookeeper.property.clientPort</name>
