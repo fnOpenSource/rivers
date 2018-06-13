@@ -30,14 +30,14 @@ import com.feiniu.writer.flow.WriterFlowSocket;
  * @author chengwen
  * @version 1.0 
  */
-public final class NodeCenter{  
+public final class SocketCenter{  
 	 
 	private Map<String,JobWriter> writerChannelMap = new ConcurrentHashMap<String, JobWriter>();
 	private Map<String, WriterFlowSocket> destinationWriterMap = new ConcurrentHashMap<String, WriterFlowSocket>();
 	private Map<String, SearcherFlowSocket> searcherFlowMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
 	private Map<String, FNSearcher> searcherMap = new ConcurrentHashMap<String, FNSearcher>();
 	
-	private final static Logger log = LoggerFactory.getLogger(NodeCenter.class);  
+	private final static Logger log = LoggerFactory.getLogger(SocketCenter.class);  
 	  
 	
 	public FNSearcher getSearcher(String instanceName) { 

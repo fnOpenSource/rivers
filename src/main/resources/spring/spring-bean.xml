@@ -51,7 +51,7 @@
 		<constructor-arg value="#{globalConfigBean['zkhost']}" />
 	</bean>
 
-	<bean id="nodeCenter" class="com.feiniu.node.NodeCenter"/>
+	<bean id="SocketCenter" class="com.feiniu.node.SocketCenter"/>
 
 	<bean id="TaskManager" class="com.feiniu.task.TaskManager" />
 

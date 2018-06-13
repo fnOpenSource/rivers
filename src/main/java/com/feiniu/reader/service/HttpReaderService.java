@@ -114,7 +114,7 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
+							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
@@ -161,7 +161,7 @@ public class HttpReaderService {
 						break;
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(rq.getParameter("instance"),
+							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(rq.getParameter("instance"),
 									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
 									coreWriter, false, false);
@@ -178,7 +178,7 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
+							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
@@ -186,7 +186,7 @@ public class HttpReaderService {
 										coreWriter, false, false);
 								coreWriter.createStorePosition(instance, storeid);
 							}
-							GlobalParam.NODE_CENTER
+							GlobalParam.SOCKET_CENTER
 									.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG)
 									.switchSearcher(instance, storeid);
 							coreWriter.write(instance, storeid, "-1", seq, true);
@@ -201,13 +201,13 @@ public class HttpReaderService {
 							FNQuery<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							JobWriter coreWriter = GlobalParam.NODE_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
+							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
 							}
 							String storeid = Common.getStoreId(instance,seq, coreWriter, true, true);
-							WarehouseParam param = GlobalParam.NODE_CENTER.getWHP(coreWriter.getNodeConfig().getTransParam().getWriteTo());
+							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(coreWriter.getNodeConfig().getTransParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
 								query = ESQueryModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());

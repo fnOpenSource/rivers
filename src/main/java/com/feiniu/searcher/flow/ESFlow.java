@@ -65,9 +65,9 @@ public class ESFlow extends SearcherFlowSocket {
 			SearchResponse response = getSearchResponse(conn,qb, returnFields, instance,
 					start, count, sortFields, facetBuilders, fq,res);
 			if(handler==null) {
-				addResult(res,response,fq);
+				addResult(res,response,fq,returnFields);
 			}else {
-				handler.Handle(res,response,fq,NodeConfig);
+				handler.Handle(res,response,fq,NodeConfig,returnFields);
 			} 
 		}catch(Exception e){ 
 			throw e;
@@ -77,7 +77,7 @@ public class ESFlow extends SearcherFlowSocket {
 		return res;
 	} 
 	
-	private void addResult(FNResultSet res,SearchResponse response,FNQuery<?, ?, ?> fq) {
+	private void addResult(FNResultSet res,SearchResponse response,FNQuery<?, ?, ?> fq,List<String> returnFields) {
 		SearchHits searchHits = response.getHits();
 		res.setTotalHit((int) searchHits.getTotalHits());  
 		SearchHit[] hits = searchHits.getHits();  
@@ -89,9 +89,9 @@ public class ESFlow extends SearcherFlowSocket {
 				String name = e.getKey();
 				WriteParam param = NodeConfig.getWriteParamMap().get(name);
 				SearchHitField v = e.getValue();  
-				if (param.getSeparator() != null) { 
+				if (param!=null && param.getSeparator() != null) { 
 					u.addObject(name, v.getValues());
-				} else {
+				} else if(returnFields.contains(name)) {
 					u.addObject(name, String.valueOf(v.getValue()));
 				}
 			}

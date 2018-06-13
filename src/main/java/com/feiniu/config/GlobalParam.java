@@ -8,7 +8,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.node.NodeCenter;
+import com.feiniu.node.SocketCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.task.Task;
 import com.feiniu.util.email.FNEmailSender;
@@ -37,7 +37,7 @@ public class GlobalParam {
 	
 	public static String IP=null;
 	
-	public static NodeCenter NODE_CENTER;
+	public static SocketCenter SOCKET_CENTER;
 	
 	public static NodeMonitor nodeMonitor;
 	

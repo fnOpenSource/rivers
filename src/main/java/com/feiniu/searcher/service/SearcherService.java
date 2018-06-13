@@ -19,7 +19,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNRequest;
 import com.feiniu.model.FNResponse;
-import com.feiniu.node.NodeCenter;
+import com.feiniu.node.SocketCenter;
 import com.feiniu.searcher.FNSearcher;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
@@ -32,7 +32,7 @@ import com.feiniu.service.HttpService;
 public class SearcherService{
 	 
 	@Autowired
-	private NodeCenter nodeCenter;   
+	private SocketCenter SocketCenter;   
  
 	@Value("#{globalConfigBean['http_service_thread_pool']}")
 	private String http_service_thread_pool;
@@ -91,7 +91,7 @@ public class SearcherService{
 		String handleName = request.getHandle(); 
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getSearchConfigs();
 		if (configMap.containsKey(handleName)) { 
-			FNSearcher searcher = nodeCenter.getSearcher(handleName);
+			FNSearcher searcher = SocketCenter.getSearcher(handleName);
 			response = searcher.startSearch(request);
 		} 
 		long endTime = System.currentTimeMillis();

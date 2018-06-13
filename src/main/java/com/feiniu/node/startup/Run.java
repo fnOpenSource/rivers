@@ -17,7 +17,7 @@ import com.feiniu.config.FNIocConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.NodeTreeConfigs;
-import com.feiniu.node.NodeCenter;
+import com.feiniu.node.SocketCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
@@ -42,7 +42,7 @@ public final class Run {
 	@Autowired
 	private HttpReaderService HttpReaderService;
 	@Autowired
-	private NodeCenter nodeCenter;
+	private SocketCenter SocketCenter;
 	
 	@Value("#{configPathConfig['config.path']}")
 	private String configPath;
@@ -69,7 +69,7 @@ public final class Run {
 		GlobalParam.run_environment = String.valueOf(globalConfigBean.get("run_environment")); 
 		GlobalParam.mailSender = mailSender;
 		GlobalParam.tasks = new HashMap<String, Task>();
-		GlobalParam.NODE_CENTER = nodeCenter;
+		GlobalParam.SOCKET_CENTER = SocketCenter;
 		GlobalParam.VERSION = version;
 		GlobalParam.nodeMonitor = nodeMonitor;
 		environmentCheck();
