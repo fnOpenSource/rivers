@@ -31,7 +31,7 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 
@@ -45,7 +45,7 @@ import com.feiniu.util.FNException;
 public class ESFlow extends WriterFlowSocket {
 
 	private ESConnector ESC;
-	private final static Logger log = LoggerFactory.getLogger(ESFlow.class);
+	private final static Logger log = LoggerFactory.getLogger("ESFlow");
 
 	public static ESFlow getInstance(HashMap<String, Object> connectParams) {
 		ESFlow o = new ESFlow();
@@ -94,7 +94,7 @@ public class ESFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void write(String keyColumn, WriteUnit unit, Map<String, WriteParam> writeParamMap, String instantcName,
+	public void write(String keyColumn, WriteUnit unit, Map<String, TransParam> transParams, String instantcName,
 			String storeId, boolean isUpdate) throws FNException {
 		try {
 			String name = Common.getStoreName(instantcName, storeId);
@@ -111,22 +111,22 @@ public class ESFlow extends WriterFlowSocket {
 				if (r.getValue() == null)
 					continue;
 				String value = String.valueOf(r.getValue());
-				WriteParam writeParam = writeParamMap.get(field);
-				if (writeParam == null)
-					writeParam = writeParamMap.get(field.toLowerCase());
-				if (writeParam == null)
+				TransParam transParam = transParams.get(field);
+				if (transParam == null)
+					transParam = transParams.get(field.toLowerCase());
+				if (transParam == null)
 					continue;
 
-				if (writeParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))) {
-					if (writeParam.getSeparator() != null) {
-						String[] vs = value.split(writeParam.getSeparator());
+				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))) {
+					if (transParam.getSeparator() != null) {
+						String[] vs = value.split(transParam.getSeparator());
 						cbuilder.array(field, vs);
 					} else
 						cbuilder.field(field, value);
 				} else {
 					cbuilder.field(field, value);
 				}
-				if (writeParam.isRouter()) {
+				if (transParam.isRouter()) {
 					routing.append(value);
 				}
 			}
@@ -188,7 +188,7 @@ public class ESFlow extends WriterFlowSocket {
 	 *            data source main tag name
 	 */
 	@Override
-	public boolean settings(String instanceName, String storeId, Map<String, WriteParam> paramMap) {
+	public boolean settings(String instanceName, String storeId, Map<String, TransParam> transParams) {
 		String name = Common.getStoreName(instanceName, storeId);
 		String type = instanceName;
 		try {
@@ -203,7 +203,7 @@ public class ESFlow extends WriterFlowSocket {
 			}
 
 			PutMappingRequest mappingRequest = new PutMappingRequest(name).type(type);
-			mappingRequest.source(getSettingMap(paramMap));
+			mappingRequest.source(getSettingMap(transParams));
 			PutMappingResponse response = this.ESC.getClient().admin().indices().putMapping(mappingRequest).actionGet();
 			log.info("setting response isAcknowledged:" + response.isAcknowledged());
 			return true;
@@ -260,7 +260,7 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public String getNewStoreId(String instance, boolean isIncrement, String dbseq, NodeConfig nodeConfig) {
-		String instanceName = Common.getInstanceName(instance, dbseq, nodeConfig.getTransParam().getInstanceName());
+		String instanceName = Common.getInstanceName(instance, dbseq, nodeConfig.getPipeParam().getInstanceName());
 		boolean a_alias = false;
 		boolean b_alias = false;
 		boolean a = this.ESC.getClient().admin().indices()
@@ -296,7 +296,7 @@ public class ESFlow extends WriterFlowSocket {
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)) {
-				this.settings(instanceName, select, nodeConfig.getWriteParamMap());
+				this.settings(instanceName, select, nodeConfig.getTransParams());
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)
@@ -346,13 +346,13 @@ public class ESFlow extends WriterFlowSocket {
 		}
 	}
 
-	private Map<String, Object> getSettingMap(Map<String, WriteParam> paramMap) {
+	private Map<String, Object> getSettingMap(Map<String, TransParam> transParams) {
 		Map<String, Object> config_map = new HashMap<String, Object>();
 		try {
 
-			for (Map.Entry<String, WriteParam> e : paramMap.entrySet()) {
+			for (Map.Entry<String, TransParam> e : transParams.entrySet()) {
 				Map<String, Object> map = new HashMap<String, Object>();
-				WriteParam p = e.getValue();
+				TransParam p = e.getValue();
 				if (p.getName() == null)
 					continue;
 				map.put("type", p.getIndextype()); // type is must
@@ -375,7 +375,7 @@ public class ESFlow extends WriterFlowSocket {
 				} else {
 					map.put("index", "not_analyzed");
 				}
-				config_map.put(p.getName(), map);
+				config_map.put(p.getAlias(), map);
 			}
 		} catch (Exception e) {
 			log.error("getSettingMap error:" + e.getMessage());

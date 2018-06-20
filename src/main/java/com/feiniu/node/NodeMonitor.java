@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
@@ -25,10 +24,12 @@ import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSON;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.DATA_TYPE;
+import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.model.param.WarehouseNosqlParam;
+import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.WarehouseSqlParam;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
@@ -77,6 +78,7 @@ public final class NodeMonitor {
 		private static final long serialVersionUID = -8313429841889556616L;
 		{
 			add("reloadConfig");
+			add("resetInstanceState");
 			add("getNodeConfig");
 			add("setNodeConfig");
 			add("stopInstance");
@@ -212,29 +214,51 @@ public final class NodeMonitor {
 		}
 		setResponse(1, dt);
 	}
+	
+	public void resetInstanceState(Request rq) {
+		if (rq.getParameter("instance").length() > 1) {
+			String instance = rq.getParameter("instance");
+			NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instance); 
+			WarehouseParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+			if (dataMap == null) {
+				dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+			}
+			List<String> seqs = dataMap.getSeq();
+			if (seqs.size() == 0) {
+				seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
+			}
+			for (String seq : seqs) { 
+				GlobalParam.LAST_UPDATE_TIME.set(instance,seq, "0");
+				Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq));
+			}
+			setResponse(1, rq.getParameter("instance") + " reset Success!");
+		} else {
+			setResponse(0, rq.getParameter("instance") + " not exists!");
+		}
+	}
 
 	public void getInstanceInfo(Request rq) {
 		if (GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(rq.getParameter("instance"))) {
 			StringBuffer sb = new StringBuffer();
 			NodeConfig config = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(rq.getParameter("instance"));
 			boolean writer = false;
-			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(config.getTransParam().getDataFrom()) != null) {
+			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(config.getPipeParam().getDataFrom()) != null) {
 				String poolname = GlobalParam.nodeTreeConfigs.getNoSqlParamMap()
-						.get(config.getTransParam().getDataFrom()).getPoolName(null);
+						.get(config.getPipeParam().getDataFrom()).getPoolName(null);
 				sb.append(",[DataFrom Pool Status] " + FnConnectionPool.getStatus(poolname));
 				writer = true;
-			} else if (GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getTransParam().getDataFrom()) != null) {
+			} else if (GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getPipeParam().getDataFrom()) != null) {
 				WarehouseSqlParam ws = GlobalParam.nodeTreeConfigs.getSqlParamMap()
-						.get(config.getTransParam().getDataFrom());
+						.get(config.getPipeParam().getDataFrom());
 				String poolname = "";
 				if (ws.getSeq() != null && ws.getSeq().size() > 0) {
 					for (String seq : ws.getSeq()) {
 						poolname = GlobalParam.nodeTreeConfigs.getSqlParamMap()
-								.get(config.getTransParam().getDataFrom()).getPoolName(seq);
+								.get(config.getPipeParam().getDataFrom()).getPoolName(seq);
 						sb.append(",[" + seq + " of DataFroms Pool Status] " + FnConnectionPool.getStatus(poolname));
 					}
 				} else {
-					poolname = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getTransParam().getDataFrom())
+					poolname = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getPipeParam().getDataFrom())
 							.getPoolName(null);
 					sb.append(",[DataFrom Pool Status] " + FnConnectionPool.getStatus(poolname));
 				} 
@@ -243,15 +267,15 @@ public final class NodeMonitor {
 
 			if (writer) {
 				WarehouseSqlParam tmpDBParam = GlobalParam.nodeTreeConfigs.getSqlParamMap()
-						.get(config.getTransParam().getDataFrom());
+						.get(config.getPipeParam().getDataFrom());
 				if (tmpDBParam.getSeq().size() > 0) {
 					sb.append(",[当前存储状态]");
 					for (String seriesDataSeq : tmpDBParam.getSeq()) {
 						String strs = getZkData(Common.getTaskStorePath(rq.getParameter("instance"), seriesDataSeq));
-						sb.append("\r\n;(" + seriesDataSeq + ") " + strs.split(":")[0] + ":");
-						for (String str : strs.split(":")[1].split(",")) {
+						sb.append("\r\n;(" + seriesDataSeq + ") " + strs.split(GlobalParam.JOB_STATE_SPERATOR)[0] + ":");
+						for (String str : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
 							String update;
-							if (str.length() > 9) {
+							if (str.length() > 9 && str.matches("[0-9]+")) {
 								update = this.SDF.format(str.length() < 12 ? new Long(str + "000") : new Long(str));
 							} else {
 								update = str;
@@ -263,9 +287,9 @@ public final class NodeMonitor {
 				} else {
 					String strs = getZkData(Common.getTaskStorePath(rq.getParameter("instance"), null));
 					StringBuffer stateStr = new StringBuffer();
-					String time = strs.split(":")[1];
-					for (String tm : strs.split(":")[1].split(",")) {
-						if (tm.length() > 9 && isInteger(tm)) {
+					String time = strs.split(GlobalParam.JOB_STATE_SPERATOR)[1];
+					for (String tm : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
+						if (tm.length() > 9 && tm.matches("[0-9]+")) {
 							stateStr.append(this.SDF.format(tm.length() < 12 ? new Long(time + "000") : new Long(tm)));
 						} else {
 							stateStr.append(tm);
@@ -273,34 +297,34 @@ public final class NodeMonitor {
 						stateStr.append(", ");
 					}
 
-					sb.append(",[当前存储状态] " + strs.split(":")[0] + ":" + stateStr.toString());
+					sb.append(",[当前存储状态] " + strs.split(GlobalParam.JOB_STATE_SPERATOR)[0] + ":" + stateStr.toString());
 				}
-				if (!GlobalParam.FLOW_INFOS.containsKey(rq.getParameter("instance") + "_full")
-						|| GlobalParam.FLOW_INFOS.get(rq.getParameter("instance") + "_full").size() == 0) {
+				if (!GlobalParam.FLOW_INFOS.containsKey(rq.getParameter("instance"),JOB_TYPE.FULL.name())
+						|| GlobalParam.FLOW_INFOS.get(rq.getParameter("instance"),JOB_TYPE.FULL.name()).size() == 0) {
 					sb.append(",[全量状态] " + "full:null");
 				} else {
-					sb.append(",[全量状态] " + "full:" + GlobalParam.FLOW_INFOS.get(rq.getParameter("instance") + "_full"));
+					sb.append(",[全量状态] " + "full:" + GlobalParam.FLOW_INFOS.get(rq.getParameter("instance"),JOB_TYPE.FULL.name()));
 				}
-				if (!GlobalParam.FLOW_INFOS.containsKey(rq.getParameter("instance") + "_increment")
-						|| GlobalParam.FLOW_INFOS.get(rq.getParameter("instance") + "_increment").size() == 0) {
+				if (!GlobalParam.FLOW_INFOS.containsKey(rq.getParameter("instance"),JOB_TYPE.INCREMENT.name())
+						|| GlobalParam.FLOW_INFOS.get(rq.getParameter("instance"),JOB_TYPE.INCREMENT.name()).size() == 0) {
 					sb.append(",[增量状态] " + "increment:null");
 				} else {
 					sb.append(",[增量状态] " + "increment:"
-							+ GlobalParam.FLOW_INFOS.get(rq.getParameter("instance") + "_increment"));
+							+ GlobalParam.FLOW_INFOS.get(rq.getParameter("instance"),JOB_TYPE.INCREMENT.name()));
 				}
 			}
 
-			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(config.getTransParam().getWriteTo()) != null) {
+			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(config.getPipeParam().getWriteTo()) != null) {
 				String poolname = GlobalParam.nodeTreeConfigs.getNoSqlParamMap()
-						.get(config.getTransParam().getWriteTo()).getPoolName(null);
+						.get(config.getPipeParam().getWriteTo()).getPoolName(null);
 				sb.append(",[WriteTo Pool Status] " + FnConnectionPool.getStatus(poolname));
-			} else if (GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getTransParam().getWriteTo()) != null) {
-				String poolname = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getTransParam().getWriteTo())
+			} else if (GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getPipeParam().getWriteTo()) != null) {
+				String poolname = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(config.getPipeParam().getWriteTo())
 						.getPoolName(null);
 				sb.append(",[WriteTo Pool Status] " + FnConnectionPool.getStatus(poolname));
 			}
 
-			String destination = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(config.getAlias()).getTransParam()
+			String destination = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(config.getAlias()).getPipeParam()
 					.getSearcher();
 			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(destination) != null) {
 				String poolname = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(destination).getPoolName(null);
@@ -326,14 +350,14 @@ public final class NodeMonitor {
 			NodeConfig config = entry.getValue();
 			StringBuffer sb = new StringBuffer();
 			sb.append(entry.getKey() + ":[Alias]" + config.getAlias());
-			sb.append(":[OptimizeCron]" + config.getTransParam().getOptimizeCron());
-			sb.append(":[DeltaCron]" + config.getTransParam().getDeltaCron());
-			sb.append(":[FullCron]" + config.getTransParam().getFullCron());
-			sb.append(":[Searcher]" + config.getTransParam().getSearcher());
+			sb.append(":[OptimizeCron]" + config.getPipeParam().getOptimizeCron());
+			sb.append(":[DeltaCron]" + config.getPipeParam().getDeltaCron());
+			sb.append(":[FullCron]" + config.getPipeParam().getFullCron());
+			sb.append(":[Searcher]" + config.getPipeParam().getSearcher());
 			sb.append(":[Indexer]" + config.isIndexer());
 			sb.append(":[Kafka]" + config.hasKafka() + ":[Rabitmq]" + config.hasRabitmq());
-			sb.append(":[WriteTo]" + config.getTransParam().getWriteTo());
-			sb.append(":[DataFrom]" + config.getTransParam().getDataFrom());
+			sb.append(":[WriteTo]" + config.getPipeParam().getWriteTo());
+			sb.append(":[DataFrom]" + config.getPipeParam().getDataFrom());
 			sb.append(":[IndexType]" + config.getIndexType() + ",");
 			if (rs.containsKey(config.getAlias())) {
 				rs.get(config.getAlias()).add(sb.toString());
@@ -404,20 +428,20 @@ public final class NodeMonitor {
 			String configString = type > 0 ? rq.getParameter("instance") + ":" + type : rq.getParameter("instance");
 			if (rq.getParameter("reset") != null && rq.getParameter("reset").equals("true")
 					&& rq.getParameter("instance").length() > 2) {
-				GlobalParam.nodeTreeConfigs.loadConfig(configString, true, true);
+				GlobalParam.nodeTreeConfigs.loadConfig(configString, true);
 			} else {
-				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance") + "_full");
-				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance") + "_increment");
+				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance"),JOB_TYPE.FULL.name());
+				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance"),JOB_TYPE.INCREMENT.name());
 				this.freeInstanceConnectPool(rq.getParameter("instance"));
 				GlobalParam.nodeTreeConfigs.getSearchConfigs().remove(
 						GlobalParam.nodeTreeConfigs.getNodeConfigs().get(rq.getParameter("instance")).getAlias());
-				GlobalParam.nodeTreeConfigs.loadConfig(configString, false, true);
+				GlobalParam.nodeTreeConfigs.loadConfig(configString, false);
 			}
 			startIndex(configString);
 			currentThreadState(rq.getParameter("instance"), 1);
-			setResponse(1, "Writer " + rq.getParameter("instance") + " reload Config Success!");
+			setResponse(1, rq.getParameter("instance") + " reload Config Success!");
 		} else {
-			setResponse(0, "Index " + rq.getParameter("instance") + " stop error,index parameter not set!");
+			setResponse(0, rq.getParameter("instance") + " not exists!");
 		}
 	}
 
@@ -436,28 +460,38 @@ public final class NodeMonitor {
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
 		boolean state = true;
 		for (Map.Entry<String, NodeConfig> ents : configMap.entrySet()) {
-			String indexname = ents.getKey();
+			String instance = ents.getKey();
 			NodeConfig nodeConfig = ents.getValue();
-			if (indexname.equals(alias) || nodeConfig.getAlias().equals(alias)) {
-				GlobalParam.LAST_UPDATE_TIME.put(indexname, "0");
-				GlobalParam.FLOW_STATUS.get(indexname).set(0);
-				WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap()
-						.get(nodeConfig.getTransParam().getWriteTo());
-				state = state && deleteAction(param, nodeConfig, indexname);
-				GlobalParam.FLOW_STATUS.get(indexname).set(1);
+			if (instance.equals(alias) || nodeConfig.getAlias().equals(alias)) {
+				WarehouseParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				if (dataMap == null) {
+					dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				}
+				List<String> seqs = dataMap.getSeq();
+				if (seqs.size() == 0) {
+					seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
+				}
+				for (String seq : seqs) { 
+					GlobalParam.LAST_UPDATE_TIME.set(instance,seq,"0");
+					GlobalParam.FLOW_STATUS.get(instance,seq).set(0);
+					WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap()
+							.get(nodeConfig.getPipeParam().getWriteTo());
+					state = state && deleteAction(param, nodeConfig, instance,seq);
+					GlobalParam.FLOW_STATUS.get(instance,seq).set(1);
+				}
 			}
 		}
 		if (state) {
-			setResponse(1, "delete writer " + alias + " Success!");
+			setResponse(1, "delete " + alias + " Success!");
 		} else {
-			setResponse(0, "delete writer " + alias + " Failed!");
+			setResponse(0, "delete " + alias + " Failed!");
 		}
 	}
 
-	public void ESIndexDelete(String indexname, WarehouseNosqlParam param, NodeConfig nodeConfig) {
+	public void ESIndexDelete(String indexname,String seq, WarehouseNosqlParam param, NodeConfig nodeConfig) {
 
 		WarehouseSqlParam tmpDBParam = GlobalParam.nodeTreeConfigs.getSqlParamMap()
-				.get(nodeConfig.getTransParam().getDataFrom());
+				.get(nodeConfig.getPipeParam().getDataFrom());
 		HashMap<String, Object> connectParams = new HashMap<String, Object>();
 		connectParams.put("alias", param.getAlias());
 		connectParams.put("defaultValue", param.getDefaultValue());
@@ -471,30 +505,28 @@ public final class NodeMonitor {
 		try {
 			DeleteIndexRequest deleteRequest;
 			if (tmpDBParam.getSeq().size() > 0) {
-				for (String dbseq : tmpDBParam.getSeq()) {
-					String batchid = getBatchId(
-							GlobalParam.CONFIG_PATH + "/" + indexname + "/" + dbseq + "/" + "batch");
-					if (batchid == null) {
-						setResponse(0, "Delete action failed,for no storeid get from store position!");
-						break;
-					}
-					deleteRequest = new DeleteIndexRequest(indexname + dbseq + "_" + batchid);
-					DeleteIndexResponse deleteResponse = es.admin().indices().delete(deleteRequest).actionGet();
-					if (deleteResponse.isAcknowledged()) {
-						resetZk(Common.getTaskStorePath(indexname, dbseq));
-						GlobalParam.LOG.info("index " + indexname + dbseq + "_" + batchid + " removed ");
-					}
+				String batchid = getBatchId(
+						GlobalParam.CONFIG_PATH + "/" + indexname + "/" + seq + "/" + "batch");
+				if (batchid == null) {
+					setResponse(0, "Delete action failed,for no storeid get from store position!");
+					return;
+				}
+				deleteRequest = new DeleteIndexRequest(indexname + seq + "_" + batchid);
+				DeleteIndexResponse deleteResponse = es.admin().indices().delete(deleteRequest).actionGet();
+				if (deleteResponse.isAcknowledged()) {
+					resetZk(Common.getTaskStorePath(indexname, seq));
+					GlobalParam.LOG.info("index " + indexname + seq + "_" + batchid + " removed ");
 				}
 			} else {
 				deleteRequest = new DeleteIndexRequest(indexname);
 				DeleteIndexResponse deleteResponse = es.admin().indices().delete(deleteRequest).actionGet();
 				if (deleteResponse.isAcknowledged()) {
 					resetZk(Common.getTaskStorePath(indexname, null));
-					GlobalParam.LOG.info("index " + indexname + " removed "); 
+					GlobalParam.LOG.info(indexname + " success removed!"); 
 				}
 			}
 		} catch (Exception e) {
-			setResponse(0, "ESIndex Delete Exception!");
+			setResponse(0, indexname + "Delete Exception!");
 		} finally {
 			FnConnectionPool.freeConn(FC, param.getIp() + "_" + param.getDefaultValue(), false);
 		}
@@ -522,20 +554,31 @@ public final class NodeMonitor {
 			if (state == 0) {
 				int waittime = 0;
 				GlobalParam.LOG.info("Instance " + inst + " waitting to stop...");
-				while ((GlobalParam.FLOW_STATUS.get(inst).get() & 2) > 0) {
-					try {
-						waittime++;
-						Thread.sleep(3000);
-						if (waittime > 5) {
-							GlobalParam.FLOW_STATUS.get(inst).set(4);
-						}
-					} catch (InterruptedException e) {
-						GlobalParam.LOG.error("currentThreadState InterruptedException", e);
-					}
+				NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instance); 
+				WarehouseParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				if (dataMap == null) {
+					dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
 				}
-				GlobalParam.LOG.info("Instance " + inst + " success stop!");
-			}
-			GlobalParam.FLOW_STATUS.get(inst).set(state);
+				List<String> seqs = dataMap.getSeq();
+				if (seqs.size() == 0) {
+					seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
+				} 
+				for (String seq : seqs) { 
+					while ((GlobalParam.FLOW_STATUS.get(inst,seq).get() & 2) > 0) {
+						try {
+							waittime++;
+							Thread.sleep(3000);
+							if (waittime > 5) {
+								GlobalParam.FLOW_STATUS.get(inst,seq).set(4);
+							}
+						} catch (InterruptedException e) {
+							GlobalParam.LOG.error("currentThreadState InterruptedException", e);
+						}
+					}
+					GlobalParam.FLOW_STATUS.get(inst,seq).set(state);
+					GlobalParam.LOG.info("Instance " + inst + " success stop!");
+				}
+			} 
 		}
 	}
 
@@ -548,13 +591,13 @@ public final class NodeMonitor {
 		}
 	}
 
-	private boolean deleteAction(WarehouseNosqlParam param, NodeConfig nodeConfig, String indexname) {
+	private boolean deleteAction(WarehouseNosqlParam param, NodeConfig nodeConfig, String indexname, String seq) {
 		if (param.getType() == DATA_TYPE.ES || param.getType() == DATA_TYPE.SOLR
 				|| param.getType() == DATA_TYPE.HBASE) {
 			try {
 				Method m = NodeMonitor.class.getMethod(param.getType().name() + "IndexDelete", String.class,
-						WarehouseNosqlParam.class, NodeConfig.class);
-				m.invoke(this, indexname, param, nodeConfig);
+						String.class,WarehouseNosqlParam.class, NodeConfig.class);
+				m.invoke(this, indexname,seq, param, nodeConfig);
 				return true;
 			} catch (Exception e) {
 				GlobalParam.LOG.error("deleteAction Exception ", e);
@@ -578,7 +621,7 @@ public final class NodeMonitor {
 
 	private void freeInstanceConnectPool(String instanceName) {
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
-		String[] dataSource = { paramConfig.getTransParam().getDataFrom(), paramConfig.getTransParam().getWriteTo() };
+		String[] dataSource = { paramConfig.getPipeParam().getDataFrom(), paramConfig.getPipeParam().getWriteTo() };
 		for (String dt : dataSource) {
 			if (GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(dt) != null) {
 				WarehouseNosqlParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(dt);
@@ -611,16 +654,11 @@ public final class NodeMonitor {
 	}
 
 	private String getBatchId(String path) {
-		String[] strs = getZkData(path).split(":");
+		String[] strs = getZkData(path).split(GlobalParam.JOB_STATE_SPERATOR);
 		if (strs.length > 0) {
 			return strs[0];
 		}
 		return null;
 	}
-
-	private static boolean isInteger(String str) {
-		Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
-		return pattern.matcher(str).matches();
-	}
-
+ 
 }

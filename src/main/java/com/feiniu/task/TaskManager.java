@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
+import com.feiniu.util.Common;
 
 /**
  * Manage node all flow tasks
@@ -46,30 +46,27 @@ public class TaskManager{
 	public boolean runIndexJobNow(String instanceName, NodeConfig NodeConfig,String type){
 		if (NodeConfig.isIndexer() == false)
 			return false; 
-		List<String> seqs = getSeqs(instanceName, NodeConfig); 
+		List<String> seqs = Common.getSeqs(instanceName, NodeConfig); 
 		if (seqs == null) { 
 			log.error(instanceName+" job start run Exception with invalid data source!");
 			return false;
 		} 
-		boolean state = true;
-		if((GlobalParam.FLOW_STATUS.get(instanceName).get()&1)>0){
-			try {
-				if (seqs.size() > 0) {
-					for (String seq : seqs) {
-						if (seq == null)
-							continue;
-						state = jobAction(instanceName + seq, type, "run") && state;
-					}
-				} else {
-					state = jobAction(instanceName, type, "run") && state;
-				}
-			} catch (Exception e) {
-				log.error("runIndexJobNow Exception", e);
-				return false;
+		boolean state = true; 
+		try {
+			if (seqs.size() == 0) {
+				seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
+			} 
+			for (String seq : seqs) {
+				if (seq == null)
+					continue;
+				if ((GlobalParam.FLOW_STATUS.get(instanceName, seq).get() & 1) > 0)
+					state = jobAction(instanceName + seq, type, "run") && state;
 			}
-		}else{
-			state = false;
+		} catch (Exception e) {
+			log.error("runIndexJobNow Exception", e);
+			return false;
 		}
+
 		return state;
 	}
 	/**
@@ -83,7 +80,7 @@ public class TaskManager{
 		if(configMap.containsKey(instanceName)){
 			try{
 				NodeConfig nodeConfig = configMap.get(instanceName);
-				List<String> seqs = getSeqs(instanceName, nodeConfig);
+				List<String> seqs = Common.getSeqs(instanceName, nodeConfig);
 				if (seqs.size() > 0) {
 					for (String seq : seqs) {
 						if (seq == null)
@@ -111,9 +108,9 @@ public class TaskManager{
 	 * start or restart add flow job
 	 */
 	public void startInstance(String instanceName, NodeConfig NodeConfig,boolean needClear) { 
-		if (NodeConfig.isIndexer() == false)
+		if (NodeConfig.checkStatus()==false || NodeConfig.isIndexer() == false)
 			return;
-		List<String> seqs = getSeqs(instanceName, NodeConfig); 
+		List<String> seqs = Common.getSeqs(instanceName, NodeConfig); 
 		if (seqs == null) { 
 			log.error(instanceName+" job create Exception with invalid data source!");
 			return;
@@ -165,22 +162,6 @@ public class TaskManager{
 			log.info("[Job " + actype + "] Failed! " + jobname);
 		} 
 		return state;
-	}
-	
-	private List<String> getSeqs(String instanceName, NodeConfig NodeConfig){
-		List<String> seqs = null;
-		WarehouseParam whParam;
-		if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(NodeConfig.getTransParam().getDataFrom())!=null){
-			whParam = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(
-					NodeConfig.getTransParam().getDataFrom());
-		}else{
-			whParam = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(
-					NodeConfig.getTransParam().getDataFrom());
-		}
-		if (null != whParam) {
-			seqs = whParam.getSeq();
-		}  
-		return seqs;
 	} 
 	 
 	/*
@@ -194,13 +175,13 @@ public class TaskManager{
 	*/
 	private boolean removeFlowScheduleJob(String instance,NodeConfig NodeConfig)throws SchedulerException {
 		boolean state = true;
-		if (NodeConfig.getTransParam().getFullCron() != null) { 
+		if (NodeConfig.getPipeParam().getFullCron() != null) { 
 			state= jobAction(instance, "full", "remove") && state;
 		}
-		if(NodeConfig.getTransParam().getFullCron() == null || NodeConfig.getTransParam().getOptimizeCron()!=null){
+		if(NodeConfig.getPipeParam().getFullCron() == null || NodeConfig.getPipeParam().getOptimizeCron()!=null){
 			state = jobAction(instance, "optimize", "remove") && state;
 		}
-		if(NodeConfig.getTransParam().getDeltaCron() != null){
+		if(NodeConfig.getPipeParam().getDeltaCron() != null){
 			state = jobAction(instance, "increment", "remove") && state;
 		}
 		return state;
@@ -209,32 +190,32 @@ public class TaskManager{
 	private void createFlowScheduleJob(String instance, Task task,
 			NodeConfig NodeConfig,boolean needclear)
 			throws SchedulerException {
-		if (NodeConfig.getTransParam().getFullCron() != null) { 
+		if (NodeConfig.getPipeParam().getFullCron() != null) { 
 			if(needclear){
 				jobAction(instance, "full", "remove");
 			}
 			JobModel _sj = new JobModel(
-					getJobName(instance, "full"), NodeConfig.getTransParam().getFullCron(),
+					getJobName(instance, "full"), NodeConfig.getPipeParam().getFullCron(),
 					"com.feiniu.manager.Task", "startFullJob", task); 
 			taskJobCenter.addJob(_sj); 
 		} 
 		
-		if(NodeConfig.getTransParam().getFullCron() == null || NodeConfig.getTransParam().getOptimizeCron()!=null){
+		if(NodeConfig.getPipeParam().getFullCron() == null || NodeConfig.getPipeParam().getOptimizeCron()!=null){
 			if(needclear){
 				jobAction(instance, "optimize", "remove");
 			}
-			String cron = NodeConfig.getTransParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getTransParam().getOptimizeCron();
-			NodeConfig.getTransParam().setOptimizeCron(cron);
-			if(NodeConfig.getTransParam().getInstanceName()==null) {
+			String cron = NodeConfig.getPipeParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getPipeParam().getOptimizeCron();
+			NodeConfig.getPipeParam().setOptimizeCron(cron);
+			if(NodeConfig.getPipeParam().getInstanceName()==null) {
 				createOptimizeJob(instance, task,cron); 
 			} 
 		}
 		
-		if (NodeConfig.getTransParam().getDeltaCron() != null) { 
+		if (NodeConfig.getPipeParam().getDeltaCron() != null) { 
 			if(needclear){
 				jobAction(instance, "increment", "remove");
 			}
-			String cron = NodeConfig.getTransParam().getDeltaCron();
+			String cron = NodeConfig.getPipeParam().getDeltaCron();
 			if(this.cron_exists.contains(cron)){
 				String[] strs = cron.trim().split(" ");
 				strs[0] = String.valueOf((int)(Math.random()*60));
@@ -248,7 +229,7 @@ public class TaskManager{
 			}
 			JobModel _sj = new JobModel(
 					getJobName(instance, "increment"),
-					NodeConfig.getTransParam().getDeltaCron(), "com.feiniu.manager.Task",
+					NodeConfig.getPipeParam().getDeltaCron(), "com.feiniu.manager.Task",
 					"startIncrementJob", task); 
 			taskJobCenter.addJob(_sj);
 		} 

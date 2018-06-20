@@ -26,7 +26,7 @@ import com.feiniu.connect.handler.ConnectionHandler;
 import com.feiniu.model.FNDataUnit;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNResultSet;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
@@ -198,8 +198,8 @@ public class SolrFlow extends SearcherFlowSocket {
 		if (fq.getFl().length() > 0) {
 			fl = fq.getFl(); 
 		} else { 
-			for (Map.Entry<String, WriteParam> e : NodeConfig
-					.getWriteParamMap().entrySet()) {
+			for (Map.Entry<String, TransParam> e : NodeConfig
+					.getTransParams().entrySet()) {
 				if (e.getValue().getStored().equalsIgnoreCase("true"))
 					fl += "," + e.getKey();
 			} 

@@ -15,7 +15,7 @@ public class ZookeeperConnection extends FnConnectionSocket implements FnConnect
 	private ZooKeeper conn; 
 	
 	private final static Logger log = LoggerFactory
-			.getLogger(ZookeeperConnection.class);
+			.getLogger("Zookeeper Socket");
 
 	public static FnConnection<?> getInstance(
 			HashMap<String, Object> ConnectParams) {

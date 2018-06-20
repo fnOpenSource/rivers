@@ -44,8 +44,7 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private String requesthandler="";
 	
 	public static ESQueryModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
-		ESQueryModel eq = new ESQueryModel();
-		SearchParamUtil.reWriteParam(request, eq,nodeConfig);
+		ESQueryModel eq = new ESQueryModel(); 
 		eq.setSorts(SearchParamUtil.getSortField(request, nodeConfig));
 		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, nodeConfig));
 		if(request.getParam("facet_ext")!=null){

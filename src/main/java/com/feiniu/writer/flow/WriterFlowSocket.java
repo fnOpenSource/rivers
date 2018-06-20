@@ -16,7 +16,7 @@ import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 
 @NotThreadSafe
 public class WriterFlowSocket implements Flow{
@@ -70,7 +70,7 @@ public class WriterFlowSocket implements Flow{
 		FnConnectionPool.release(this.poolName);
 	}
 	
-	public boolean settings(String instantcName, String batchId, Map<String,WriteParam> paramMap) {
+	public boolean settings(String instantcName, String batchId, Map<String,TransParam> transParams) {
 		return false;
 	}
 	
@@ -78,7 +78,7 @@ public class WriterFlowSocket implements Flow{
 		return null;
 	}
 
-	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap,String instantcName, String batchId,boolean isUpdate) throws Exception {
+	public void write(String keyColumn,WriteUnit unit,Map<String, TransParam> transParams,String instantcName, String batchId,boolean isUpdate) throws Exception {
 	}
 
 	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {

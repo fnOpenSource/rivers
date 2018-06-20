@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
 public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
@@ -31,7 +31,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	} 
 
 	@Override
-	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, WriteParam> writeParamMap,Handler handler) {
+	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		try {
 			while (isLocked.get()) {
 				Thread.sleep(1000);
@@ -49,9 +49,9 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				this.jobPage.put("keyColumn", param.get("keyColumn"));
 				this.jobPage.put("IncrementColumn", param.get("incrementField"));  
 				if(handler==null){
-					getAllData(rs,writeParamMap); 
+					getAllData(rs,transParams); 
 				}else{
-					handler.Handle(this,rs,writeParamMap);
+					handler.Handle(this,rs,transParams);
 				} 
 			} catch (Exception e) {
 				this.jobPage.put("lastUpdateTime", -1);
@@ -148,7 +148,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	} 
 	 
 
-	private void getAllData(ResultSet rs,Map<String, WriteParam> writeParamMap) {  
+	private void getAllData(ResultSet rs,Map<String, TransParam> writeParamMap) {  
 		this.datas.clear();
 		String maxId = null;
 		String updateFieldValue=null;

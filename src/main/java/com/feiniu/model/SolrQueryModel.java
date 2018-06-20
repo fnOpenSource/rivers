@@ -10,7 +10,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 
 import com.feiniu.config.NodeConfig;
 import com.feiniu.searcher.flow.SolrQueryBuilder;
-import com.feiniu.util.SearchParamUtil;
 
 public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	private SolrQuery query ; 
@@ -28,8 +27,7 @@ public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
 	private List<String> sortinfo;
 	
 	public static SolrQueryModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
-		SolrQueryModel sq = new SolrQueryModel();
-		SearchParamUtil.reWriteParam(request, sq,nodeConfig);
+		SolrQueryModel sq = new SolrQueryModel(); 
 		sq.setQuery(SolrQueryBuilder.queryBuilder(request, nodeConfig,
 				analyzer, new HashMap<String, String>()));
 		return sq;

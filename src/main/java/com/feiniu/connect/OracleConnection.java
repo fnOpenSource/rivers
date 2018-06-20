@@ -12,7 +12,7 @@ public class OracleConnection extends FnConnectionSocket implements FnConnection
 	private Connection conn = null;   
 	
 	private final static Logger log = LoggerFactory
-			.getLogger(OracleConnection.class);
+			.getLogger("Oracle Socket");
 	
 	static{
 		 try {

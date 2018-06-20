@@ -36,7 +36,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 
@@ -57,7 +57,7 @@ public class SolrFlow extends WriterFlowSocket{
 	private Properties property;
 	private List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>(); 
 	
-	private final static Logger log = LoggerFactory.getLogger(SolrFlow.class);  
+	private final static Logger log = LoggerFactory.getLogger("SolrFlow");  
 	
 	public static SolrFlow getInstance(HashMap<String, Object> connectParams) {
 		SolrFlow o = new SolrFlow();
@@ -85,7 +85,7 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	 
 	@Override
-	public boolean settings(String instantcName, String storeId, Map<String, WriteParam> paramMap) {
+	public boolean settings(String instantcName, String storeId, Map<String, TransParam> transParams) {
 		String name = Common.getStoreName(instantcName, storeId);
 		String path = null; 
 		try {
@@ -93,7 +93,7 @@ public class SolrFlow extends WriterFlowSocket{
 			path = this.property.getProperty("config.path"); 
 			String zkHost = this.conn.getZkHost();
 			moveFile2ZookeeperDest((path+"/"+srcDir).replace("file:", ""), zkDir+"/"+instantcName, zkHost);
-			getSchemaFile(paramMap, instantcName, storeId, zkHost); 
+			getSchemaFile(transParams, instantcName, storeId, zkHost); 
 			CollectionAdminRequest.Create create = new CollectionAdminRequest.Create();
 			create.setConfigName(instantcName);
 			create.setCollectionName(name);
@@ -109,7 +109,7 @@ public class SolrFlow extends WriterFlowSocket{
 	} 
 	
 	@Override
-	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,WriteUnit unit,Map<String, TransParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		String name = Common.getStoreName(instantcName,storeId);
 		if (unit.getData().size() == 0){
 			log.warn("Empty IndexUnit for " + name );
@@ -124,14 +124,14 @@ public class SolrFlow extends WriterFlowSocket{
 			if (r.getValue() == null)
 				continue;
 			String value = String.valueOf(r.getValue());
-			WriteParam indexParam = writeParamMap.get(field);
-			if (indexParam == null)
+			TransParam transParam = writeParamMap.get(field);
+			if (transParam == null)
 				continue;
 			
 			if(isUpdate){  
-				if (indexParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
-					if (indexParam.getSeparator() != null){
-						String[] vs = value.split(indexParam.getSeparator());
+				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
+					if (transParam.getSeparator() != null){
+						String[] vs = value.split(transParam.getSeparator());
 						Map<String,Object> fm = new HashMap<>(1);
 						fm.put("set",vs);
 						doc.setField(field, fm);
@@ -151,9 +151,9 @@ public class SolrFlow extends WriterFlowSocket{
 					doc.setField(field, fm);
 				}
 			}else{
-				if (indexParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
-					if (indexParam.getSeparator() != null){
-						String[] vs = value.split(indexParam.getSeparator());
+				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
+					if (transParam.getSeparator() != null){
+						String[] vs = value.split(transParam.getSeparator());
 						doc.addField(field, vs);
 					}
 					else
@@ -247,7 +247,7 @@ public class SolrFlow extends WriterFlowSocket{
 
 	@Override
 	public String getNewStoreId(String instance,boolean isIncrement,String seq, final NodeConfig nodeConfig) { 
-		String instanceName = Common.getInstanceName(instance, seq,nodeConfig.getTransParam().getInstanceName());
+		String instanceName = Common.getInstanceName(instance, seq,nodeConfig.getPipeParam().getInstanceName());
 		String b = Common.getStoreName(instanceName, "b");
 		String a = Common.getStoreName(instanceName, "a");
 		String select="";  
@@ -258,7 +258,7 @@ public class SolrFlow extends WriterFlowSocket{
 				select = "b"; 
 			}else{
 				select = "a"; 
-				settings(instanceName,select, nodeConfig.getWriteParamMap());
+				settings(instanceName,select, nodeConfig.getTransParams());
 				setAlias(instanceName, select, nodeConfig.getAlias());
 			}   
 		}else{
@@ -266,12 +266,12 @@ public class SolrFlow extends WriterFlowSocket{
 			if(this.existsCollection(b)){ 
 				select =  "a";
 			}
-			settings(instanceName,select, nodeConfig.getWriteParamMap());
+			settings(instanceName,select, nodeConfig.getTransParams());
 		} 
 		return select;
 	}
  
-	private void getSchemaFile(Map<String,WriteParam> paramMap,String instantcName, String storeId,String zkHost) {
+	private void getSchemaFile(Map<String,TransParam> paramMap,String instantcName, String storeId,String zkHost) {
 		BufferedReader head_reader = null;
 		BufferedReader tail_reader = null; 
 		String path = null;
@@ -306,22 +306,22 @@ public class SolrFlow extends WriterFlowSocket{
 			
 			StringBuilder field = new StringBuilder();
 			String firstFiled = null;
-			for (Map.Entry<String, WriteParam> e : paramMap.entrySet()) {
-				WriteParam p = e.getValue();
+			for (Map.Entry<String, TransParam> e : paramMap.entrySet()) {
+				TransParam tp = e.getValue();
 				field.delete(0, field.length());
-				if (p.getName() == null)
+				if (tp.getName() == null)
 					continue;
 				if(firstFiled == null){
-					firstFiled = p.getName();
+					firstFiled = tp.getName();
 				}
-				field.append("<field ").append("name=\"").append(p.getName()).append("\" ");
-				if("string".equals(p.getIndextype()) && "not_analyzed".equalsIgnoreCase(p.getAnalyzer())) {
+				field.append("<field ").append("name=\"").append(tp.getAlias()).append("\" ");
+				if("string".equals(tp.getIndextype()) && "not_analyzed".equalsIgnoreCase(tp.getAnalyzer())) {
 					field.append("type=\"").append("string\" ");
 				}else{
-					field.append("type=\"").append(p.getIndextype()).append("\" ");
+					field.append("type=\"").append(tp.getIndextype()).append("\" ");
 				}
-				field.append("indexed=\"").append(p.getIndexed()).append("\" ");
-				field.append("stored=\"").append(p.getStored()).append("\" ");
+				field.append("indexed=\"").append(tp.getIndexed()).append("\" ");
+				field.append("stored=\"").append(tp.getStored()).append("\" ");
 				field.append("required=\"false\" />");
 				sb.append(field.toString()).append("\n");
 			}

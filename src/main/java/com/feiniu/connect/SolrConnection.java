@@ -13,7 +13,7 @@ public class SolrConnection extends FnConnectionSocket implements FnConnection<C
 	private CloudSolrClient conn = null; 
 
 	private final static Logger log = LoggerFactory
-			.getLogger(SolrConnection.class);
+			.getLogger("Solr Socket");
 
 	public static FnConnection<?> getInstance(
 			HashMap<String, Object> ConnectParams) {

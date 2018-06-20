@@ -21,7 +21,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
+import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.writer.flow.JobWriter;
 
 public class Common {
@@ -203,9 +205,9 @@ public class Common {
 	public static void saveTaskInfo(String instanceName, String seq, String storeId) {
 		if (storeId.length() > 0) {
 			ZKUtil.setData(getTaskStorePath(instanceName, seq),
-					storeId + ":" + GlobalParam.LAST_UPDATE_TIME.get(instanceName));
+					storeId + GlobalParam.JOB_STATE_SPERATOR + GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq));
 		}
-	}
+	} 
 
 	/**
 	 * 
@@ -236,7 +238,7 @@ public class Common {
 	public static String getInstanceName(String instanceName, String seq,String fixName) {
 		if(fixName!=null)
 			return fixName;
-		if (seq != null && seq.length() > 0) {
+		if (seq != null && !seq.equals(GlobalParam.DEFAULT_RESOURCE_SEQ)) {
 			return instanceName + seq;
 		} else {
 			return instanceName;
@@ -245,7 +247,7 @@ public class Common {
 	}
 
 	/**
-	 * get store tag name
+	 * get store tag name and will auto create new one with some conditions.
 	 * 
 	 * @param isIncrement
 	 * @param reCompute
@@ -264,7 +266,7 @@ public class Common {
 			String storeId = "";
 			if (b != null && b.length > 0) {
 				String str = new String(b);
-				String[] strs = str.split(":");
+				String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
 				if (strs.length > 0) {
 					if (strs[0].equals("a") || strs[0].equals("b")) {
 						storeId = strs[0];
@@ -273,7 +275,7 @@ public class Common {
 					}
 				}
 				if (strs.length > 1) {
-					GlobalParam.LAST_UPDATE_TIME.put(instanceName, strs[1]);
+					GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, strs[1]);
 				}
 			}
 			if (storeId.length() == 0 || reCompute) {
@@ -287,4 +289,48 @@ public class Common {
 			return writer.getNewStoreId(instanceName, false, seq);
 		}
 	}
+	
+	/**
+	 * get store tag name
+	 * @param instanceName
+	 * @param seq
+	 * @return String
+	 */
+	public static String getStoreId(String instanceName, String seq) {
+		String path = Common.getTaskStorePath(instanceName, seq);
+		byte[] b = ZKUtil.getData(path, true);
+		String storeId = "";
+		if (b != null && b.length > 0) {
+			String str = new String(b);
+			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
+			if (strs.length > 0) {
+				if (strs[0].equals("a") || strs[0].equals("b")) {
+					storeId = strs[0];
+				}
+			}
+		}
+		return storeId;
+	}
+	
+	/**
+	 * get read data source seq flags
+	 * @param instanceName
+	 * @param NodeConfig
+	 * @return
+	 */
+	public static List<String> getSeqs(String instanceName, NodeConfig NodeConfig){
+		List<String> seqs = null;
+		WarehouseParam whParam;
+		if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(NodeConfig.getPipeParam().getDataFrom())!=null){
+			whParam = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(
+					NodeConfig.getPipeParam().getDataFrom());
+		}else{
+			whParam = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(
+					NodeConfig.getPipeParam().getDataFrom());
+		}
+		if (null != whParam) {
+			seqs = whParam.getSeq();
+		}  
+		return seqs;
+	} 
 }

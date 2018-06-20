@@ -1,15 +1,15 @@
 package com.feiniu.config;
 
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.node.SocketCenter;
+import com.feiniu.model.RiverModel;
 import com.feiniu.node.NodeMonitor;
+import com.feiniu.node.SocketCenter;
 import com.feiniu.task.Task;
 import com.feiniu.util.email.FNEmailSender;
 /**
@@ -23,9 +23,11 @@ public class GlobalParam {
 	
 	public static String VERSION;
 	/**node core writer status,0 stop 1 normal 2running 4break running thread */
-	public volatile static HashMap<String,AtomicInteger> FLOW_STATUS = new HashMap<String, AtomicInteger>();
+	public volatile static RiverModel<AtomicInteger> FLOW_STATUS = new RiverModel<AtomicInteger>();
 	/**FLOW_INFOS current flow runing state information*/
-	public static HashMap<String,HashMap<String,String>> FLOW_INFOS = new HashMap<String, HashMap<String,String>>();
+	public static RiverModel<HashMap<String,String>> FLOW_INFOS = new RiverModel< HashMap<String,String>>();
+	
+	public static RiverModel<String> LAST_UPDATE_TIME = new RiverModel<String>();
 	
 	public static boolean WRITE_BATCH = false;
 	
@@ -39,9 +41,7 @@ public class GlobalParam {
 	
 	public static SocketCenter SOCKET_CENTER;
 	
-	public static NodeMonitor nodeMonitor;
-	
-	public static ConcurrentHashMap<String,String> LAST_UPDATE_TIME = new ConcurrentHashMap<String, String>();
+	public static NodeMonitor nodeMonitor; 
 	
 	public static FNEmailSender mailSender;
 	
@@ -69,7 +69,13 @@ public class GlobalParam {
 	
 	public final static String DEFAULT_RESOURCE_TAG = "_DEFAULT";
 	
-	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
+	public final static String DEFAULT_RESOURCE_SEQ = "";
+	 
+	public static enum JOB_TYPE {
+		FULL,INCREMENT
+	}
+	
+	public final static String JOB_STATE_SPERATOR = ":"; 
 	
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
 	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f;
@@ -108,4 +114,6 @@ public class GlobalParam {
 	public static final String _incrementField = "#{update_time}"; 
 	public static final String _start_time =  "#{start_time}"; 
 	public static final String _end_time =  "#{end_time}"; 
+	
+	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
 }

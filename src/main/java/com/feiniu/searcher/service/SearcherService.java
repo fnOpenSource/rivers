@@ -71,13 +71,11 @@ public class SearcherService{
 		FNRequest rq = FNRequest.getInstance(); 
 		Request base_request = (Request) input;
 		String path = base_request.getPathInfo();
-		String handle = path.substring(1); 
-		rq.setHandle(handle); 
-		@SuppressWarnings("rawtypes")
-		Iterator iter = base_request.getParameterMap().entrySet().iterator();
-		while (iter.hasNext()) {
-			@SuppressWarnings("rawtypes")
-			Map.Entry entry = (Map.Entry) iter.next();
+		String pipe = path.substring(1); 
+		rq.setPipe(pipe);  
+		Iterator<Map.Entry<String,String>> iter = base_request.getParameterMap().entrySet().iterator();
+		while (iter.hasNext()) { 
+			Map.Entry<String,String> entry = iter.next();
 			String key = (String) entry.getKey();
 			String value = base_request.getParameter(key);
 			rq.addParam(key, value);
@@ -88,10 +86,10 @@ public class SearcherService{
 	public FNResponse process(FNRequest request) { 
 		long startTime = System.currentTimeMillis();
 		FNResponse response = null; 
-		String handleName = request.getHandle(); 
+		String pipe = request.getPipe(); 
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getSearchConfigs();
-		if (configMap.containsKey(handleName)) { 
-			FNSearcher searcher = SocketCenter.getSearcher(handleName);
+		if (configMap.containsKey(pipe)) { 
+			FNSearcher searcher = SocketCenter.getSearcher(pipe);
 			response = searcher.startSearch(request);
 		} 
 		long endTime = System.currentTimeMillis();
@@ -117,7 +115,7 @@ public class SearcherService{
 			FNRequest _request = parseRequest((Object) rq);
 
 			if (GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(
-					_request.getHandle())) {
+					_request.getPipe())) {
 				FNResponse _response = null;
 				try {
 					_response = process(_request);

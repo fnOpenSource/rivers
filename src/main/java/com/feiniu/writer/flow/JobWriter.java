@@ -5,20 +5,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
+import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.correspond.ReportStatus;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNWriteResponse;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
-import com.feiniu.model.param.WriteParam;
 import com.feiniu.reader.Reader;
 import com.feiniu.reader.flow.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
@@ -52,11 +51,11 @@ public final class JobWriter {
 		this.nodeConfig = nodeConfig;  
 		this.flowSocket = flowSocket;
 		try {
-			if(nodeConfig.getTransParam().getDataFromhandler()!=null){
-				this.dataFromHandler = (Handler) Class.forName(nodeConfig.getTransParam().getDataFromhandler()).newInstance();
+			if(nodeConfig.getPipeParam().getDataFromhandler()!=null){
+				this.dataFromHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getDataFromhandler()).newInstance();
 			} 
-			if(nodeConfig.getTransParam().getSqlParam().getHandler()!=null) {
-				this.scanHandler = (Handler) Class.forName(nodeConfig.getTransParam().getSqlParam().getHandler()).newInstance();
+			if(nodeConfig.getPipeParam().getSqlParam().getHandler()!=null) {
+				this.scanHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getSqlParam().getHandler()).newInstance();
 			}
 		}catch(Exception e){
 			log.error("FNIndexer Construct Exception,",e);
@@ -65,7 +64,7 @@ public final class JobWriter {
 	
 	public String write(String instanceName, String storeId, String lastTime,
 			String DataSeq, boolean isFullIndex) throws FNException{
-		if(this.nodeConfig.getTransParam().getNoSqlParam()!=null){
+		if(this.nodeConfig.getPipeParam().getNoSqlParam()!=null){
 			return doNosqlWrite(instanceName, storeId, lastTime, isFullIndex);
 		}else{
 			return doSqlWrite(instanceName, storeId, lastTime, DataSeq, isFullIndex);
@@ -122,8 +121,7 @@ public final class JobWriter {
 	public void createStorePosition(String store_main,String storeId){
 		this.writer.getResource();
 		try{
-			this.writer.settings(store_main, storeId,
-					getWriteParamMap());
+			this.writer.settings(store_main, storeId,nodeConfig.getTransParams());
 		}finally{
 			this.writer.freeResource(false);
 		}  
@@ -147,10 +145,7 @@ public final class JobWriter {
 			this.writer.freeConnPool();
 		}   
 	}
-
-	public Map<String, WriteParam> getWriteParamMap(){
-		return nodeConfig.getWriteParamMap();
-	}
+ 
 
 /**
  * do index one page
@@ -182,7 +177,7 @@ public final class JobWriter {
 			boolean freeConn = false;
 			try{
 				while (reader.nextLine()) {   
-					this.writer.write(reader.getkeyColumn(),reader.getLineData(),getWriteParamMap(),instance, storeId,isUpdate);
+					this.writer.write(reader.getkeyColumn(),reader.getLineData(),nodeConfig.getTransParams(),instance, storeId,isUpdate);
 					count++;
 				}
 				String lastUpdateTime = reader.getLastUpdateTime();
@@ -234,12 +229,12 @@ public final class JobWriter {
 		private String doNosqlWrite(String instanceName, String storeId, String lastTime,
 				boolean isFullIndex)  throws FNException{  
 			String desc = "increment";
-			String indexName = Common.getInstanceName(instanceName,"",nodeConfig.getTransParam().getInstanceName()); 
+			String indexName = Common.getInstanceName(instanceName,"",nodeConfig.getPipeParam().getInstanceName()); 
 			if (isFullIndex) {
 				createStorePosition(indexName, storeId); 
 				desc = "full";
 			} 
-			NOSQLParam noSqlParam = nodeConfig.getTransParam().getNoSqlParam();
+			NOSQLParam noSqlParam = nodeConfig.getPipeParam().getNoSqlParam();
 			try {
 				if(lastTime==null || lastTime.equals(""))
 					lastTime = "0";
@@ -269,7 +264,7 @@ public final class JobWriter {
 						pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 						 
 						resp = writeDataSet(desc,indexName, storeId, "",
-								(HashMap<String, Object>) flowSocket.getJobPage(pageParams,getWriteParamMap(),this.dataFromHandler),
+								(HashMap<String, Object>) flowSocket.getJobPage(pageParams,nodeConfig.getTransParams(),this.dataFromHandler),
 								",complete:" + processPos + "/" + pageList.size(),false,false);
 
 						total += resp.getCount();
@@ -297,14 +292,16 @@ public final class JobWriter {
 		 */
 		private String doSqlWrite(String instanceName, String storeId, String lastTime,
 				String DataSeq, boolean isFullIndex) throws FNException{
-			String desc = "increment";
-			boolean isUpdate = nodeConfig.getTransParam().getWriteType().equals("increment")?true:false;
-			String destName = Common.getInstanceName(instanceName,DataSeq,nodeConfig.getTransParam().getInstanceName()); 
+			String desc;
+			boolean isUpdate = nodeConfig.getPipeParam().getWriteType().equals("increment")?true:false;
+			String destName = Common.getInstanceName(instanceName,DataSeq,nodeConfig.getPipeParam().getInstanceName()); 
 			if (isFullIndex) {
 				createStorePosition(destName, storeId); 
-				desc = "full";
-			} 
-			SQLParam sqlParam = nodeConfig.getTransParam().getSqlParam();
+				desc = JOB_TYPE.FULL.name();
+			}else {
+				desc = JOB_TYPE.INCREMENT.name();
+			}
+			SQLParam sqlParam = nodeConfig.getPipeParam().getSqlParam();
 			List<String> table_seqs = sqlParam.getSeq().size() > 0 ? sqlParam.getSeq()
 					: Arrays.asList("");
 			String originalSql = sqlParam.getSql();
@@ -317,10 +314,10 @@ public final class JobWriter {
 				newLastUpdateTimes = lastTime.split(",");
 				lastUpdateTimes = lastTime.split(",");
 			}
-			if(!GlobalParam.FLOW_INFOS.containsKey(instanceName+"_"+desc)){
-				GlobalParam.FLOW_INFOS.put(instanceName+"_"+desc,new HashMap<String, String>());
+			if(!GlobalParam.FLOW_INFOS.containsKey(instanceName,desc)){
+				GlobalParam.FLOW_INFOS.set(instanceName,desc,new HashMap<String, String>());
 			} 
-			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).put(instanceName+" seqs nums",String.valueOf(table_seqs.size()));
+			GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName+" seqs nums",String.valueOf(table_seqs.size()));
 			for (int i = 0; i < table_seqs.size(); i++) {
 				int total = 0;
 				FNWriteResponse resp = null;
@@ -354,14 +351,14 @@ public final class JobWriter {
 				do {
 					List<String> pageList = flowSocket.getPageSplit(param);
 					HashMap<String, String> sqlParams;
-					GlobalParam.FLOW_INFOS.get(instanceName + "_" + desc).put(instanceName + tseq, "start count page...");
+					GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq, "start count page...");
 					if (pageList.size() > 0) {
 						indexLog("start " + desc, destName, storeId, tseq, "", maxId, lastUpdateTime, 0, "start",
 								",totalpage:" + pageList.size());
 						int processPos = 0;
 						for (String page : pageList) {
 							processPos++;
-							GlobalParam.FLOW_INFOS.get(instanceName + "_" + desc).put(instanceName + tseq,
+							GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq,
 									processPos + "/" + pageList.size());
 							maxId = page;
 							sqlParams = null;
@@ -375,7 +372,7 @@ public final class JobWriter {
 							sqlParams.put(GlobalParam._incrementField, incrementField);
 							String sql = buildSql(originalSql, sqlParams);
 
-							if ((GlobalParam.FLOW_STATUS.get(instanceName).get() & 4) > 0) {
+							if ((GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).get() & 4) > 0) {
 								indexLog("kill " + desc, instanceName, storeId, tseq, String.valueOf(total), maxId,
 										newLastUpdateTime, Common.getNow() - start, "complete", "");
 								break;
@@ -393,14 +390,14 @@ public final class JobWriter {
 								newLastUpdateTimes[i] = String.valueOf(resp.getLastUpdateTime());
 							}
 							if (!isFullIndex) {
-								GlobalParam.LAST_UPDATE_TIME.put(instanceName, getTimeString(newLastUpdateTimes));
+								GlobalParam.LAST_UPDATE_TIME.set(instanceName,DataSeq, getTimeString(newLastUpdateTimes));
 								Common.saveTaskInfo(instanceName, DataSeq, storeId);
 							}
 						}
 						indexLog("complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
 								newLastUpdateTime, Common.getNow() - start, "complete", "");
-						if (nodeConfig.getTransParam().getNextJob() != null
-								&& nodeConfig.getTransParam().getNextJob().length > 0) {
+						if (nodeConfig.getPipeParam().getNextJob() != null
+								&& nodeConfig.getPipeParam().getNextJob().length > 0) {
 							ReportStatus.report(instanceName, desc);
 						}
 					} else {
@@ -430,15 +427,15 @@ public final class JobWriter {
 					}
 				}  
 			} 
-			GlobalParam.FLOW_INFOS.get(instanceName+"_"+desc).clear();
+			GlobalParam.FLOW_INFOS.get(instanceName,desc).clear();
 			if (isFullIndex){
 				int waittime=0;
-				while ((GlobalParam.FLOW_STATUS.get(instanceName).get() & 2) > 0) {
+				while ((GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).get() & 2) > 0) {
 					try {
 						waittime++;
 						Thread.sleep(2000);
 						if (waittime > 300) {
-							GlobalParam.FLOW_STATUS.get(instanceName).set(4);
+							GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).set(4);
 							Thread.sleep(10000);
 						}
 					} catch (InterruptedException e) {
@@ -462,7 +459,7 @@ public final class JobWriter {
 		params.put("sql", sql); 
 		params.put("incrementField", incrementField); 
 		params.put("keyColumn", keyColumn); 
-		return (HashMap<String, Object>) flowSocket.getJobPage(params,getWriteParamMap(),this.dataFromHandler);
+		return (HashMap<String, Object>) flowSocket.getJobPage(params,nodeConfig.getTransParams(),this.dataFromHandler);
 	}
 	
 	private String getTimeString(String[] strs) {
@@ -498,7 +495,7 @@ public final class JobWriter {
 		String useTimeFormat = Common.seconds2time(useTime);
 		String str = "["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : "");
 		String update;
-		if(lastUpdateTime.length()>9){
+		if(lastUpdateTime.length()>9 && lastUpdateTime.matches("[0-9]+")){ 
 			update = this.SDF.format(lastUpdateTime.length()<12?new Long(lastUpdateTime+"000"):new Long(lastUpdateTime));
 		}else{
 			update = lastUpdateTime;

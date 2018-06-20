@@ -2,6 +2,7 @@ package com.feiniu.node.startup;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,6 +24,7 @@ import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.Task;
 import com.feiniu.task.TaskManager;
+import com.feiniu.util.Common;
 import com.feiniu.util.IKAnalyzer5;
 import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
@@ -92,12 +94,10 @@ public final class Run {
 		
 		if((GlobalParam.SERVICE_LEVEL&6)>0) {
 			Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
-			for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) {
-				String instanceName = entry.getKey();
-				NodeConfig NodeConfig = entry.getValue();
-				initParams(instanceName);
-				if(NodeConfig.getTransParam().getInstanceName()!=null)
-						initParams(NodeConfig.getTransParam().getInstanceName()); 
+			for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) { 
+				NodeConfig nodeConfig = entry.getValue(); 
+				if(nodeConfig.checkStatus())
+						initParams(nodeConfig); 
 			}
 		} 
 	}
@@ -117,8 +117,15 @@ public final class Run {
 		}
 	}  
 	
-	private void initParams(String indexName){
-		GlobalParam.FLOW_STATUS.put(indexName, new AtomicInteger(1));
-		GlobalParam.LAST_UPDATE_TIME.put(indexName, "0");
+	private void initParams(NodeConfig nodeConfig){ 
+		String instance = nodeConfig.getName(); 
+		List<String> seqs = Common.getSeqs(instance, nodeConfig); 
+		if (seqs.size() == 0) {
+			seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
+		} 
+		for (String seq : seqs) {
+			GlobalParam.FLOW_STATUS.set(instance,seq, new AtomicInteger(1));
+			GlobalParam.LAST_UPDATE_TIME.set(instance,seq, "0");
+		}
 	}
 } 

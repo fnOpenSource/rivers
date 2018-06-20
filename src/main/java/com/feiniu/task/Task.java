@@ -31,7 +31,7 @@ public class Task{
 			.getLogger(Task.class);
 	
 	public static Task createTask(String instanceName, JobWriter writer){
-		return new Task(instanceName, writer, "");
+		return new Task(instanceName, writer, GlobalParam.DEFAULT_RESOURCE_SEQ);
 	}
 	
 	public static Task createTask(String instanceName, JobWriter writer, String seq){
@@ -48,12 +48,12 @@ public class Task{
 	 * if no full job will auto open optimize job 
 	 */
 	public void optimizeInstance(){
-		GlobalParam.FLOW_STATUS.get(instanceName).set(0);
+		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(0);
 		String indexName = instanceName;
 		if (seq != null && seq.length() > 0)
 			indexName = instanceName + seq;  
 		jobWriter.optimizeIndex(indexName, Common.getStoreId(instanceName,seq,jobWriter,true,false));
-		GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 	}
 	
 	public void startFullJob() {
@@ -61,18 +61,18 @@ public class Task{
 			this.runState.getAndAdd(2); 
 			try{  
 				Common.getStoreId(instanceName,seq,jobWriter,true,false);
-				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName);
+				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq);
 					
 				String storeId = Common.getStoreId(instanceName,seq,jobWriter,false,false); 
 				jobWriter.write(instanceName, storeId, "-1", seq, true);
-				GlobalParam.LAST_UPDATE_TIME.put(instanceName, keepCurrentUpdateTime);
-				GlobalParam.FLOW_STATUS.get(instanceName).set(4); 
+				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq,keepCurrentUpdateTime);
+				GlobalParam.FLOW_STATUS.get(instanceName,seq).set(4); 
 				Common.saveTaskInfo(instanceName,seq,storeId); 
 			}catch(Exception e){
 				log.error(instanceName+" Full Exception",e);
 			}finally{
 				this.runState.getAndAdd(-2);
-				GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+				GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 			}
 		}else{
 			log.info(instanceName+" full job is running, ignore this time job!");
@@ -83,20 +83,20 @@ public class Task{
 	public void startIncrementJob() {
 		synchronized (this.runState) {
 			if((this.runState.get()&1)==0){    
-				if((GlobalParam.FLOW_STATUS.get(instanceName).get()&1)>0){  
+				if((GlobalParam.FLOW_STATUS.get(instanceName,seq).get()&1)>0){  
 					this.runState.getAndAdd(1);
-					GlobalParam.FLOW_STATUS.get(instanceName).set(3);
+					GlobalParam.FLOW_STATUS.get(instanceName,seq).set(3);
 					String storeId = Common.getStoreId(instanceName,seq,jobWriter,true,recompute);
 					String lastUpdateTime; 
 					try {
-						lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName), seq,false);
-						GlobalParam.LAST_UPDATE_TIME.put(instanceName, lastUpdateTime); 
+						lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq), seq,false);
+						GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, lastUpdateTime); 
 					} catch (Exception e) { 
 						if(e.getMessage().equals("storeId not found")){
 							storeId = Common.getStoreId(instanceName,seq,jobWriter,true,true);
 							try {
-								lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName), seq,false);
-								GlobalParam.LAST_UPDATE_TIME.put(instanceName, lastUpdateTime); 
+								lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq), seq,false);
+								GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, lastUpdateTime); 
 							}catch (Exception ex) {
 								log.error(instanceName+" Increment Exception",e);
 							}
@@ -104,7 +104,7 @@ public class Task{
 						log.error(instanceName+" startIncrementJob Exception",e);
 					}finally{
 						recompute = false;
-						GlobalParam.FLOW_STATUS.get(instanceName).set(1);
+						GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 						this.runState.getAndAdd(-1); 
 					} 
 				}else{

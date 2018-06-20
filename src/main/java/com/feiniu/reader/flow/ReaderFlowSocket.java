@@ -10,7 +10,7 @@ import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
 public class ReaderFlowSocket<T> implements Flow{ 
@@ -47,7 +47,7 @@ public class ReaderFlowSocket<T> implements Flow{
 		
 	} 
 
-	public T getJobPage(HashMap<String, String> param,Map<String, WriteParam> writeParamMap,Handler handler) {
+	public T getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		return null;
 	}
 

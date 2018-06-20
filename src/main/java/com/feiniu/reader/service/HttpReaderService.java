@@ -25,7 +25,7 @@ import com.feiniu.model.ESQueryModel;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WarehouseParam;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
@@ -140,9 +140,9 @@ public class HttpReaderService {
 							try {
 								coreWriter.writeDataSet("HTTP PUT",
 										Common.getInstanceName(instance, seq,
-												coreWriter.getNodeConfig().getTransParam().getInstanceName()),
+												coreWriter.getNodeConfig().getPipeParam().getInstanceName()),
 										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
-												coreWriter.getWriteParamMap()),
+												coreWriter.getNodeConfig().getTransParams()),
 										"", isUpdate,monopoly);
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
@@ -207,7 +207,7 @@ public class HttpReaderService {
 								break;
 							}
 							String storeid = Common.getStoreId(instance,seq, coreWriter, true, true);
-							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(coreWriter.getNodeConfig().getTransParam().getWriteTo());
+							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(coreWriter.getNodeConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
 								query = ESQueryModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
@@ -238,7 +238,7 @@ public class HttpReaderService {
 		}
 
 		private HashMap<String, Object> getJobPage(Object data, String keycolumn, String updatecolumn,
-				Map<String, WriteParam> writeParamMap) {
+				Map<String, TransParam> transParams) {
 			HashMap<String, Object> jobPage = new HashMap<String, Object>();
 			LinkedList<WriteUnit> datas = new LinkedList<WriteUnit>();
 			jobPage.put("keyColumn", keycolumn);
@@ -260,7 +260,7 @@ public class HttpReaderService {
 					if (k.getKey().equals(jobPage.get("IncrementColumn"))) {
 						updateFieldValue = String.valueOf(k.getValue());
 					}
-					u.addFieldValue(k.getKey(), k.getValue(), writeParamMap);
+					u.addFieldValue(k.getKey(), k.getValue(), transParams);
 				}
 				datas.add(u);
 			}

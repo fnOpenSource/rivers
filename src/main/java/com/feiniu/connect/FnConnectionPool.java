@@ -29,7 +29,7 @@ public final class FnConnectionPool {
 	private int waitTime=1000;
 
 	private final static Logger log = LoggerFactory
-			.getLogger(FnConnectionPool.class);
+			.getLogger("FnConnectionPool");
 
 	static{
 		FnCPool = new FnConnectionPool();

@@ -6,10 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.model.param.FNParam;
+import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.TransParam;
 
 public class FNRequest {
-	private String handle = null;
+	private String pipe = null;
 	private String detail = null;
 	private String originalKeyword = null; 
 	private Map<String, String> params = new HashMap<String, String>(); 
@@ -27,12 +28,12 @@ public class FNRequest {
 		return err;
 	}
  
-	public String getHandle() {
-		return this.handle;
+	public String getPipe() {
+		return this.pipe;
 	}
 
-	public void setHandle(String handle) {
-		this.handle = handle;
+	public void setPipe(String pipe) {
+		this.pipe = pipe;
 	}
 
 	public String getDetail() {
@@ -44,11 +45,11 @@ public class FNRequest {
 	}
 
 	public String toString() {
-		return this.handle + ":" + params.toString();
+		return this.pipe + ":" + params.toString();
 	}
 
 	public boolean isValid() {
-		return this.handle != null && this.handle.length() > 0;
+		return this.pipe != null && this.pipe.length() > 0;
 	}
 
 	public boolean addParam(String key, String value) {
@@ -76,16 +77,36 @@ public class FNRequest {
 		return this.params;
 	}  
 
-	public Object get(String key, FNParam pr) {
-		if (pr == null)
+	public Object get(String key, SearchParam sp,String type) {
+		if (sp == null)
+			return null;
+		String v;
+		if (params.containsKey(key)) {
+			v = params.get(key);
+		}else{
+			v = sp.getDefaultValue();
+		} 
+		try {
+			Class<?> c = Class.forName(type);
+			Method method = c.getMethod("valueOf", String.class);
+			return method.invoke(c,String.valueOf(v)); 
+		} catch (Exception e) {
+			addError("param "+key+" parse Exception!");
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public Object get(String key, TransParam tp) {
+		if (tp == null)
 			return null;
 		try {
-			Class<?> c = Class.forName(pr.getParamtype());
+			Class<?> c = Class.forName(tp.getParamtype());
 			String v;
 			if (params.containsKey(key)) {
 				v = params.get(key);
 			}else{
-				v = pr.getDefaultValue();
+				v = tp.getDefaultvalue();
 			}
 			if (c.getSimpleName().equalsIgnoreCase("String"))
 				return v;

@@ -50,10 +50,10 @@ public class NodeTreeConfigs {
 		    this.sqlFileName = sqlFileName;
 		    GlobalParam.POOL_SIZE = Integer.parseInt(pool_size);
 		    GlobalParam.WRITE_BATCH = write_batch.equals("false")?false:true;
-			this.loadConfig(instances,true,false);
+			loadConfig(instances,true);
 	}
 	
-	public void loadConfig(String instances,boolean reset,boolean init){
+	public void loadConfig(String instances,boolean reset){
 		if(reset){
 			this.nodeConfigs = new HashMap<String, NodeConfig>();
 		} 
@@ -69,14 +69,13 @@ public class NodeTreeConfigs {
 				indexType = Integer.parseInt(strs[1]); 
 			}
 			String filename = GlobalParam.CONFIG_PATH + "/" +  name  + "/" +  name + ".xml";
-			NodeConfig nconfig = new NodeConfig(filename, indexType); 
-			if(init){
-				nconfig.init();
-				if(nconfig.getAlias().equals("")){
-					nconfig.setAlias(name);
-				} 
-				this.searchConfigMap.put(nconfig.getAlias(), nconfig);
-			}
+			NodeConfig nconfig = new NodeConfig(filename, indexType);  
+			nconfig.init();
+			if(nconfig.getAlias().equals("")){
+				nconfig.setAlias(name);
+			}  
+			nconfig.setName(name);
+			this.searchConfigMap.put(nconfig.getAlias(), nconfig);
 			this.nodeConfigs.put(name, nconfig);  
 		}	  
 	}
@@ -150,11 +149,7 @@ public class NodeTreeConfigs {
 	}
 
 	public void init(){
-		for(Map.Entry<String, NodeConfig> e : this.nodeConfigs.entrySet()){
-			e.getValue().init();
-			if(e.getValue().getAlias().equals("")){
-				e.getValue().setAlias(e.getKey());
-			}
+		for(Map.Entry<String, NodeConfig> e : this.nodeConfigs.entrySet()){  
 			this.searchConfigMap.put(e.getValue().getAlias(), e.getValue());
 		}
 	}

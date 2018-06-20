@@ -1,138 +1,135 @@
 package com.feiniu.model.param;
 
-/**
- * data-flow trans parameters
- * @author chengwen
- * @version 1.0 
- */
-public class TransParam {
-	private SQLParam sqlParam;
-	private NOSQLParam noSqlParam;
-	private String writeTo;
-	private String writeTohandler;
-	private String searcher;
-	private String searcherHandler;
-	private String dataFrom;
-	private String dataFromHandler;
-	private String deltaCron;
-	private String fullCron;
-	private String optimizeCron;
-	private String splitCron;
-	private String instanceName;
-	private String[] nextJob;
-	/**data write into type,full complete data,increment part of data*/
-	private String writeType="full";
+import com.feiniu.writerUnit.handler.Handler;
+
+public class TransParam { 
+	/**read name*/
+	private String name = null;
+	/**write name*/
+	private String alias = null;
+	private String defaultvalue = null;
+	private String analyzer = null;
+	private String stored = "false";
+	private String separator = null;
+	/**for data storetype*/
+	private String indextype = null;
+	private String indexed = "true";
+	private float boost = 1.0f;
+	private Handler handler;
+	private boolean router=false;
+	private String paramtype = null;
+
+	public boolean isValid(String value) { 
+		return true;
+	}  
 	
-	public SQLParam getSqlParam() {
-		return sqlParam;
-	}
-	public void setSqlParam(SQLParam sqlParam) {
-		this.sqlParam = sqlParam;
-	}
-	public NOSQLParam getNoSqlParam() {
-		return noSqlParam;
-	}
-	public void setNoSqlParam(NOSQLParam sqlParam) {
-		this.noSqlParam = sqlParam;
-	}
-	public String getWriteTo() {
-		return writeTo;
-	}
-	public void setWriteTo(String writeTo) {
-		this.writeTo = writeTo;
-	}
-	public String getDataFrom() {
-		return dataFrom;
-	}
-	public String[] getNextJob() {
-		return nextJob;
-	}
-	public String getDataFromhandler() {
-		return dataFromHandler;
-	}
-	public String getWriteTohandler() {
-		return writeTohandler;
-	}
-	public String getSearcherHandler() {
-		return searcherHandler;
-	} 
-	public String getInstanceName() {
-		return instanceName;
-	} 
-	public String getDeltaCron() {
-		return deltaCron;
-	}
-	public void setDeltaCron(String deltaCron) {
-		this.deltaCron = deltaCron;
-	}
-	public String getFullCron() {
-		return fullCron;
-	}
-	public void setFullCron(String fullCron) {
-		this.fullCron = fullCron;
-	} 
-	public String getOptimizeCron() {
-		return optimizeCron;
-	}
-	public void setOptimizeCron(String optimizeCron) {
-		this.optimizeCron = optimizeCron;
-	} 
- 
-	public String getSplitCron() {
-		return splitCron;
-	} 
-	
-	public String getSearcher() {
-		if(this.searcher==null){
-			this.searcher = this.writeTo;
+	public String getAlias() {
+		if(this.alias==null){
+			this.alias = this.name;
 		}
-		return this.searcher;
+		return this.alias;
+	} 
+
+	public void setAlias(String alias) {
+		this.alias = alias;
 	} 
 	
-	public String getWriteType() {
-		return writeType;
+	public void setBoost(float boost) {
+		this.boost = boost;
+	}   
+
+	public float getBoost() {
+		return boost;
+	}
+
+	public void setBoost(String boost) {
+		this.boost = Float.valueOf(boost);
 	} 
-	public void setKeyValue(String k,String v){
-		switch (k.toLowerCase()) {
-		case "writeto":
-			this.writeTo = v;
-			break; 
-		case "datafrom":
-			this.dataFrom = v;
-			break;
-		case "deltacron":
-			this.deltaCron = v;
-			break;
-		case "fullcron":
-			this.fullCron = v;
-			break;
-		case "optimizecron":
-			this.optimizeCron = v;
-			break;
-		case "splitcron":
-			this.splitCron = v;
-			break;
-		case "searcher":
-			this.searcher = v;
-			break;
-		case "searcherhandler":
-			this.searcherHandler = v;
-			break;
-		case "datafromhandler":
-			this.dataFromHandler = v;
-			break;
-		case "writetohandler":
-			this.writeTohandler = v;
-			break;
-		case "instancename":
-			this.instanceName = v;
-			break;
-		case "nextjob":
-			this.nextJob = v.split(","); 
-		case "writetype":
-			if(v.length()>0 && (v.equals("full") || v.equals("increment")))
-				this.writeType = v;
-			break;
+	
+	public String getParamtype() {
+		if(this.paramtype==null){
+			this.paramtype = "java.lang.String";
+		}
+		return this.paramtype;
+	} 
+
+	public void setParamtype(String paramtype) {
+		this.paramtype = paramtype;
+	} 
+
+	
+	public String getDefaultvalue() {
+		return defaultvalue;
+	}
+
+	public void setDefaultvalue(String defaultvalue) {
+		this.defaultvalue = defaultvalue;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getAnalyzer() {
+		return analyzer;
+	}
+
+	public void setAnalyzer(String analyzer) {
+		this.analyzer = analyzer;
+	}
+
+	public String getStored() {
+		return stored;
+	}
+
+	public void setStored(String stored) {
+		this.stored = stored;
+	}
+
+	public String getSeparator() {
+		return separator;
+	}
+
+	public void setSeparator(String separator) {
+		this.separator = separator;
+	}
+
+	public String getIndextype() {
+		return indextype;
+	}
+
+	public void setIndextype(String indextype) {
+		this.indextype = indextype;
+	}
+
+	public String getIndexed() {
+		return indexed;
+	}
+
+	public void setIndexed(String indexed) {
+		this.indexed = indexed;
+	}
+
+	public Handler getHandler() {
+		return this.handler;
+	}
+
+	public void setHandler(String handler) throws Exception {
+		if(handler!=null && handler.length()>1){
+			this.handler = (Handler) Class.forName(handler).newInstance();
 		}
 	}
+
+	public boolean isRouter() {
+		return router;
+	}
+
+	public void setRouter(String router) {
+		this.router = router.toLowerCase().equals("true")?true:false;
+	}
+	
 }

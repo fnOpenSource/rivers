@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
 public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
@@ -52,7 +52,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	}
 
 	@Override
-	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, WriteParam> writeParamMap,Handler handler) {
+	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		try {
 			while (isLocked.get()) {
 				Thread.sleep(1000);
@@ -105,7 +105,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 							if(k.equals(this.jobPage.get("IncrementColumn"))){
 								updateFieldValue = v;
 							}
-							u.addFieldValue(k, v, writeParamMap);
+							u.addFieldValue(k, v, transParams);
 						} 
 					}else{
 						handler.Handle(r,u);

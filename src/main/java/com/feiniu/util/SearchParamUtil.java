@@ -15,20 +15,21 @@ import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNRequest;
-import com.feiniu.model.param.FNParam;
+import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.TransParam; 
 
 public class SearchParamUtil {
 
-	public static void reWriteParam(FNRequest request, FNQuery<?, ?, ?> fq,NodeConfig nodeConfig) {
+	public static void normalParam(FNRequest request, FNQuery<?, ?, ?> fq,NodeConfig nodeConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
-				nodeConfig.getParam(KEY_PARAM.start.toString()));
+				nodeConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
 		if (o != null) {
 			int start = (int) o;
 			if (start >= 0)
 				fq.setStart(start);
 		}
 		o = request.get(KEY_PARAM.count.toString(),
-				nodeConfig.getParam(KEY_PARAM.count.toString()));
+				nodeConfig.getSearchParam(KEY_PARAM.count.toString()),"java.lang.Integer");
 		if (o != null) {
 			int count = (int) o;
 			if (count >= 1 && count <= 2000) {
@@ -80,10 +81,19 @@ public class SearchParamUtil {
 					break;
 
 				default:
-					FNParam sortpr = nodeConfig.getParam(fieldname); 
-					if (sortpr != null) { 
-						sortList.add(SortBuilders.fieldSort(sortpr.getName()).order(
+					TransParam checked; 
+					SearchParam sp;
+					if ((checked = nodeConfig.getTransParam(fieldname)) != null) { 
+						sortList.add(SortBuilders.fieldSort(checked.getAlias()).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));
+					}else if((sp = nodeConfig.getSearchParam(fieldname))!=null){
+						String fields = sp.getFields();
+						if(fields!=null) {
+							for(String k:fields.split(",")) {
+								sortList.add(SortBuilders.fieldSort(k).order(
+										reverse ? SortOrder.DESC : SortOrder.ASC));
+							}
+						}
 					}else if(fieldname.equals("SYSTEM_UPDATE_TIME")) { 
 						sortList.add(SortBuilders.fieldSort(fieldname).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));

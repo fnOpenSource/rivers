@@ -12,6 +12,7 @@ import com.feiniu.model.FNResponse;
 import com.feiniu.model.SolrQueryModel;
 import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
+import com.feiniu.util.SearchParamUtil;
 
 /**
  * provide search service
@@ -37,8 +38,8 @@ public class FNSearcher {
 		this.searcher = searcher;
 		this.NodeConfig = NodeConfig;
 		try {
-			if(NodeConfig.getTransParam().getSearcherHandler()!=null) {
-				this.handler = (Handler) Class.forName(NodeConfig.getTransParam().getSearcherHandler()).newInstance();
+			if(NodeConfig.getPipeParam().getSearcherHandler()!=null) {
+				this.handler = (Handler) Class.forName(NodeConfig.getPipeParam().getSearcherHandler()).newInstance();
 			}
 		}catch(Exception e){
 			log.error("FNSearcher Handler Exception",e);
@@ -66,9 +67,11 @@ public class FNSearcher {
 		switch (this.searcher.getType()) {
 		case ES:
 			query = ESQueryModel.getInstance(rq, analyzer,NodeConfig);
+			SearchParamUtil.normalParam(rq, query,NodeConfig);
 			break;
 		case SOLR:
 			query = SolrQueryModel.getInstance(rq, analyzer,NodeConfig);
+			SearchParamUtil.normalParam(rq, query,NodeConfig);
 			break; 
 		default:
 			response.setError_info("Not Support Searcher Type!");

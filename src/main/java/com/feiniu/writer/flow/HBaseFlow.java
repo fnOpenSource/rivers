@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 
 /**
  * HBase flow Writer Manager
@@ -29,7 +29,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	 
 	private List<Put> data = new CopyOnWriteArrayList<Put>();  
 	private Table conn;
-	private final static Logger log = LoggerFactory.getLogger(HBaseFlow.class); 
+	private final static Logger log = LoggerFactory.getLogger("HBaseFlow"); 
 	
 	public static HBaseFlow getInstance(HashMap<String, Object> connectParams) {
 		HBaseFlow o = new HBaseFlow();
@@ -64,7 +64,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 	  
 	@Override
-	public void write(String keyColumn,WriteUnit unit,Map<String, WriteParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,WriteUnit unit,Map<String, TransParam> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		if (unit.getData().size() == 0){
 			log.info("Empty IndexUnit for " + instantcName + " " + storeId);
 			return;
@@ -83,14 +83,14 @@ public class HBaseFlow extends WriterFlowSocket {
 			if (value == null)
 				continue;
 			
-			WriteParam indexParam = writeParamMap.get(field);
-			if (indexParam == null)
-				indexParam = writeParamMap.get(field.toLowerCase());
-			if (indexParam == null)
-				indexParam = writeParamMap.get(field.toUpperCase());
-			if (indexParam == null)
+			TransParam transParam = transParams.get(field);
+			if (transParam == null)
+				transParam = transParams.get(field.toLowerCase());
+			if (transParam == null)
+				transParam = transParams.get(field.toUpperCase());
+			if (transParam == null)
 				continue; 
-			put.addColumn(Bytes.toBytes((String)connectParams.get("columnFamily")), Bytes.toBytes(indexParam.getName()),
+			put.addColumn(Bytes.toBytes((String)connectParams.get("columnFamily")), Bytes.toBytes(transParam.getAlias()),
 					Bytes.toBytes(value));  
 		} 
 		synchronized (data) {
@@ -127,7 +127,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	}
  
 	@Override
-	public boolean settings(String instantcName, String batchId, Map<String, WriteParam> paramMap) {
+	public boolean settings(String instantcName, String batchId, Map<String, TransParam> transParams) {
 		return true;
 	}
 

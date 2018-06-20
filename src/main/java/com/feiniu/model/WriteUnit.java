@@ -3,7 +3,7 @@ package com.feiniu.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 
 public class WriteUnit {  
 	public String key_column_val;
@@ -18,14 +18,14 @@ public class WriteUnit {
 		this.SYSTEM_UPDATE_TIME = System.currentTimeMillis();
 	}
 	
-	public boolean addFieldValue(String k,Object v,Map<String, WriteParam> writeParamMap){
-		WriteParam param = writeParamMap.get(k);
+	public boolean addFieldValue(String k,Object v,Map<String, TransParam> transParams){
+		TransParam param = transParams.get(k);
 		if (param != null){
 			if (param.getHandler()!=null){
-				param.getHandler().handle(this, v,writeParamMap); 
+				param.getHandler().handle(this, v,transParams); 
 			}
 			else{ 
-				this.data.put(k,v);
+				this.data.put(param.getAlias(),v);
 			}
 			return true;
 		}else{

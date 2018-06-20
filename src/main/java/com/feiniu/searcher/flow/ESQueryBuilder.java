@@ -27,7 +27,8 @@ import com.feiniu.config.GlobalParam.QUERY_TYPE;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.ESQueryModel;
 import com.feiniu.model.FNRequest;
-import com.feiniu.model.param.FNParam;
+import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.FNQueryBuilder;
 import com.feiniu.util.Common;
 import com.feiniu.util.LongRangeType;
@@ -102,18 +103,16 @@ public class ESQueryBuilder implements FNQueryBuilder{
 					occur = Occur.MUST_NOT;
 				}
 
-				FNParam pr = nodeConfig.getParam(key);
-				if (pr == null || Common.isDefaultParam(pr.getName())){ 
+				TransParam tp = nodeConfig.getTransParam(key);
+				SearchParam sp = nodeConfig.getSearchParam(key);
+				if ((tp == null && sp==null) || Common.isDefaultParam(key)){ 
 					continue;
-				}  
-
-				QueryBuilder query = null;
-				String multifield = pr.getFields();
-
-				if (multifield != null && multifield.length() > 0)
-					query = buildMultiQuery(multifield, value, nodeConfig, request, analyzer, key,fuzzy);
+				} 
+				QueryBuilder query = null;  
+				if (sp!=null && sp.getFields() != null && sp.getFields().length() > 0)
+					query = buildMultiQuery(sp.getFields(), value, nodeConfig, request, analyzer, key,fuzzy);
 				else
-					query = buildSingleQuery(key, value, pr, request, analyzer, key,fuzzy);
+					query = buildSingleQuery(tp.getAlias(), value, tp,sp, request, analyzer, key,fuzzy);
 
 				if (occur == Occur.MUST_NOT && query != null) {
 					bquery.mustNot(query);
@@ -135,8 +134,8 @@ public class ESQueryBuilder implements FNQueryBuilder{
 		return null;
 	} 
 	 
-	static private void QueryBoost (QueryBuilder query, FNParam pr, FNRequest request)throws Exception{
-		float boostValue = pr.getBoost();
+	static private void QueryBoost (QueryBuilder query, TransParam tp, FNRequest request)throws Exception{
+		float boostValue = tp.getBoost();
 
 		Method m = query.getClass().getMethod("boost", new Class[]{float.class});
 		if (query instanceof FunctionScoreQueryBuilder)
@@ -144,16 +143,10 @@ public class ESQueryBuilder implements FNQueryBuilder{
 		m.invoke(query, boostValue);
 	}
 	
-	static private QueryBuilder buildSingleQuery(String key, String value, FNParam pr, FNRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception{
-		if (value == null || value.length() <= 0 || pr == null 
-				|| (pr.getDefaultValue() != null && value.equals(pr.getDefaultValue())))
-			return null;
-		String field = key;
-
-		if (pr.getName() != null)
-			field = pr.getName();
-
-		boolean not_analyzed = pr.getAnalyzer().equalsIgnoreCase(GlobalParam.NOT_ANALYZED) ? true : false;
+	static private QueryBuilder buildSingleQuery(String key, String value, TransParam tp,SearchParam sp, FNRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception{
+		if (value == null || (tp.getDefaultvalue() == null && value.length() <= 0) || tp == null )
+			return null; 
+		boolean not_analyzed = tp.getAnalyzer().equalsIgnoreCase(GlobalParam.NOT_ANALYZED) ? true : false;
 		
 		if (!not_analyzed)
 			value = value.toLowerCase().trim();
@@ -163,23 +156,23 @@ public class ESQueryBuilder implements FNQueryBuilder{
 		for (String v : values) {
 			QueryBuilder query = null;
 			if (!not_analyzed) {
-				query = fieldParserQuery(field, String.valueOf(v),fuzzy, analyzer);
-			}else if (pr.getIndextype().equalsIgnoreCase("long") || pr.getIndextype().equalsIgnoreCase("double") || pr.getIndextype().equalsIgnoreCase("int")){
-				Object val = request.get(key, pr);
+				query = fieldParserQuery(key, String.valueOf(v),fuzzy, analyzer);
+			}else if (tp.getIndextype().equalsIgnoreCase("long") || tp.getIndextype().equalsIgnoreCase("double") || tp.getIndextype().equalsIgnoreCase("int")){
+				Object val = request.get(key, tp);
 				if (val instanceof LongRangeType){ 
 					LongRangeType longRangeValue = LongRangeType.valueOf(v);
-					query = QueryBuilders.rangeQuery(field).from(longRangeValue.getMin()).to(longRangeValue.getMax()).includeLower(pr.isIncludeLower()).includeUpper(pr.isIncludeUpper());
+					query = QueryBuilders.rangeQuery(key).from(longRangeValue.getMin()).to(longRangeValue.getMax()).includeLower(sp==null?true:sp.isIncludeLower()).includeUpper(sp==null?true:sp.isIncludeUpper());
 				}
 				else
-					query = QueryBuilders.termQuery(field, String.valueOf(v));
+					query = QueryBuilders.termQuery(key, String.valueOf(v));
 			} 
 			else{		
-				query = QueryBuilders.termQuery(field,String.valueOf(v));
+				query = QueryBuilders.termQuery(key,String.valueOf(v));
 			} 
 			
 			if (query != null) {
-				QueryBoost(query, pr, request);				
-				if (request.getParams().containsKey(field + "_and"))
+				QueryBoost(query, tp, request);				
+				if (request.getParams().containsKey(key + "_and"))
 					bquery.must(query);
 				else
 					bquery.should(query);
@@ -208,7 +201,7 @@ public class ESQueryBuilder implements FNQueryBuilder{
 		return ESSimpleQuery.getQuery();
 	} 
 
-	static private QueryBuilder buildMultiQuery(String multifield, String value, NodeConfig prs, FNRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception {
+	static private QueryBuilder buildMultiQuery(String multifield, String value, NodeConfig nodeConfig, FNRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception {
 		DisMaxQueryBuilder bquery = null; 
 		String[] keys = multifield.split(",");
 
@@ -216,8 +209,8 @@ public class ESQueryBuilder implements FNQueryBuilder{
 			return null;
 
 		if (keys.length == 1) {
-			FNParam pr = prs.getParam(keys[0]);
-			return buildSingleQuery(keys[0], value, pr, request, analyzer, paramKey,fuzzy);
+			TransParam tp = nodeConfig.getTransParam(keys[0]);
+			return buildSingleQuery(tp.getAlias(), value, tp,nodeConfig.getSearchParam(keys[0]), request, analyzer, paramKey,fuzzy);
 		}
 
 		String[] word_vals = value.split(",");
@@ -228,8 +221,8 @@ public class ESQueryBuilder implements FNQueryBuilder{
 			for (String val : vals) {
 				DisMaxQueryBuilder parsedDisMaxQuery = null;
 				for (String key2 : keys) {
-					FNParam pr2 = prs.getParam(key2);
-					QueryBuilder query = buildSingleQuery(key2, pr2.getAnalyzer().equals("NOT_ANALYZED")? word : val, pr2, request, analyzer, paramKey,fuzzy);
+					TransParam _tp = nodeConfig.getTransParam(key2);
+					QueryBuilder query = buildSingleQuery(_tp.getAlias(), _tp.getAnalyzer().equals("NOT_ANALYZED")? word : val, _tp,nodeConfig.getSearchParam(key2), request, analyzer, paramKey,fuzzy);
 					if (query != null) {
 						if (parsedDisMaxQuery == null)
 							parsedDisMaxQuery = QueryBuilders.disMaxQuery().tieBreaker(GlobalParam.DISJUNCTION_QUERY_WEIGHT);

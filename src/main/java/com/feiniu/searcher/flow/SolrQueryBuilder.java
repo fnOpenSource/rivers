@@ -13,7 +13,8 @@ import org.apache.solr.client.solrj.SolrQuery;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.model.FNRequest;
-import com.feiniu.model.param.FNParam;
+import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 
 public class SolrQueryBuilder {
@@ -56,18 +57,18 @@ public class SolrQueryBuilder {
 				continue;
 			}
 			
-			FNParam pr = prs.getParam(k);
-			if (pr == null){
+			TransParam tp = prs.getTransParam(k);
+			SearchParam sp = prs.getSearchParam(k);
+			if (tp == null || sp==null){
 				continue; 
 			}  
 			if (!start) {
 				qr.append(" AND ");
-			} 
-			String combineSearch = pr.getFields();
-			if(combineSearch != null && combineSearch.length() > 0){
-				qr.append(buildMultiQuery(v, combineSearch, paramMap));
+			}  
+			if(sp.getFields() != null && sp.getFields().length() > 0){
+				qr.append(buildMultiQuery(v, sp.getFields(), paramMap));
 			}else{
-				qr.append(buildSingleQuery(k, v));
+				qr.append(buildSingleQuery(tp.getAlias(), v));
 			}
 			
 			start = false;

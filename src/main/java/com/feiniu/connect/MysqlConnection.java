@@ -12,7 +12,7 @@ public class MysqlConnection extends FnConnectionSocket implements FnConnection<
 	private Connection conn = null;  
 	
 	private final static Logger log = LoggerFactory
-			.getLogger(MysqlConnection.class);
+			.getLogger("Mysql Socket");
 	
 	static{
 		 try {

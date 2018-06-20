@@ -22,7 +22,7 @@ import com.feiniu.connect.FnConnection;
 import com.feiniu.model.FNDataUnit;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.FNResultSet;
-import com.feiniu.model.param.WriteParam;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
@@ -56,8 +56,8 @@ public class ESFlow extends SearcherFlowSocket {
 					returnFields.add(s);
 				}
 			} else {
-				Map<String, WriteParam> tmpFields = NodeConfig.getWriteParamMap();
-				for (Map.Entry<String, WriteParam> e : tmpFields.entrySet()) {
+				Map<String, TransParam> tmpFields = NodeConfig.getTransParams();
+				for (Map.Entry<String, TransParam> e : tmpFields.entrySet()) {
 					if (e.getValue().getStored().equalsIgnoreCase("true"))
 						returnFields.add(e.getKey());
 				}
@@ -87,7 +87,7 @@ public class ESFlow extends SearcherFlowSocket {
 			FNDataUnit u = FNDataUnit.getInstance();
 			for (Map.Entry<String, SearchHitField> e : fieldMap.entrySet()) {
 				String name = e.getKey();
-				WriteParam param = NodeConfig.getWriteParamMap().get(name);
+				TransParam param = NodeConfig.getTransParams().get(name);
 				SearchHitField v = e.getValue();  
 				if (param!=null && param.getSeparator() != null) { 
 					u.addObject(name, v.getValues());

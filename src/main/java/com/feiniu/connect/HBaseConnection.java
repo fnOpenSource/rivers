@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 public class HBaseConnection extends FnConnectionSocket implements
 		FnConnection<Table> {
 	private final static Logger log = LoggerFactory
-			.getLogger(HBaseConnection.class);
+			.getLogger("HBase Socket");
 	private Configuration hbaseConfig;
 	private Connection Hconn;
 	private Table conn;

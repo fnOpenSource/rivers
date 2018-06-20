@@ -44,8 +44,8 @@ public final class SocketCenter{
 		if(!searcherMap.containsKey(instanceName)) {
 			if (!GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(instanceName))
 				return null; 
-			NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(instanceName);
-			FNSearcher searcher = FNSearcher.getInstance(instanceName, paramConfig, getSearcherFlow(instanceName));
+			NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(instanceName);
+			FNSearcher searcher = FNSearcher.getInstance(instanceName, nodeConfig, getSearcherFlow(instanceName));
 			searcherMap.put(instanceName, searcher);
 		}
 		return searcherMap.get(instanceName);
@@ -62,7 +62,7 @@ public final class SocketCenter{
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
 		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,null)+tag) || needClear){ 
 			JobWriter writer=null;
-			String readFrom = paramConfig.getTransParam().getDataFrom(); 
+			String readFrom = paramConfig.getPipeParam().getDataFrom(); 
 			ReaderFlowSocket<?> flowSocket;
 			if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(readFrom)!=null){ 
 				Map<String, WarehouseNosqlParam> dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap();
@@ -89,7 +89,7 @@ public final class SocketCenter{
 		if (!GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(instanceName))
 			return null;
 		
-		WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getTransParam().getWriteTo());
+		WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getPipeParam().getWriteTo());
 		if (param == null)
 			return null;
 		
@@ -115,7 +115,7 @@ public final class SocketCenter{
 	
 	public WriterFlowSocket getDestinationWriter(String instanceName,String seq) {
 		if (!destinationWriterMap.containsKey(instanceName)){
-			WarehouseParam param = getWHP(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getTransParam().getWriteTo()); 
+			WarehouseParam param = getWHP(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getPipeParam().getWriteTo()); 
 			if (param == null)
 				return null;
 			destinationWriterMap.put(instanceName, WriterFactory.getWriter(param,seq));
@@ -126,7 +126,7 @@ public final class SocketCenter{
 	private SearcherFlowSocket getSearcherFlow(String secname) {
 		if (searcherFlowMap.containsKey(secname))
 			return searcherFlowMap.get(secname); 
-		WarehouseParam param = getWHP(GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname).getTransParam().getSearcher());
+		WarehouseParam param = getWHP(GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname).getPipeParam().getSearcher());
 		if (param == null)
 			return null;
 		
