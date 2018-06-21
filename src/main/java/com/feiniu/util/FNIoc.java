@@ -1,18 +1,18 @@
-package com.feiniu.config;
+package com.feiniu.util;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public final class FNIocConfig {
+public final class FNIoc {
 	private ApplicationContext ctx;
 
-	private static final FNIocConfig m_instance = new FNIocConfig();
+	private static final FNIoc m_instance = new FNIoc();
 
-	private FNIocConfig() {
+	private FNIoc() {
 		ctx = new ClassPathXmlApplicationContext ("spring.xml");
 	}
 
-	public static FNIocConfig getInstance() {
+	public static FNIoc getInstance() {
 		return m_instance;
 	}
 

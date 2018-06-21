@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.wltea.analyzer.cfg.Configuration;
 import org.wltea.analyzer.dic.Dictionary;
 
-import com.feiniu.config.FNIocConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.NodeTreeConfigs;
@@ -25,6 +24,7 @@ import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.Task;
 import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
+import com.feiniu.util.FNIoc;
 import com.feiniu.util.IKAnalyzer5;
 import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
@@ -62,7 +62,7 @@ public final class Run {
 	NodeMonitor nodeMonitor;
 	
 	public static void main(String[] args) throws URISyntaxException{	
-		Run run = (Run)FNIocConfig.getInstance().getBean("FNStart");
+		Run run = (Run)FNIoc.getInstance().getBean("FNStart");
 		Dictionary.initial(new Configuration(run.configPath));
 		run.start();
 	}

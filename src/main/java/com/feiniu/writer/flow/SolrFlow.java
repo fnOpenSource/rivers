@@ -31,7 +31,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.config.FNIocConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNQuery;
@@ -39,6 +38,7 @@ import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
+import com.feiniu.util.FNIoc;
 
 /**
  * solr flow Writer Manager
@@ -69,7 +69,7 @@ public class SolrFlow extends WriterFlowSocket{
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams; 
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.property = (Properties)FNIocConfig.getInstance().getBean("configPathConfig");
+		this.property = (Properties)FNIoc.getInstance().getBean("configPathConfig");
 		this.batch = GlobalParam.WRITE_BATCH;
 	}
 	
