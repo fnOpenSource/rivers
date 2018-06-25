@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.client.Client;
@@ -79,6 +80,7 @@ public final class NodeMonitor {
 		{
 			add("reloadConfig");
 			add("resetInstanceState");
+			add("getInstanceSeqs");
 			add("getNodeConfig");
 			add("setNodeConfig");
 			add("stopInstance");
@@ -215,23 +217,43 @@ public final class NodeMonitor {
 		setResponse(1, dt);
 	}
 	
+	public void getInstanceSeqs(Request rq) {
+		if (rq.getParameter("instance").length() > 1) {
+			try {
+				String instance = rq.getParameter("instance");
+				NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instance); 
+				WarehouseParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				if (dataMap == null) {
+					dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				} 
+				setResponse(1, StringUtils.join(dataMap.getSeq().toArray(), ","));
+			}catch (Exception e) { 
+				setResponse(0, rq.getParameter("instance") + " not exists!");
+			} 
+		}
+	}
+	
 	public void resetInstanceState(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			String instance = rq.getParameter("instance");
-			NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instance); 
-			WarehouseParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
-			if (dataMap == null) {
-				dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
-			}
-			List<String> seqs = dataMap.getSeq();
-			if (seqs.size() == 0) {
-				seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
-			}
-			for (String seq : seqs) { 
-				GlobalParam.LAST_UPDATE_TIME.set(instance,seq, "0");
-				Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq));
-			}
-			setResponse(1, rq.getParameter("instance") + " reset Success!");
+			try {
+				String instance = rq.getParameter("instance");
+				NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instance); 
+				WarehouseParam dataMap = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				if (dataMap == null) {
+					dataMap = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(nodeConfig.getPipeParam().getDataFrom());
+				}
+				List<String> seqs = dataMap.getSeq();
+				if (seqs.size() == 0) {
+					seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
+				}
+				for (String seq : seqs) { 
+					GlobalParam.LAST_UPDATE_TIME.set(instance,seq, "0");
+					Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq));
+				}
+				setResponse(1, rq.getParameter("instance") + " reset Success!");
+			}catch (Exception e) { 
+				setResponse(0, rq.getParameter("instance") + " not exists!");
+			} 
 		} else {
 			setResponse(0, rq.getParameter("instance") + " not exists!");
 		}

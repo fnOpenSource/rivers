@@ -1,4 +1,4 @@
-package com.feiniu.writer.flow;
+package com.feiniu.instruction.flow;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -24,41 +24,42 @@ import com.feiniu.reader.handler.Handler;
 import com.feiniu.reader.util.DataSetReader;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
+import com.feiniu.writer.flow.WriterFlowSocket;
 
 /**
  * write data from source A to Source B
  * @author chengwen
  * @version 1.0 
  */
-public final class JobWriter {
+public final class TransDataFlow {
 
-	private final static Logger log = LoggerFactory.getLogger("JOB STATE"); 
-	private ReaderFlowSocket<?> flowSocket; 
+	private final static Logger log = LoggerFactory.getLogger("TransDataFlow"); 
+	private ReaderFlowSocket<?> reader; 
 	private NodeConfig nodeConfig;
 	private WriterFlowSocket writer;
 	/**defined custom read flow socket*/
-	private Handler dataFromHandler; 
+	private Handler readHandler; 
 	private Handler scanHandler; 
 
 	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	public static JobWriter getInstance(ReaderFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig){
-		return new JobWriter(flowSocket,writer,nodeConfig);
+	public static TransDataFlow getInstance(ReaderFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig){
+		return new TransDataFlow(flowSocket,writer,nodeConfig);
 	}
  
-	private JobWriter(ReaderFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig) {
+	private TransDataFlow(ReaderFlowSocket<?> reader,WriterFlowSocket writer, NodeConfig nodeConfig) {
 		this.writer = writer;
 		this.nodeConfig = nodeConfig;  
-		this.flowSocket = flowSocket;
+		this.reader = reader;
 		try {
 			if(nodeConfig.getPipeParam().getDataFromhandler()!=null){
-				this.dataFromHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getDataFromhandler()).newInstance();
+				this.readHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getDataFromhandler()).newInstance();
 			} 
 			if(nodeConfig.getPipeParam().getSqlParam().getHandler()!=null) {
 				this.scanHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getSqlParam().getHandler()).newInstance();
 			}
 		}catch(Exception e){
-			log.error("FNIndexer Construct Exception,",e);
+			log.error("TransDataFlow Instruction Exception,",e);
 		}
 	}   
 	
@@ -83,7 +84,7 @@ public final class JobWriter {
 		MessageParam MP = nodeConfig.getMessageParam();
 		String originalSql = MP.getSqlParam().getSql();
 		if (null == originalSql) {
-			log.error("scanDbWriteIndex No Message sql to deal!");
+			log.error("scanData with null sql!");
 		} else {
 			String indexName = instanceName;
 			if (dbseq != null && dbseq.length() > 0) {
@@ -95,11 +96,11 @@ public final class JobWriter {
 	} 
 	 
 
-	public void optimizeIndex(String indexName, String storeId) {
-		log.info("start optimize job "+indexName+"_"+storeId+" ...");
+	public void optimizeIndex(String instance, String storeId) {
+		log.info("start optimize instance "+instance+"_"+storeId+" ...");
 		this.writer.getResource();
 		try{
-			this.writer.optimize(indexName, storeId);
+			this.writer.optimize(instance, storeId);
 		}finally{
 			this.writer.freeResource(false);
 		}  
@@ -164,11 +165,11 @@ public final class JobWriter {
 	public FNWriteResponse writeDataSet(String id,String instance, String storeId,
 			String seq, HashMap<String, Object> dataSet, String info,boolean isUpdate,boolean monopoly) throws Exception {
 		FNWriteResponse resp = new FNWriteResponse(); 
-		Reader<HashMap<String, Object>> reader = new DataSetReader();
-		reader.init(dataSet);
+		Reader<HashMap<String, Object>> scaner = new DataSetReader();
+		scaner.init(dataSet);
 		long start = Common.getNow();
 		int count = 0; 
-		if (!reader.getLastUpdateTime().equals("-1")) {
+		if (!scaner.getLastUpdateTime().equals("-1")) {
 			if(monopoly) {
 				this.writer.MONOPOLY();
 			}else {
@@ -176,13 +177,13 @@ public final class JobWriter {
 			} 
 			boolean freeConn = false;
 			try{
-				while (reader.nextLine()) {   
-					this.writer.write(reader.getkeyColumn(),reader.getLineData(),nodeConfig.getTransParams(),instance, storeId,isUpdate);
+				while (scaner.nextLine()) {   
+					this.writer.write(scaner.getkeyColumn(),scaner.getLineData(),nodeConfig.getTransParams(),instance, storeId,isUpdate);
 					count++;
 				}
-				String lastUpdateTime = reader.getLastUpdateTime();
-				String maxId = reader.getMaxId();
-				reader.close();
+				String lastUpdateTime = scaner.getLastUpdateTime();
+				String maxId = scaner.getMaxId();
+				scaner.close();
 				resp.setLastUpdateTime(lastUpdateTime);
 				resp.setMaxId(maxId);
 				resp.setCount(count);
@@ -200,7 +201,7 @@ public final class JobWriter {
 					this.writer.freeResource(freeConn);
 			}  
 		}
-		flowSocket.freeJobPage();
+		reader.freeJobPage();
 		return resp;
 	}  
 	
@@ -243,7 +244,7 @@ public final class JobWriter {
 				param.put("column", noSqlParam.getKeyColumn());
 				param.put("startTime", lastTime);  
 				param.put(GlobalParam._incrementField, noSqlParam.getIncrementField());  
-				List<String> pageList = flowSocket.getPageSplit(param); 
+				List<String> pageList = reader.getPageSplit(param); 
 				if (pageList.size() > 0) {
 					indexLog("start " + desc, indexName, storeId, "", "",
 							"", lastTime, 0, "start", ",totalpage:"
@@ -264,7 +265,7 @@ public final class JobWriter {
 						pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 						 
 						resp = writeDataSet(desc,indexName, storeId, "",
-								(HashMap<String, Object>) flowSocket.getJobPage(pageParams,nodeConfig.getTransParams(),this.dataFromHandler),
+								(HashMap<String, Object>) reader.getJobPage(pageParams,nodeConfig.getTransParams(),this.readHandler),
 								",complete:" + processPos + "/" + pageList.size(),false,false);
 
 						total += resp.getCount();
@@ -349,7 +350,7 @@ public final class JobWriter {
 						this.scanHandler.Handle("",param); 
 					//control  repeat with time job 
 				do {
-					List<String> pageList = flowSocket.getPageSplit(param);
+					List<String> pageList = reader.getPageSplit(param);
 					HashMap<String, String> sqlParams;
 					GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq, "start count page...");
 					if (pageList.size() > 0) {
@@ -459,7 +460,7 @@ public final class JobWriter {
 		params.put("sql", sql); 
 		params.put("incrementField", incrementField); 
 		params.put("keyColumn", keyColumn); 
-		return (HashMap<String, Object>) flowSocket.getJobPage(params,nodeConfig.getTransParams(),this.dataFromHandler);
+		return (HashMap<String, Object>) reader.getJobPage(params,nodeConfig.getTransParams(),this.readHandler);
 	}
 	
 	private String getTimeString(String[] strs) {

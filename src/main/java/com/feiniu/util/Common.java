@@ -23,8 +23,8 @@ import org.w3c.dom.NodeList;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
+import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.param.WarehouseParam;
-import com.feiniu.writer.flow.JobWriter;
 
 public class Common {
 
@@ -258,7 +258,7 @@ public class Common {
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static String getStoreId(String instanceName, String seq, JobWriter writer, boolean isIncrement,
+	public static String getStoreId(String instanceName, String seq, TransDataFlow writer, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) {
 			String path = Common.getTaskStorePath(instanceName, seq);

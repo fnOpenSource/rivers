@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.util.Common;
-import com.feiniu.writer.flow.JobWriter;
 
 /**
  * schedule task description,to manage task job
@@ -17,7 +17,7 @@ import com.feiniu.writer.flow.JobWriter;
 public class Task{
 	private boolean recompute = true;
 	private String instanceName;
-	private JobWriter jobWriter;
+	private TransDataFlow jobWriter;
 	/**
 	 * seq for scan series datas
 	 */
@@ -30,15 +30,15 @@ public class Task{
 	private final static Logger log = LoggerFactory
 			.getLogger(Task.class);
 	
-	public static Task createTask(String instanceName, JobWriter writer){
+	public static Task createTask(String instanceName, TransDataFlow writer){
 		return new Task(instanceName, writer, GlobalParam.DEFAULT_RESOURCE_SEQ);
 	}
 	
-	public static Task createTask(String instanceName, JobWriter writer, String seq){
+	public static Task createTask(String instanceName, TransDataFlow writer, String seq){
 		return new Task(instanceName, writer, seq);
 	}
 	
-    private Task(String instanceName, JobWriter jobWriter, String seq) {
+    private Task(String instanceName, TransDataFlow jobWriter, String seq) {
     	this.instanceName = instanceName;
     	this.jobWriter = jobWriter;
     	this.seq = seq;

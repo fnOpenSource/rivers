@@ -15,8 +15,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-
-import org.apache.commons.lang3.StringUtils;
+ 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -81,13 +80,7 @@ public class FNEmailSender extends WebApplicationObjectSupport {
 		emailProperties.put("mail.smtp.auth",
 				mailConfigBean.getProperty("mail.smtps.auth"));
 		emailProperties.put("mail.debug", "true");
-
-		if (StringUtils.trimToNull(emailInfo.getFromAddress()) == null) {
-			emailInfo.setFromAddress(null);
-		}
-		if (StringUtils.trimToNull(emailInfo.getName()) == null) {
-			emailInfo.setName(null);
-		}
+ 
 		emailInfo.setProperties(emailProperties);
 
 		return emailInfo;

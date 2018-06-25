@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.DATA_TYPE;
+import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.model.param.WarehouseParam;
@@ -20,7 +21,6 @@ import com.feiniu.searcher.FNSearcherSocketFactory;
 import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.util.Common;
 import com.feiniu.writer.WriterFactory;
-import com.feiniu.writer.flow.JobWriter;
 import com.feiniu.writer.flow.WriterFlowSocket;
 
 /**
@@ -32,7 +32,7 @@ import com.feiniu.writer.flow.WriterFlowSocket;
  */
 public final class SocketCenter{  
 	 
-	private Map<String,JobWriter> writerChannelMap = new ConcurrentHashMap<String, JobWriter>();
+	private Map<String,TransDataFlow> writerChannelMap = new ConcurrentHashMap<String, TransDataFlow>();
 	private Map<String, WriterFlowSocket> destinationWriterMap = new ConcurrentHashMap<String, WriterFlowSocket>();
 	private Map<String, SearcherFlowSocket> searcherFlowMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
 	private Map<String, FNSearcher> searcherMap = new ConcurrentHashMap<String, FNSearcher>();
@@ -58,10 +58,10 @@ public final class SocketCenter{
 	 * @param needClear for reset resource
 	 * @param tag  Marking resource
 	 */ 
-	public JobWriter getWriterChannel(String instanceName, String seq,boolean needClear,String tag) { 
+	public TransDataFlow getWriterChannel(String instanceName, String seq,boolean needClear,String tag) { 
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName);
 		if(!writerChannelMap.containsKey(Common.getInstanceName(instanceName, seq,null)+tag) || needClear){ 
-			JobWriter writer=null;
+			TransDataFlow writer=null;
 			String readFrom = paramConfig.getPipeParam().getDataFrom(); 
 			ReaderFlowSocket<?> flowSocket;
 			if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(readFrom)!=null){ 
@@ -79,7 +79,7 @@ public final class SocketCenter{
 				}   
 				flowSocket = ReaderFlowSocketFactory.getChannel(dataMap.get(readFrom),seq);
 			} 
-			writer = JobWriter.getInstance(flowSocket,getDestinationWriter(instanceName,seq), paramConfig);
+			writer = TransDataFlow.getInstance(flowSocket,getDestinationWriter(instanceName,seq), paramConfig);
 			writerChannelMap.put(Common.getInstanceName(instanceName, seq,null), writer);
 		}
 		return writerChannelMap.get(Common.getInstanceName(instanceName, seq,null)); 

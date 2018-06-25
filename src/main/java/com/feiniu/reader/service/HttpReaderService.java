@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.ESQueryModel;
 import com.feiniu.model.FNQuery;
 import com.feiniu.model.WriteUnit;
@@ -31,7 +32,6 @@ import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.MD5Util;
-import com.feiniu.writer.flow.JobWriter;
 import com.feiniu.searcher.service.SearcherService;
 
 /**
@@ -114,7 +114,7 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
@@ -161,7 +161,7 @@ public class HttpReaderService {
 						break;
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
-							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(rq.getParameter("instance"),
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(rq.getParameter("instance"),
 									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
 									coreWriter, false, false);
@@ -178,7 +178,7 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
@@ -201,7 +201,7 @@ public class HttpReaderService {
 							FNQuery<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							JobWriter coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
