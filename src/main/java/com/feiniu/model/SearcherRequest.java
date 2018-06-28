@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.TransParam;
 
 public class SearcherRequest {
@@ -77,7 +77,7 @@ public class SearcherRequest {
 		return this.params;
 	}  
 
-	public Object get(String key, SearchParam sp,String type) {
+	public Object get(String key, SearcherParam sp,String type) {
 		if (sp == null)
 			return null;
 		String v;

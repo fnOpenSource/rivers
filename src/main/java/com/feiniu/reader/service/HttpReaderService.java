@@ -103,7 +103,7 @@ public class HttpReaderService {
 					case "add":
 						if (rq.getParameterMap().get("data") != null && rq.getParameterMap().get("instance") != null
 								&& rq.getParameterMap().get("type") != null && rq.getParameterMap().get("seq") != null
-								&& rq.getParameterMap().get(GlobalParam.READER_KEY) != null
+								&& rq.getParameterMap().get("keycolumn") != null
 								&& rq.getParameterMap().get("updatecolumn") != null) {
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
@@ -243,6 +243,7 @@ public class HttpReaderService {
 			LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>();
 			jobPage.put(GlobalParam.READER_KEY, keycolumn);
 			jobPage.put(GlobalParam.READER_SCAN_KEY, updatecolumn);
+			jobPage.put(GlobalParam.READER_STATUS, true);
 			jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
 			JSONArray jr = JSONArray.fromObject(data);
 			String maxId = null;
@@ -265,9 +266,9 @@ public class HttpReaderService {
 				datas.add(u);
 			}
 			if (updateFieldValue == null) {
-				jobPage.put("lastUpdateTime", System.currentTimeMillis());
+				jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
 			} else {
-				jobPage.put("lastUpdateTime", updateFieldValue);
+				jobPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue);
 			}
 			jobPage.put("maxId", maxId);
 			jobPage.put("datas", datas);

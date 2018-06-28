@@ -70,7 +70,7 @@ public class SolrFlow extends WriterFlowSocket{
 		this.connectParams = connectParams; 
 		this.poolName = String.valueOf(connectParams.get("poolName"));
 		this.property = (Properties)FNIoc.getInstance().getBean("configPathConfig");
-		this.batch = GlobalParam.WRITE_BATCH;
+		this.isBatch = GlobalParam.WRITE_BATCH;
 	}
 	
 	@Override
@@ -163,7 +163,7 @@ public class SolrFlow extends WriterFlowSocket{
 				}
 			} 
 		}  
-		if (!this.batch) {
+		if (!this.isBatch) {
 			this.conn.add(doc);
 			this.conn.commit(); 
 		}else{
@@ -213,7 +213,7 @@ public class SolrFlow extends WriterFlowSocket{
 
 	@Override
 	public void flush() throws FNException { 
-		if(this.batch){
+		if(this.isBatch){
 			synchronized (docs){
 				try { 
 					this.conn.add(docs);

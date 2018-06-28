@@ -15,7 +15,7 @@ import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.TransParam; 
 
 public class SearchParamUtil {
@@ -82,7 +82,7 @@ public class SearchParamUtil {
 
 				default:
 					TransParam checked; 
-					SearchParam sp;
+					SearcherParam sp;
 					if ((checked = nodeConfig.getTransParam(fieldname)) != null) { 
 						sortList.add(SortBuilders.fieldSort(checked.getAlias()).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));

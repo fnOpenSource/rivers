@@ -17,7 +17,7 @@ import com.feiniu.model.param.BasicParam;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
-import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.PipeParam;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
@@ -36,7 +36,7 @@ public class NodeConfig {
 	private boolean status = true;
 	private String name;
 	private Map<String, TransParam> transParams;
-	private Map<String,SearchParam> searchParams;
+	private Map<String,SearcherParam> searchParams;
 	private PipeParam pipeParam;
 	private MessageParam messageParam ; 
 	/**
@@ -52,7 +52,7 @@ public class NodeConfig {
 	public void init() { 
 		this.pipeParam = new PipeParam();
 		this.transParams = new HashMap<String, TransParam>(); 
-		this.searchParams = new HashMap<String, SearchParam>();
+		this.searchParams = new HashMap<String, SearcherParam>();
 		this.messageParam = new MessageParam(); 
 		loadConfigFromZk();
 		GlobalParam.LOG.info(filename + " config loaded");
@@ -75,7 +75,7 @@ public class NodeConfig {
 		return this.transParams.get(key);
 	}
 	
-	public SearchParam getSearchParam(String key) {
+	public SearcherParam getSearchParam(String key) {
 		return this.searchParams.get(key);
 	}
 
@@ -210,7 +210,7 @@ public class NodeConfig {
 
 			params = (Element) doc.getElementsByTagName("searchParams").item(0);
 			paramlist = params.getElementsByTagName("param");
-			parseNode(paramlist, "SearchParam", SearchParam.class);
+			parseNode(paramlist, "SearchParam", SearcherParam.class);
 		} catch (Exception e) {
 			setStatus(false);
 			GlobalParam.LOG.error(this.filename+" configParse error,",e);
@@ -246,7 +246,7 @@ public class NodeConfig {
 						messageParam.setSqlParam((SQLParam) o);
 						break;
 					case "SearchParam":
-						SearchParam v  = (SearchParam) o;
+						SearcherParam v  = (SearcherParam) o;
 						searchParams.put(v.getName(), v);
 						break;  
 					default: 

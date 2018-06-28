@@ -13,7 +13,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 
@@ -58,7 +58,7 @@ public class SolrQueryBuilder {
 			}
 			
 			TransParam tp = prs.getTransParam(k);
-			SearchParam sp = prs.getSearchParam(k);
+			SearcherParam sp = prs.getSearchParam(k);
 			if (tp == null || sp==null){
 				continue; 
 			}  

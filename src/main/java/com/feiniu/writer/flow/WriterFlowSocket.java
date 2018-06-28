@@ -22,7 +22,7 @@ import com.feiniu.model.param.TransParam;
 public class WriterFlowSocket implements Flow{
 	
 	/**batch submit documents*/
-	protected volatile Boolean batch = true;
+	protected volatile Boolean isBatch = true;
 	protected HashMap<String, Object> connectParams;
 	protected volatile String poolName;  
 	protected FnConnection<?> FC;
@@ -33,7 +33,7 @@ public class WriterFlowSocket implements Flow{
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.batch = GlobalParam.WRITE_BATCH;
+		this.isBatch = GlobalParam.WRITE_BATCH;
 		retainer.set(0);
 	}
 

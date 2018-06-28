@@ -1,6 +1,6 @@
 package com.feiniu.model.param;
 
-public class SearchParam {
+public class SearcherParam {
 	
 	private String name = null;
 	private boolean includeLower = true;

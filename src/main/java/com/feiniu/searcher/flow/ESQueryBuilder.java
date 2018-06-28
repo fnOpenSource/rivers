@@ -26,7 +26,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.QUERY_TYPE;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearchParam;
+import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.LongRangeType;
@@ -102,7 +102,7 @@ public class ESQueryBuilder{
 				}
 
 				TransParam tp = nodeConfig.getTransParam(key);
-				SearchParam sp = nodeConfig.getSearchParam(key);
+				SearcherParam sp = nodeConfig.getSearchParam(key);
 				if ((tp == null && sp==null) || Common.isDefaultParam(key)){ 
 					continue;
 				} 
@@ -136,7 +136,7 @@ public class ESQueryBuilder{
 		m.invoke(query, boostValue);
 	}
 	
-	static private QueryBuilder buildSingleQuery(String key, String value, TransParam tp,SearchParam sp, SearcherRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception{
+	static private QueryBuilder buildSingleQuery(String key, String value, TransParam tp,SearcherParam sp, SearcherRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception{
 		if (value == null || (tp.getDefaultvalue() == null && value.length() <= 0) || tp == null )
 			return null; 
 		boolean not_analyzed = tp.getAnalyzer().equalsIgnoreCase(GlobalParam.NOT_ANALYZED) ? true : false;

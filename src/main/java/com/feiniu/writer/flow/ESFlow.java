@@ -138,22 +138,22 @@ public class ESFlow extends WriterFlowSocket {
 				_UR.doc(cbuilder).upsert(cbuilder);
 				if (routing.length() > 0)
 					_UR.routing(routing.toString());
-				if (!batch) {
-					this.ESC.getClient().update(_UR).get();
+				if (this.isBatch) {
+					this.ESC.getBulkProcessor().add(_UR); 
 				} else {
-					this.ESC.getBulkProcessor().add(_UR);
+					this.ESC.getClient().update(_UR).get();
 				}
 			} else {
 				IndexRequestBuilder _IB = this.ESC.getClient().prepareIndex(name, type, id);
 				_IB.setSource(cbuilder);
 				if (routing.length() > 0)
 					_IB.setRouting(routing.toString());
-				if (!batch) {
-					_IB.execute().actionGet();
+				if (this.isBatch) {
+					this.ESC.getBulkProcessor().add(_IB.request()); 
 				} else {
-					this.ESC.getBulkProcessor().add(_IB.request());
+					_IB.execute().actionGet();
 				}
-			}
+			} 
 		} catch (Exception e) {
 			log.error("write Exception", e);
 			if (e.getMessage().contains("IndexNotFoundException")) {
@@ -171,7 +171,7 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public void flush() throws Exception {
-		if (batch) {
+		if (this.isBatch) {
 			this.ESC.getBulkProcessor().flush();
 			if (this.ESC.getRunState() == false) {
 				this.ESC.setRunState(true);
