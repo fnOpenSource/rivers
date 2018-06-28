@@ -20,7 +20,7 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.model.FNRequest;
 import com.feiniu.model.FNResponse;
 import com.feiniu.node.SocketCenter;
-import com.feiniu.searcher.FNSearcher;
+import com.feiniu.searcher.Searcher;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 
@@ -89,7 +89,7 @@ public class SearcherService{
 		String pipe = request.getPipe(); 
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getSearchConfigs();
 		if (configMap.containsKey(pipe)) { 
-			FNSearcher searcher = SocketCenter.getSearcher(pipe);
+			Searcher searcher = SocketCenter.getSearcher(pipe);
 			response = searcher.startSearch(request);
 		} 
 		long endTime = System.currentTimeMillis();

@@ -11,7 +11,7 @@ import com.feiniu.searcher.flow.MysqlFlow;
 import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.searcher.flow.SolrFlow;
 
-public class FNSearcherSocketFactory {
+public class SearcherFactory {
 
 	public static SearcherFlowSocket getSearcherFlow(final WarehouseParam param, final NodeConfig nodeConfig,
 			String seq) {

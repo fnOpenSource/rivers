@@ -1,8 +1,8 @@
 package com.feiniu.model;
 
-public class FNWriteResponse {
+public class ReaderState {
 	String maxId = "";
-	String lastUpdateTime = "0";
+	String ReaderScanStamp = "0";
 	int count = 0;
 	public String getMaxId() {
 		return maxId;
@@ -10,11 +10,11 @@ public class FNWriteResponse {
 	public void setMaxId(String maxId) {
 		this.maxId = maxId;
 	}
-	public String getLastUpdateTime() {
-		return lastUpdateTime;
+	public String getReaderScanStamp() {
+		return ReaderScanStamp;
 	}
-	public void setLastUpdateTime(String lastUpdateTime) {
-		this.lastUpdateTime = lastUpdateTime;
+	public void setReaderScanStamp(String ReaderScanStamp) {
+		this.ReaderScanStamp = ReaderScanStamp;
 	}
 	public int getCount() {
 		return count;

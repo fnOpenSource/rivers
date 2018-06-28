@@ -13,14 +13,14 @@ import org.elasticsearch.search.sort.SortOrder;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.FNRequest;
 import com.feiniu.model.param.SearchParam;
 import com.feiniu.model.param.TransParam; 
 
 public class SearchParamUtil {
 
-	public static void normalParam(FNRequest request, FNQuery<?, ?, ?> fq,NodeConfig nodeConfig) {
+	public static void normalParam(FNRequest request, SearcherModel<?, ?, ?> fq,NodeConfig nodeConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
 				nodeConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
 		if (o != null) {
@@ -94,7 +94,7 @@ public class SearchParamUtil {
 										reverse ? SortOrder.DESC : SortOrder.ASC));
 							}
 						}
-					}else if(fieldname.equals("SYSTEM_UPDATE_TIME")) { 
+					}else if(fieldname.equals(GlobalParam.DEFAULT_FIELD)) { 
 						sortList.add(SortBuilders.fieldSort(fieldname).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));
 					} 

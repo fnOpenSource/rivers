@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.ESQueryModel;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.ESSearcherModel;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.FNRequest;
 import com.feiniu.model.FNResponse;
 import com.feiniu.model.SolrQueryModel;
@@ -20,19 +20,19 @@ import com.feiniu.util.SearchParamUtil;
  * @author chengwen
  * @version 1.0
  */
-public class FNSearcher {
-	private final static Logger log = LoggerFactory.getLogger(FNSearcher.class);
+public class Searcher {
+	private final static Logger log = LoggerFactory.getLogger(Searcher.class);
 	private SearcherFlowSocket searcher = null;
 	private NodeConfig NodeConfig = null;
 	private String instanceName = null;
 	private Handler handler=null;
 
-	public static FNSearcher getInstance(String instanceName,
+	public static Searcher getInstance(String instanceName,
 			NodeConfig NodeConfig, SearcherFlowSocket searcher) {
-		return new FNSearcher(instanceName, NodeConfig, searcher);
+		return new Searcher(instanceName, NodeConfig, searcher);
 	}
 
-	private FNSearcher(String instanceName, NodeConfig NodeConfig,
+	private Searcher(String instanceName, NodeConfig NodeConfig,
 			SearcherFlowSocket searcher) {
 		this.instanceName = instanceName;
 		this.searcher = searcher;
@@ -63,15 +63,15 @@ public class FNSearcher {
 		response.setParams(rq.getParams(), this.NodeConfig);
 		Analyzer analyzer = this.searcher.getAnalyzer();
 
-		FNQuery<?, ?, ?> query=null;
+		SearcherModel<?, ?, ?> searcherModel = null;
 		switch (this.searcher.getType()) {
 		case ES:
-			query = ESQueryModel.getInstance(rq, analyzer,NodeConfig);
-			SearchParamUtil.normalParam(rq, query,NodeConfig);
+			searcherModel = ESSearcherModel.getInstance(rq, analyzer,NodeConfig);
+			SearchParamUtil.normalParam(rq, searcherModel,NodeConfig);
 			break;
 		case SOLR:
-			query = SolrQueryModel.getInstance(rq, analyzer,NodeConfig);
-			SearchParamUtil.normalParam(rq, query,NodeConfig);
+			searcherModel = SolrQueryModel.getInstance(rq, analyzer,NodeConfig);
+			SearchParamUtil.normalParam(rq, searcherModel,NodeConfig);
 			break; 
 		default:
 			response.setError_info("Not Support Searcher Type!");
@@ -79,7 +79,7 @@ public class FNSearcher {
 		}  
 		try {
 			response.setError_info(rq.getErrors());
-			response.setResult(this.searcher.Search(query, instanceName,handler));
+			response.setResult(this.searcher.Search(searcherModel, instanceName,handler));
 		} catch (Exception e) {
 			response.setError_info("search parameter may be error!");
 			log.error("FNResponse error,", e);

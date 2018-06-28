@@ -3,6 +3,7 @@ package com.feiniu.reader.util;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import com.feiniu.config.GlobalParam;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.reader.Reader;
 /**
@@ -13,19 +14,21 @@ import com.feiniu.reader.Reader;
 public class DataSetReader implements Reader<HashMap<String, Object>> {  
 	private String IncrementColumn;
 	private String keyColumn;
-	private String lastUpdateTime = "";
+	private String READER_LAST_STAMP = "";
 	private String maxId = "";
-	private LinkedList<WriteUnit> datas;  
+	private LinkedList<WriteUnit> datas;
+	private boolean status = true;
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void init(HashMap<String, Object> rs) {
 		if (rs.size() > 2) {
-			this.keyColumn =  String.valueOf(rs.get("keyColumn"));
-			this.IncrementColumn = String.valueOf(rs.get("IncrementColumn"));
+			this.keyColumn =  String.valueOf(rs.get(GlobalParam.READER_KEY));
+			this.IncrementColumn = String.valueOf(rs.get(GlobalParam.READER_SCAN_KEY));
 			this.maxId = String.valueOf(rs.get("maxId"));
-			if(rs.containsKey("lastUpdateTime"))
-				this.lastUpdateTime = String.valueOf(rs.get("lastUpdateTime"));
+			if(rs.containsKey(GlobalParam.READER_LAST_STAMP))
+				this.READER_LAST_STAMP = String.valueOf(rs.get(GlobalParam.READER_LAST_STAMP));
+			this.status = (boolean) rs.get(GlobalParam.READER_STATUS);
 			this.datas = (LinkedList<WriteUnit>) rs.get("datas");
 		}
 	}
@@ -53,15 +56,16 @@ public class DataSetReader implements Reader<HashMap<String, Object>> {
 
 	@Override
 	public void close() {
-		lastUpdateTime = "";
+		READER_LAST_STAMP = "";
 		maxId = "";
+		status = true;
 		keyColumn = null;
 		IncrementColumn = null;
 	}
 
 	@Override
-	public String getLastUpdateTime() {
-		return lastUpdateTime;
+	public String getScanStamp() {
+		return READER_LAST_STAMP;
 	}
 
 	@Override
@@ -74,4 +78,8 @@ public class DataSetReader implements Reader<HashMap<String, Object>> {
 		return keyColumn;
 	}
 
+	@Override
+	public boolean status() { 
+		return status;
+	} 
 }

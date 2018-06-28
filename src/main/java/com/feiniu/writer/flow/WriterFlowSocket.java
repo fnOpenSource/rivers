@@ -14,7 +14,7 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.TransParam;
 
@@ -22,11 +22,11 @@ import com.feiniu.model.param.TransParam;
 public class WriterFlowSocket implements Flow{
 	
 	/**batch submit documents*/
-	protected Boolean batch = true;
+	protected volatile Boolean batch = true;
 	protected HashMap<String, Object> connectParams;
-	protected String poolName;  
+	protected volatile String poolName;  
 	protected FnConnection<?> FC;
-	protected AtomicInteger retainer = new AtomicInteger(0);
+	protected volatile AtomicInteger retainer = new AtomicInteger(0);
 	private final static Logger log = LoggerFactory.getLogger(WriterFlowSocket.class);
 	
 	@Override
@@ -81,7 +81,7 @@ public class WriterFlowSocket implements Flow{
 	public void write(String keyColumn,WriteUnit unit,Map<String, TransParam> transParams,String instantcName, String batchId,boolean isUpdate) throws Exception {
 	}
 
-	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
 	}
   
 	public void remove(String instanceName, String batchId) {

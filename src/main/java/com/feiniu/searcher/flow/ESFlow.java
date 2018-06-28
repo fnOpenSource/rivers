@@ -20,7 +20,7 @@ import com.alibaba.fastjson.JSON;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.model.FNDataUnit;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.FNResultSet;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
@@ -36,7 +36,7 @@ public class ESFlow extends SearcherFlowSocket {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FNResultSet Search(FNQuery<?, ?, ?> fq, String instance,Handler handler)
+	public FNResultSet Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler)
 			throws FNException {
 		FnConnection<?> FC = LINK(true);
 		FNResultSet res = new FNResultSet();
@@ -77,7 +77,7 @@ public class ESFlow extends SearcherFlowSocket {
 		return res;
 	} 
 	
-	private void addResult(FNResultSet res,SearchResponse response,FNQuery<?, ?, ?> fq,List<String> returnFields) {
+	private void addResult(FNResultSet res,SearchResponse response,SearcherModel<?, ?, ?> fq,List<String> returnFields) {
 		SearchHits searchHits = response.getHits();
 		res.setTotalHit((int) searchHits.getTotalHits());  
 		SearchHit[] hits = searchHits.getHits();  
@@ -111,7 +111,7 @@ public class ESFlow extends SearcherFlowSocket {
 	private SearchResponse getSearchResponse(Client conn,QueryBuilder qb,
 			List<String> returnFields, String instance, int start, int count,
 			List<SortBuilder> sortFields,
-			List<AbstractAggregationBuilder> facetBuilders,FNQuery<?, ?, ?> fq,FNResultSet res) {
+			List<AbstractAggregationBuilder> facetBuilders,SearcherModel<?, ?, ?> fq,FNResultSet res) {
 		SearchRequestBuilder request = conn.prepareSearch(instance).setPreference("_replica_first");
 		request.setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
 		request.setQuery(qb);

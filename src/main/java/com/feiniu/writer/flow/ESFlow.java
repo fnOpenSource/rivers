@@ -27,9 +27,10 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.ESConnector;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
@@ -130,7 +131,7 @@ public class ESFlow extends WriterFlowSocket {
 					routing.append(value);
 				}
 			}
-			cbuilder.field("SYSTEM_UPDATE_TIME", unit.getUpdateTime());
+			cbuilder.field(GlobalParam.DEFAULT_FIELD, unit.getUpdateTime());
 			cbuilder.endObject();
 			if (isUpdate) {
 				UpdateRequest _UR = new UpdateRequest(name, type, id);
@@ -164,13 +165,13 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
  
 	}
 
 	@Override
 	public void flush() throws Exception {
-		if (this.batch) {
+		if (batch) {
 			this.ESC.getBulkProcessor().flush();
 			if (this.ESC.getRunState() == false) {
 				this.ESC.setRunState(true);
@@ -380,6 +381,7 @@ public class ESFlow extends WriterFlowSocket {
 		} catch (Exception e) {
 			log.error("getSettingMap error:" + e.getMessage());
 		}
+		config_map.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){{put("type", "long");}});
 		Map<String, Object> root_map = new HashMap<String, Object>();
 		root_map.put("properties", config_map);
 		Map<String, Object> _source_map = new HashMap<String, Object>();

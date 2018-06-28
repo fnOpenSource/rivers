@@ -69,6 +69,8 @@ public class GlobalParam {
 	
 	public final static String DEFAULT_RESOURCE_TAG = "_DEFAULT";
 	
+	public final static String DEFAULT_FIELD = "SYSTEM_UPDATE_TIME";
+	
 	public final static String DEFAULT_RESOURCE_SEQ = "";
 	 
 	public static enum JOB_TYPE {
@@ -114,6 +116,11 @@ public class GlobalParam {
 	public static final String _incrementField = "#{update_time}"; 
 	public static final String _start_time =  "#{start_time}"; 
 	public static final String _end_time =  "#{end_time}"; 
+	
+	public static final String READER_KEY = "keyColumn";
+	public static final String READER_SCAN_KEY = "IncrementColumn";
+	public static final String READER_LAST_STAMP = "lastUpdateTime";
+	public static final String READER_STATUS = "status";
 	
 	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
 }

@@ -3,7 +3,7 @@ package com.feiniu.model;
 import java.util.List;
 import java.util.Map;
 
-public interface FNQuery<T1, T2, T3> {
+public interface SearcherModel<T1, T2, T3> {
 	public T1 getQuery();
 
 	public void setQuery(T1 query);

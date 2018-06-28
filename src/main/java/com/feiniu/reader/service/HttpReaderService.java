@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.flow.TransDataFlow;
-import com.feiniu.model.ESQueryModel;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.ESSearcherModel;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.TransParam;
@@ -103,7 +103,7 @@ public class HttpReaderService {
 					case "add":
 						if (rq.getParameterMap().get("data") != null && rq.getParameterMap().get("instance") != null
 								&& rq.getParameterMap().get("type") != null && rq.getParameterMap().get("seq") != null
-								&& rq.getParameterMap().get("keycolumn") != null
+								&& rq.getParameterMap().get(GlobalParam.READER_KEY) != null
 								&& rq.getParameterMap().get("updatecolumn") != null) {
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
@@ -198,7 +198,7 @@ public class HttpReaderService {
 					case "delete":
 						if (rq.getParameterMap().get("instance") != null
 								&& rq.getParameterMap().get("seq") != null && rq.getParameterMap().get("search_dsl") != null) { 
-							FNQuery<?, ?, ?> query=null;
+							SearcherModel<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
 							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
@@ -210,7 +210,7 @@ public class HttpReaderService {
 							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(coreWriter.getNodeConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = ESQueryModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
+								query = ESSearcherModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
 								break; 
 							default:
 								break;
@@ -241,9 +241,9 @@ public class HttpReaderService {
 				Map<String, TransParam> transParams) {
 			HashMap<String, Object> jobPage = new HashMap<String, Object>();
 			LinkedList<WriteUnit> datas = new LinkedList<WriteUnit>();
-			jobPage.put("keyColumn", keycolumn);
-			jobPage.put("IncrementColumn", updatecolumn);
-			jobPage.put("lastUpdateTime", System.currentTimeMillis());
+			jobPage.put(GlobalParam.READER_KEY, keycolumn);
+			jobPage.put(GlobalParam.READER_SCAN_KEY, updatecolumn);
+			jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
 			JSONArray jr = JSONArray.fromObject(data);
 			String maxId = null;
 			String updateFieldValue = null;
@@ -253,11 +253,11 @@ public class HttpReaderService {
 				@SuppressWarnings("unchecked")
 				Set<Entry<String, String>> itr = jo.entrySet();
 				for (Entry<String, String> k : itr) {
-					if (k.getKey().equals(jobPage.get("keyColumn"))) {
+					if (k.getKey().equals(jobPage.get(GlobalParam.READER_KEY))) {
 						u.setKeyColumnVal(k.getValue());
 						maxId = String.valueOf(k.getValue());
 					}
-					if (k.getKey().equals(jobPage.get("IncrementColumn"))) {
+					if (k.getKey().equals(jobPage.get(GlobalParam.READER_SCAN_KEY))) {
 						updateFieldValue = String.valueOf(k.getValue());
 					}
 					u.addFieldValue(k.getKey(), k.getValue(), transParams);

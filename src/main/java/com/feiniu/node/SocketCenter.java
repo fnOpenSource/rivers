@@ -7,17 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.GlobalParam.DATA_TYPE;
-import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.config.NodeConfig;
+import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.WarehouseSqlParam;
 import com.feiniu.reader.flow.ReaderFlowSocket;
 import com.feiniu.reader.flow.ReaderFlowSocketFactory;
-import com.feiniu.searcher.FNQueryBuilder;
-import com.feiniu.searcher.FNSearcher;
-import com.feiniu.searcher.FNSearcherSocketFactory;
+import com.feiniu.searcher.Searcher;
+import com.feiniu.searcher.SearcherFactory;
 import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.util.Common;
 import com.feiniu.writer.WriterFactory;
@@ -35,17 +33,17 @@ public final class SocketCenter{
 	private Map<String,TransDataFlow> writerChannelMap = new ConcurrentHashMap<String, TransDataFlow>();
 	private Map<String, WriterFlowSocket> destinationWriterMap = new ConcurrentHashMap<String, WriterFlowSocket>();
 	private Map<String, SearcherFlowSocket> searcherFlowMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
-	private Map<String, FNSearcher> searcherMap = new ConcurrentHashMap<String, FNSearcher>();
+	private Map<String, Searcher> searcherMap = new ConcurrentHashMap<String, Searcher>();
 	
 	private final static Logger log = LoggerFactory.getLogger(SocketCenter.class);  
 	  
 	
-	public FNSearcher getSearcher(String instanceName) { 
+	public Searcher getSearcher(String instanceName) { 
 		if(!searcherMap.containsKey(instanceName)) {
 			if (!GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(instanceName))
 				return null; 
 			NodeConfig nodeConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(instanceName);
-			FNSearcher searcher = FNSearcher.getInstance(instanceName, nodeConfig, getSearcherFlow(instanceName));
+			Searcher searcher = Searcher.getInstance(instanceName, nodeConfig, getSearcherFlow(instanceName));
 			searcherMap.put(instanceName, searcher);
 		}
 		return searcherMap.get(instanceName);
@@ -83,25 +81,7 @@ public final class SocketCenter{
 			writerChannelMap.put(Common.getInstanceName(instanceName, seq,null), writer);
 		}
 		return writerChannelMap.get(Common.getInstanceName(instanceName, seq,null)); 
-	}  
- 
-	public FNQueryBuilder getQueryBuilder(String instanceName) { 
-		if (!GlobalParam.nodeTreeConfigs.getNodeConfigs().containsKey(instanceName))
-			return null;
-		
-		WarehouseNosqlParam param = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(GlobalParam.nodeTreeConfigs.getNodeConfigs().get(instanceName).getPipeParam().getWriteTo());
-		if (param == null)
-			return null;
-		
-		if (param.getType() == DATA_TYPE.ES){		
-			return null;
-		}
-		else if (param.getType() == DATA_TYPE.SOLR){
-			return null;
-		}
-		else
-			return null;
-	}
+	}   
 	
 	public WarehouseParam getWHP(String destination) {
 		WarehouseParam param=null;
@@ -131,7 +111,7 @@ public final class SocketCenter{
 			return null;
 		
 		NodeConfig paramConfig = GlobalParam.nodeTreeConfigs.getSearchConfigs().get(secname);
-		SearcherFlowSocket searcher = FNSearcherSocketFactory.getSearcherFlow(param, paramConfig,null);
+		SearcherFlowSocket searcher = SearcherFactory.getSearcherFlow(param, paramConfig,null);
 		searcherFlowMap.put(secname, searcher); 
 		return searcher;
 	}

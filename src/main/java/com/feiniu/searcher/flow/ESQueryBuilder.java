@@ -25,15 +25,13 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.QUERY_TYPE;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.ESQueryModel;
 import com.feiniu.model.FNRequest;
 import com.feiniu.model.param.SearchParam;
 import com.feiniu.model.param.TransParam;
-import com.feiniu.searcher.FNQueryBuilder;
 import com.feiniu.util.Common;
 import com.feiniu.util.LongRangeType;
  
-public class ESQueryBuilder implements FNQueryBuilder{  
+public class ESQueryBuilder{  
 	
 	private final static Logger log = LoggerFactory.getLogger(ESQueryBuilder.class);
 	 
@@ -128,12 +126,7 @@ public class ESQueryBuilder implements FNQueryBuilder{
 		} 
 		return bquery;
 	} 
-	
-	@Override
-	public ESQueryModel getQuery(FNRequest request) { 
-		return null;
-	} 
-	 
+ 
 	static private void QueryBoost (QueryBuilder query, TransParam tp, FNRequest request)throws Exception{
 		float boostValue = tp.getBoost();
 

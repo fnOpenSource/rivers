@@ -24,7 +24,7 @@ import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.handler.ConnectionHandler;
 import com.feiniu.model.FNDataUnit;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.FNResultSet;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
@@ -60,7 +60,7 @@ public class SolrFlow extends SearcherFlowSocket {
 	} 
 
 	@Override
-	public FNResultSet Search(FNQuery<?, ?, ?> fq, String instance,Handler handler) throws FNException{
+	public FNResultSet Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler) throws FNException{
 		FnConnection<?> FC = LINK(true);
 		FNResultSet res = new FNResultSet();
 		try {
@@ -111,7 +111,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		return this.collectionName;
 	} 
 	
-	private void addResult(FNResultSet res, QueryResponse rps,FNQuery<?, ?, ?> fq) { 
+	private void addResult(FNResultSet res, QueryResponse rps,SearcherModel<?, ?, ?> fq) { 
 		GroupResponse groupResponse = rps.getGroupResponse();
 		NamedList<Object> commonResponse = rps.getResponse();
 		boolean setnum = true;
@@ -184,7 +184,7 @@ public class SolrFlow extends SearcherFlowSocket {
 	}
 
 	private QueryResponse getSearchResponse(CloudSolrClient conn,SolrQuery qb, String index,
-			int start, int count, FNQuery<?, ?, ?> fq) {
+			int start, int count, SearcherModel<?, ?, ?> fq) {
 		conn.setDefaultCollection(getCollection()); 
 		qb.setParam("wt", "json");
 		qb.setRows(count);

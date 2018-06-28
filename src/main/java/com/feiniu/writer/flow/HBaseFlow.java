@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.FNQuery;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.WriteUnit;
 import com.feiniu.model.param.TransParam;
 
@@ -99,7 +99,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void doDelete(FNQuery<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
 		
 	}
 

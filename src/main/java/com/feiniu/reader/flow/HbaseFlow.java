@@ -90,19 +90,19 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				String maxId = null;
 				String updateFieldValue=null;
 				this.datas.clear();
-				this.jobPage.put("keyColumn", param.get("keyColumn"));
-				this.jobPage.put("IncrementColumn", param.get("incrementField")); 
+				this.jobPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
+				this.jobPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY)); 
 				for (Result r : resultScanner) { 
 					WriteUnit u = WriteUnit.getInstance();
 					if(handler==null){
 						for (Cell cell : r.rawCells()) {
 							String k = new String(CellUtil.cloneQualifier(cell));
 							String v = new String(CellUtil.cloneValue(cell), "UTF-8"); 
-							if(k.equals(this.jobPage.get("keyColumn"))){
+							if(k.equals(this.jobPage.get(GlobalParam.READER_KEY))){
 								u.setKeyColumnVal(v);
 								maxId = v;
 							}
-							if(k.equals(this.jobPage.get("IncrementColumn"))){
+							if(k.equals(this.jobPage.get(GlobalParam.READER_SCAN_KEY))){
 								updateFieldValue = v;
 							}
 							u.addFieldValue(k, v, transParams);
@@ -113,14 +113,14 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 					this.datas.add(u);
 				} 
 				if (updateFieldValue==null){ 
-					this.jobPage.put("lastUpdateTime", System.currentTimeMillis()); 
+					this.jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
 				}else{
-					this.jobPage.put("lastUpdateTime", updateFieldValue); 
+					this.jobPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
 				}
 				this.jobPage.put("maxId", maxId);
 				this.jobPage.put("datas", this.datas);
 			} catch (Exception e) {
-				this.jobPage.put("lastUpdateTime", -1);
+				this.jobPage.put(GlobalParam.READER_LAST_STAMP, -1);
 				log.error("SqlReader init Exception", e);
 			} 
 		} catch (Exception e) {

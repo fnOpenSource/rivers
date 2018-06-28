@@ -10,6 +10,8 @@ public interface Reader<T> {
 	 
 	public void init(T rs); 
 	
+	public boolean status();
+	
 	public WriteUnit getLineData();
 	
 	public String getIncrementColumn();
@@ -20,7 +22,7 @@ public interface Reader<T> {
 	
 	public void close();
 	
-	public String getLastUpdateTime();
+	public String getScanStamp();
 	
 	public String getMaxId();
 }

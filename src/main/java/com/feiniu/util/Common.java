@@ -238,10 +238,10 @@ public class Common {
 	public static String getInstanceName(String instanceName, String seq,String fixName) {
 		if(fixName!=null)
 			return fixName;
-		if (seq != null && !seq.equals(GlobalParam.DEFAULT_RESOURCE_SEQ)) {
+		if (seq != null && seq.length()>0) {
 			return instanceName + seq;
 		} else {
-			return instanceName;
+			return instanceName + GlobalParam.DEFAULT_RESOURCE_SEQ;
 		}
 
 	}

@@ -41,26 +41,29 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		isLocked.set(true);
 		FnConnection<?> FC = LINK(false);
 		this.jobPage.clear(); 
+		this.jobPage.put(GlobalParam.READER_STATUS,true);
 		boolean releaseConn = false;
 		Connection conn = (Connection) FC.getConnection(false);
 		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
 			try(ResultSet rs = statement.executeQuery();){				
-				this.jobPage.put("keyColumn", param.get("keyColumn"));
-				this.jobPage.put("IncrementColumn", param.get("incrementField"));
+				this.jobPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
+				this.jobPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));
 				if(handler==null){
 					getAllData(rs,transParams); 
 				}else{
 					handler.Handle(this,rs,transParams);
 				} 
 			} catch (Exception e) {
-				this.jobPage.put("lastUpdateTime", -1);
-				log.error("SqlReader init Exception", e);
+				this.jobPage.put(GlobalParam.READER_STATUS,false);
+				log.error("get data Page Exception", e);
 			} 
 		} catch (SQLException e){
+			this.jobPage.put(GlobalParam.READER_STATUS,false);
 			log.error(param.get("sql") + " getJobPage SQLException", e);
 		} catch (Exception e) { 
 			releaseConn = true;
+			this.jobPage.put(GlobalParam.READER_STATUS,false);
 			log.error("getJobPage Exception so free connection,details ", e);
 		}finally{
 			UNLINK(FC,releaseConn);
@@ -159,11 +162,11 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				for (int i = 1; i < columncount + 1; i++) {
 					String v = rs.getString(i);
 					String k = metaData.getColumnLabel(i);
-					if(k.equals(this.jobPage.get("keyColumn"))){
+					if(k.equals(this.jobPage.get(GlobalParam.READER_KEY))){
 						u.setKeyColumnVal(v);
 						maxId = v;
 					}
-					if(k.equals(this.jobPage.get("IncrementColumn"))){
+					if(k.equals(this.jobPage.get(GlobalParam.READER_SCAN_KEY))){
 						updateFieldValue = v;
 					}
 					u.addFieldValue(k, v, transParam);
@@ -172,12 +175,13 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			}
 			rs.close();
 		} catch (SQLException e) {
+			this.jobPage.put(GlobalParam.READER_STATUS,false);
 			log.error("getAllData SQLException,", e);
 		}
 		if (updateFieldValue==null){ 
-			this.jobPage.put("lastUpdateTime", System.currentTimeMillis()); 
+			this.jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
 		}else{
-			this.jobPage.put("lastUpdateTime", updateFieldValue); 
+			this.jobPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
 		}
 		this.jobPage.put("maxId", maxId);
 		this.jobPage.put("datas", this.datas);

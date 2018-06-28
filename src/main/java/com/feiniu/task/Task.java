@@ -49,10 +49,8 @@ public class Task{
 	 */
 	public void optimizeInstance(){
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(0);
-		String indexName = instanceName;
-		if (seq != null && seq.length() > 0)
-			indexName = instanceName + seq;  
-		jobWriter.optimizeIndex(indexName, Common.getStoreId(instanceName,seq,jobWriter,true,false));
+		String storeName = Common.getInstanceName(instanceName, seq, null); 
+		jobWriter.optimizeIndex(storeName, Common.getStoreId(instanceName,seq,jobWriter,true,false));
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 	}
 	

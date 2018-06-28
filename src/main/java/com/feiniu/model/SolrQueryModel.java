@@ -11,7 +11,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.searcher.flow.SolrQueryBuilder;
 
-public class SolrQueryModel implements FNQuery<SolrQuery, String, String> {
+public class SolrQueryModel implements SearcherModel<SolrQuery, String, String> {
 	private SolrQuery query ; 
 	private int start = 0;
 	private int count = 5; 

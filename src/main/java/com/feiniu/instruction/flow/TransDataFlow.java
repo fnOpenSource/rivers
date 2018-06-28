@@ -13,8 +13,8 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.correspond.ReportStatus;
-import com.feiniu.model.FNQuery;
-import com.feiniu.model.FNWriteResponse;
+import com.feiniu.model.SearcherModel;
+import com.feiniu.model.ReaderState;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
@@ -162,14 +162,14 @@ public final class TransDataFlow {
  * @return FNWriteResponse 
  * @throws Exception
  */  
-	public FNWriteResponse writeDataSet(String id,String instance, String storeId,
+	public ReaderState writeDataSet(String id,String instance, String storeId,
 			String seq, HashMap<String, Object> dataSet, String info,boolean isUpdate,boolean monopoly) throws Exception {
-		FNWriteResponse resp = new FNWriteResponse(); 
+		ReaderState resp = new ReaderState(); 
 		Reader<HashMap<String, Object>> scaner = new DataSetReader();
 		scaner.init(dataSet);
 		long start = Common.getNow();
-		int count = 0; 
-		if (!scaner.getLastUpdateTime().equals("-1")) {
+		int num = 0; 
+		if (scaner.status()) {
 			if(monopoly) {
 				this.writer.MONOPOLY();
 			}else {
@@ -179,16 +179,16 @@ public final class TransDataFlow {
 			try{
 				while (scaner.nextLine()) {   
 					this.writer.write(scaner.getkeyColumn(),scaner.getLineData(),nodeConfig.getTransParams(),instance, storeId,isUpdate);
-					count++;
+					num++;
 				}
-				String lastUpdateTime = scaner.getLastUpdateTime();
+				String READER_LAST_STAMP = scaner.getScanStamp();
 				String maxId = scaner.getMaxId();
 				scaner.close();
-				resp.setLastUpdateTime(lastUpdateTime);
+				resp.setReaderScanStamp(READER_LAST_STAMP);
 				resp.setMaxId(maxId);
-				resp.setCount(count);
-				indexLog(" -- "+id+" onepage ",instance, storeId, seq, String.valueOf(count), maxId,
-						String.valueOf(lastUpdateTime), Common.getNow() - start, "onepage", info); 
+				resp.setCount(num);
+				indexLog(" -- "+id+" onepage ",instance, storeId, seq, String.valueOf(num), maxId,
+						String.valueOf(READER_LAST_STAMP), Common.getNow() - start, "onepage", info); 
 			}catch(Exception e){
 				if(e.getMessage().equals("storeId not found")){
 					throw new FNException("storeId not found");
@@ -205,7 +205,7 @@ public final class TransDataFlow {
 		return resp;
 	}  
 	
-		public void deleteByQuery(FNQuery<?, ?, ?> query,String instance, String storeId) {
+		public void deleteByQuery(SearcherModel<?, ?, ?> query,String instance, String storeId) {
 			this.writer.getResource(); 
 			boolean freeConn = false;
 			try{
@@ -253,7 +253,7 @@ public final class TransDataFlow {
 					String startId ="";
 					String endId = "";
 					int total = 0;
-					FNWriteResponse resp = null;
+					ReaderState resp = null;
 					long start = Common.getNow();
 					for (String page : pageList) { 
 						processPos++;
@@ -321,24 +321,24 @@ public final class TransDataFlow {
 			GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName+" seqs nums",String.valueOf(table_seqs.size()));
 			for (int i = 0; i < table_seqs.size(); i++) {
 				int total = 0;
-				FNWriteResponse resp = null;
+				ReaderState rState = null;
 				long start = Common.getNow();
-				String lastUpdateTime = "0";
+				String READER_LAST_STAMP = "0";
 				String newLastUpdateTime = "0";
 				String maxId = "0";
 				String startId = "0";
 				String tseq = table_seqs.get(i);
 
 				if (null != lastUpdateTimes[i])
-					lastUpdateTime = lastUpdateTimes[i];
+					READER_LAST_STAMP = lastUpdateTimes[i];
 				try {
-					if(lastUpdateTime.equals("null"))
-						lastUpdateTime = "0";
+					if(READER_LAST_STAMP.equals("null"))
+						READER_LAST_STAMP = "0";
 					HashMap<String, String> param = new HashMap<String, String>();
 					param.put("table", sqlParam.getMainTable());
 					param.put("alias", sqlParam.getMainAlias());
 					param.put("column", sqlParam.getKeyColumn()); 
-					param.put(GlobalParam._start_time, lastUpdateTime);
+					param.put(GlobalParam._start_time, READER_LAST_STAMP);
 					param.put(GlobalParam._end_time,"");
 					param.put(GlobalParam._seq, tseq); 
 					param.put("originalSql", originalSql);
@@ -354,7 +354,7 @@ public final class TransDataFlow {
 					HashMap<String, String> sqlParams;
 					GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq, "start count page...");
 					if (pageList.size() > 0) {
-						indexLog("start " + desc, destName, storeId, tseq, "", maxId, lastUpdateTime, 0, "start",
+						indexLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
 								",totalpage:" + pageList.size());
 						int processPos = 0;
 						for (String page : pageList) {
@@ -378,17 +378,17 @@ public final class TransDataFlow {
 										newLastUpdateTime, Common.getNow() - start, "complete", "");
 								break;
 							} else {
-								resp = writeDataSet(desc, destName, storeId, tseq,
+								rState = writeDataSet(desc, destName, storeId, tseq,
 										getSqlPageData(sql, incrementField, keyColumn),
 										",complete:" + processPos + "/" + pageList.size(), isUpdate,false);
 
-								total += resp.getCount();
+								total += rState.getCount();
 								startId = maxId;
 							}
 
 							if (newLastUpdateTimes[i] == null || newLastUpdateTimes[i].equals("null")
-									|| resp.getLastUpdateTime().compareTo(newLastUpdateTimes[i]) > 0) {
-								newLastUpdateTimes[i] = String.valueOf(resp.getLastUpdateTime());
+									|| rState.getReaderScanStamp().compareTo(newLastUpdateTimes[i]) > 0) {
+								newLastUpdateTimes[i] = String.valueOf(rState.getReaderScanStamp());
 							}
 							if (!isFullIndex) {
 								GlobalParam.LAST_UPDATE_TIME.set(instanceName,DataSeq, getTimeString(newLastUpdateTimes));
@@ -402,7 +402,7 @@ public final class TransDataFlow {
 							ReportStatus.report(instanceName, desc);
 						}
 					} else {
-						indexLog("start " + desc, destName, storeId, tseq, "", maxId, lastUpdateTime, 0, "start",
+						indexLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
 								" no data job finished!");
 					}
 				} while (param.get(GlobalParam._end_time).length()>0 && this.scanHandler.needLoop(param));
@@ -458,8 +458,8 @@ public final class TransDataFlow {
 	private HashMap<String, Object> getSqlPageData(String sql,String incrementField,String keyColumn){
 		HashMap<String, String> params = new HashMap<String, String>();
 		params.put("sql", sql); 
-		params.put("incrementField", incrementField); 
-		params.put("keyColumn", keyColumn); 
+		params.put(GlobalParam.READER_SCAN_KEY, incrementField); 
+		params.put(GlobalParam.READER_KEY, keyColumn); 
 		return (HashMap<String, Object>) reader.getJobPage(params,nodeConfig.getTransParams(),this.readHandler);
 	}
 	

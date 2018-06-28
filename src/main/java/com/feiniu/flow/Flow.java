@@ -9,6 +9,7 @@ import com.feiniu.connect.FnConnection;
  * @version 1.0 
  */
 public interface Flow {
+	
 	public void INIT(HashMap<String, Object> connectParams);
 
 	public FnConnection<?> LINK(boolean canSharePipe);

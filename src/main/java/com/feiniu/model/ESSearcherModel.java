@@ -15,6 +15,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
+import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -25,7 +26,7 @@ import com.feiniu.util.SearchParamUtil;
 
 import org.elasticsearch.script.Script;
 
-public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
+public class ESSearcherModel implements SearcherModel<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
 	private QueryBuilder query;
 	private List<SortBuilder> sortinfo;
 	private int start = 0;
@@ -43,8 +44,8 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	private String facet_ext="";
 	private String requesthandler="";
 	
-	public static ESQueryModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
-		ESQueryModel eq = new ESQueryModel(); 
+	public static ESSearcherModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+		ESSearcherModel eq = new ESSearcherModel(); 
 		eq.setSorts(SearchParamUtil.getSortField(request, nodeConfig));
 		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, nodeConfig));
 		if(request.getParam("facet_ext")!=null){
@@ -256,6 +257,10 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	 * @return
 	 */
 	private AbstractAggregationBuilder genAgg(String fun,String name,String field,boolean type) {
+		HashMap<String, String> kv = new HashMap<>();
+		if(field.contains("(DEF(")) {
+			kv = getDEF(field);
+		}
 		switch (fun) {
 			case "cardinality": 
 				return AggregationBuilders.cardinality(name).field(field); 
@@ -268,18 +273,27 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 					return AggregationBuilders.sum(name).field(field); 
 				} 
 			case "topHits":
-				String[] tmp = field.split(":");
-				if(tmp.length>1) { 
-					String sortField;
-					SortOrder sod;
-					if(tmp[1].endsWith(GlobalParam.SORT_ASC)) {
-						sortField = tmp[1].substring(0, tmp[1].indexOf(GlobalParam.SORT_ASC));
-						sod = SortOrder.ASC;
-					}else {
-						sortField = tmp[1].substring(0, tmp[1].indexOf(GlobalParam.SORT_DESC));
-						sod = SortOrder.DESC;
+				if(kv.size()>0) {
+					TopHitsBuilder tb = AggregationBuilders.topHits(fun);
+					if(kv.containsKey("sort")) {
+						String sortField;
+						SortOrder sod;
+						if(kv.get("sort").endsWith(GlobalParam.SORT_ASC)) {
+							sortField = kv.get("sort").substring(0, kv.get("sort").indexOf(GlobalParam.SORT_ASC));
+							sod = SortOrder.ASC;
+						}else {
+							sortField = kv.get("sort").substring(0, kv.get("sort").indexOf(GlobalParam.SORT_DESC));
+							sod = SortOrder.DESC;
+						}
+						tb.addSort(sortField, sod).setFrom(Integer.valueOf(name));
+					} 
+					if(kv.containsKey("size")) {
+						tb.setSize(Integer.valueOf(kv.get("size")));
 					}
-					return AggregationBuilders.topHits(fun).addSort(sortField, sod).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(tmp[0]));
+					if(kv.containsKey("includes")) {
+						tb.setFetchSource(kv.get("includes").split("\\|"), null);
+					}
+					return tb.setFrom(Integer.valueOf(name));
 				}else {
 					return AggregationBuilders.topHits(fun).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(field));
 				} 
@@ -305,6 +319,18 @@ public class ESQueryModel implements FNQuery<QueryBuilder,SortBuilder,AbstractAg
 	 str = str.substring(0, str.length()-2); 
 	 Script script = new Script(str); 
 	 return script;
+ }
+ 
+ private HashMap<String, String> getDEF(String str){
+	 str = str.replace("(DEF(", "");
+	 str = str.substring(0, str.length()-2); 
+	 HashMap<String, String> res = new HashMap<>();
+	 for(String s:str.split(";")) {
+		 String[] tmp = s.split("=");
+		 if(tmp.length==2)
+			 res.put(tmp[0], tmp[1]);
+	 }
+	 return res;
  }
 
 }
