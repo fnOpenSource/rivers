@@ -7,7 +7,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.model.RiverModel;
+import com.feiniu.model.RiverState;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.task.Task;
@@ -23,11 +23,11 @@ public class GlobalParam {
 	
 	public static String VERSION;
 	/**node core writer status,0 stop 1 normal 2running 4break running thread */
-	public volatile static RiverModel<AtomicInteger> FLOW_STATUS = new RiverModel<AtomicInteger>();
+	public volatile static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
 	/**FLOW_INFOS current flow runing state information*/
-	public static RiverModel<HashMap<String,String>> FLOW_INFOS = new RiverModel< HashMap<String,String>>();
+	public static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState< HashMap<String,String>>();
 	
-	public static RiverModel<String> LAST_UPDATE_TIME = new RiverModel<String>();
+	public static RiverState<String> LAST_UPDATE_TIME = new RiverState<String>();
 	
 	public static boolean WRITE_BATCH = false;
 	

@@ -12,14 +12,14 @@ import org.apache.solr.client.solrj.SolrQuery;
 
 import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam;
-import com.feiniu.model.FNRequest;
+import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearchParam;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 
 public class SolrQueryBuilder {
 
-	public static SolrQuery queryBuilder(FNRequest request, NodeConfig prs,
+	public static SolrQuery queryBuilder(SearcherRequest request, NodeConfig prs,
 			Analyzer analyzer, Map<String, String> attrQueryMap) {
 		SolrQuery sq = new SolrQuery();
 		StringBuffer qr = new StringBuffer();

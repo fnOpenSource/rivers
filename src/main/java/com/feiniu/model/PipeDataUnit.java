@@ -5,15 +5,15 @@ import java.util.Map;
 
 import com.feiniu.model.param.TransParam;
 
-public class WriteUnit {  
+public class PipeDataUnit {  
 	public String key_column_val;
 	private HashMap<String,Object> data;  
 	private long SYSTEM_UPDATE_TIME; 
 	
-	public static WriteUnit getInstance(){
-		return new WriteUnit();
+	public static PipeDataUnit getInstance(){
+		return new PipeDataUnit();
 	}
-	public WriteUnit() {
+	public PipeDataUnit() {
 		this.data = new HashMap<String,Object>();
 		this.SYSTEM_UPDATE_TIME = System.currentTimeMillis();
 	}

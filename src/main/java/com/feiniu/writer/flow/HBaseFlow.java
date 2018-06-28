@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 
 /**
@@ -64,7 +64,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 	  
 	@Override
-	public void write(String keyColumn,WriteUnit unit,Map<String, TransParam> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		if (unit.getData().size() == 0){
 			log.info("Empty IndexUnit for " + instantcName + " " + storeId);
 			return;

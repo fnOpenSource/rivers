@@ -31,7 +31,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
@@ -95,7 +95,7 @@ public class ESFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void write(String keyColumn, WriteUnit unit, Map<String, TransParam> transParams, String instantcName,
+	public void write(String keyColumn, PipeDataUnit unit, Map<String, TransParam> transParams, String instantcName,
 			String storeId, boolean isUpdate) throws FNException {
 		try {
 			String name = Common.getStoreName(instantcName, storeId);

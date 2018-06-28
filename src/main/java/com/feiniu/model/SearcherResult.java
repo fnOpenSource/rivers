@@ -3,24 +3,24 @@ package com.feiniu.model;
 import java.util.ArrayList;
 import java.util.List;
  
-public class FNResultSet {
+public class SearcherResult {
 	private float useTime;
 	private String callDateTime; 
 	private int totalHit;
-	private List<FNDataUnit> unitSet;
+	private List<SearcherDataUnit> unitSet;
 	private Object facetInfo=null;   
 	private Object queryDetail = null;
 	private Object explainInfo;
 
-	public FNResultSet() {
-		unitSet = new ArrayList<FNDataUnit>();
+	public SearcherResult() {
+		unitSet = new ArrayList<SearcherDataUnit>();
 	}
 
-	public List<FNDataUnit> getUnitSet() {
+	public List<SearcherDataUnit> getUnitSet() {
 		return unitSet;
 	}
 
-	public void setUnitSet(List<FNDataUnit> unitSet) {
+	public void setUnitSet(List<SearcherDataUnit> unitSet) {
 		this.unitSet = unitSet;
 	}
 

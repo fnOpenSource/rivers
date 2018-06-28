@@ -1,6 +1,6 @@
 package com.feiniu.reader;
 
-import com.feiniu.model.WriteUnit; 
+import com.feiniu.model.PipeDataUnit; 
 /**
  * define data scan interface
  * @author chengwen
@@ -12,7 +12,7 @@ public interface Reader<T> {
 	
 	public boolean status();
 	
-	public WriteUnit getLineData();
+	public PipeDataUnit getLineData();
 	
 	public String getIncrementColumn();
 	

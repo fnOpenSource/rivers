@@ -26,7 +26,7 @@ import com.feiniu.util.SearchParamUtil;
 
 import org.elasticsearch.script.Script;
 
-public class ESSearcherModel implements SearcherModel<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
+public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
 	private QueryBuilder query;
 	private List<SortBuilder> sortinfo;
 	private int start = 0;
@@ -44,8 +44,8 @@ public class ESSearcherModel implements SearcherModel<QueryBuilder,SortBuilder,A
 	private String facet_ext="";
 	private String requesthandler="";
 	
-	public static ESSearcherModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
-		ESSearcherModel eq = new ESSearcherModel(); 
+	public static SearcherESModel getInstance(SearcherRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+		SearcherESModel eq = new SearcherESModel(); 
 		eq.setSorts(SearchParamUtil.getSortField(request, nodeConfig));
 		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, nodeConfig));
 		if(request.getParam("facet_ext")!=null){

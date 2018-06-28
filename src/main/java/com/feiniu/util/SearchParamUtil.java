@@ -14,13 +14,13 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.FNRequest;
+import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearchParam;
 import com.feiniu.model.param.TransParam; 
 
 public class SearchParamUtil {
 
-	public static void normalParam(FNRequest request, SearcherModel<?, ?, ?> fq,NodeConfig nodeConfig) {
+	public static void normalParam(SearcherRequest request, SearcherModel<?, ?, ?> fq,NodeConfig nodeConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
 				nodeConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
 		if (o != null) {
@@ -46,7 +46,7 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder> getSortField(FNRequest request, NodeConfig nodeConfig) {  
+	public static List<SortBuilder> getSortField(SearcherRequest request, NodeConfig nodeConfig) {  
 		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
 		List<SortBuilder> sortList = new ArrayList<SortBuilder>();
 		boolean useScore = false;
@@ -113,7 +113,7 @@ public class SearchParamUtil {
 	 * @param prs
 	 * @return
 	 */
-		public static Map<String,List<String[]>> getFacetParams(FNRequest rq,
+		public static Map<String,List<String[]>> getFacetParams(SearcherRequest rq,
 				NodeConfig prs) {
 			Map<String,List<String[]>> res = new LinkedHashMap<String,List<String[]>>();
 			if(rq.getParam("facet")!=null){

@@ -19,9 +19,9 @@ import org.elasticsearch.search.sort.SortBuilder;
 import com.alibaba.fastjson.JSON;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.connect.FnConnection;
-import com.feiniu.model.FNDataUnit;
+import com.feiniu.model.SearcherDataUnit;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.FNResultSet;
+import com.feiniu.model.SearcherResult;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
@@ -36,10 +36,10 @@ public class ESFlow extends SearcherFlowSocket {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FNResultSet Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler)
+	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler)
 			throws FNException {
 		FnConnection<?> FC = LINK(true);
-		FNResultSet res = new FNResultSet();
+		SearcherResult res = new SearcherResult();
 		try{
 			ESConnector ESC = (ESConnector) FC.getConnection(true);
 			Client conn = ESC.getClient();
@@ -77,14 +77,14 @@ public class ESFlow extends SearcherFlowSocket {
 		return res;
 	} 
 	
-	private void addResult(FNResultSet res,SearchResponse response,SearcherModel<?, ?, ?> fq,List<String> returnFields) {
+	private void addResult(SearcherResult res,SearchResponse response,SearcherModel<?, ?, ?> fq,List<String> returnFields) {
 		SearchHits searchHits = response.getHits();
 		res.setTotalHit((int) searchHits.getTotalHits());  
 		SearchHit[] hits = searchHits.getHits();  
 		 
 		for (SearchHit h:hits) {
 			Map<String, SearchHitField> fieldMap = h.getFields(); 
-			FNDataUnit u = FNDataUnit.getInstance();
+			SearcherDataUnit u = SearcherDataUnit.getInstance();
 			for (Map.Entry<String, SearchHitField> e : fieldMap.entrySet()) {
 				String name = e.getKey();
 				TransParam param = NodeConfig.getTransParams().get(name);
@@ -111,7 +111,7 @@ public class ESFlow extends SearcherFlowSocket {
 	private SearchResponse getSearchResponse(Client conn,QueryBuilder qb,
 			List<String> returnFields, String instance, int start, int count,
 			List<SortBuilder> sortFields,
-			List<AbstractAggregationBuilder> facetBuilders,SearcherModel<?, ?, ?> fq,FNResultSet res) {
+			List<AbstractAggregationBuilder> facetBuilders,SearcherModel<?, ?, ?> fq,SearcherResult res) {
 		SearchRequestBuilder request = conn.prepareSearch(instance).setPreference("_replica_first");
 		request.setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
 		request.setQuery(qb);

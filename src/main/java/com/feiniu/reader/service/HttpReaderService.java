@@ -22,9 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.flow.TransDataFlow;
-import com.feiniu.model.ESSearcherModel;
+import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.service.FNService;
@@ -210,7 +210,7 @@ public class HttpReaderService {
 							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(coreWriter.getNodeConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = ESSearcherModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
+								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
 								break; 
 							default:
 								break;
@@ -240,7 +240,7 @@ public class HttpReaderService {
 		private HashMap<String, Object> getJobPage(Object data, String keycolumn, String updatecolumn,
 				Map<String, TransParam> transParams) {
 			HashMap<String, Object> jobPage = new HashMap<String, Object>();
-			LinkedList<WriteUnit> datas = new LinkedList<WriteUnit>();
+			LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>();
 			jobPage.put(GlobalParam.READER_KEY, keycolumn);
 			jobPage.put(GlobalParam.READER_SCAN_KEY, updatecolumn);
 			jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
@@ -248,7 +248,7 @@ public class HttpReaderService {
 			String maxId = null;
 			String updateFieldValue = null;
 			for (int j = 0; j < jr.size(); j++) {
-				WriteUnit u = WriteUnit.getInstance();
+				PipeDataUnit u = PipeDataUnit.getInstance();
 				JSONObject jo = jr.getJSONObject(j);
 				@SuppressWarnings("unchecked")
 				Set<Entry<String, String>> itr = jo.entrySet();

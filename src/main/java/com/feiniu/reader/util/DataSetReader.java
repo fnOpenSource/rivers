@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.reader.Reader;
 /**
  * pass data set in argument,writer will auto get each line
@@ -16,7 +16,7 @@ public class DataSetReader implements Reader<HashMap<String, Object>> {
 	private String keyColumn;
 	private String READER_LAST_STAMP = "";
 	private String maxId = "";
-	private LinkedList<WriteUnit> datas;
+	private LinkedList<PipeDataUnit> datas;
 	private boolean status = true;
 
 	@SuppressWarnings("unchecked")
@@ -29,7 +29,7 @@ public class DataSetReader implements Reader<HashMap<String, Object>> {
 			if(rs.containsKey(GlobalParam.READER_LAST_STAMP))
 				this.READER_LAST_STAMP = String.valueOf(rs.get(GlobalParam.READER_LAST_STAMP));
 			this.status = (boolean) rs.get(GlobalParam.READER_STATUS);
-			this.datas = (LinkedList<WriteUnit>) rs.get("datas");
+			this.datas = (LinkedList<PipeDataUnit>) rs.get("datas");
 		}
 	}
 
@@ -39,7 +39,7 @@ public class DataSetReader implements Reader<HashMap<String, Object>> {
 	}
 
 	@Override
-	public WriteUnit getLineData() {  
+	public PipeDataUnit getLineData() {  
 		return this.datas.poll();
 	}
 

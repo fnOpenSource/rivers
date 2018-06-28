@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.connect.FnConnection;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
@@ -93,7 +93,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				this.jobPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
 				this.jobPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY)); 
 				for (Result r : resultScanner) { 
-					WriteUnit u = WriteUnit.getInstance();
+					PipeDataUnit u = PipeDataUnit.getInstance();
 					if(handler==null){
 						for (Cell cell : r.rawCells()) {
 							String k = new String(CellUtil.cloneQualifier(cell));

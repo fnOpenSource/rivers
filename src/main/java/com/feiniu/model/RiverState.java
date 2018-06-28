@@ -2,7 +2,7 @@ package com.feiniu.model;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RiverModel<T> extends ConcurrentHashMap<String,T>{
+public class RiverState<T> extends ConcurrentHashMap<String,T>{
  
 	private static final long serialVersionUID = 7134367712318896122L;
 	

@@ -17,8 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.FNRequest;
-import com.feiniu.model.FNResponse;
+import com.feiniu.model.SearcherRequest;
+import com.feiniu.model.SearcherState;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.searcher.Searcher;
 import com.feiniu.service.FNService;
@@ -67,8 +67,8 @@ public class SearcherService{
 		return true;
 	}
   
-	public static FNRequest parseRequest(Object input) {
-		FNRequest rq = FNRequest.getInstance(); 
+	public static SearcherRequest parseRequest(Object input) {
+		SearcherRequest rq = SearcherRequest.getInstance(); 
 		Request base_request = (Request) input;
 		String path = base_request.getPathInfo();
 		String pipe = path.substring(1); 
@@ -83,9 +83,9 @@ public class SearcherService{
 		return rq;
 	}
 	
-	public FNResponse process(FNRequest request) { 
+	public SearcherState process(SearcherRequest request) { 
 		long startTime = System.currentTimeMillis();
-		FNResponse response = null; 
+		SearcherState response = null; 
 		String pipe = request.getPipe(); 
 		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getSearchConfigs();
 		if (configMap.containsKey(pipe)) { 
@@ -112,11 +112,11 @@ public class SearcherService{
 			response.setStatus(HttpServletResponse.SC_OK);
 
 			rq.setHandled(true);
-			FNRequest _request = parseRequest((Object) rq);
+			SearcherRequest _request = parseRequest((Object) rq);
 
 			if (GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(
 					_request.getPipe())) {
-				FNResponse _response = null;
+				SearcherState _response = null;
 				try {
 					_response = process(_request);
 				} catch (Exception e) {

@@ -10,19 +10,19 @@ import com.alibaba.fastjson.JSON;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 
-public class FNResponse {
+public class SearcherState {
 
 	protected Map<String, String> params = new HashMap<String, String>();
 	protected Map<String, String> parsedParams = new HashMap<String, String>(); 
-	protected FNResultSet result = null;
+	protected SearcherResult result = null;
 	private long startTime = 0;
 	private long endTime = 0;
 	private long duration = 0; 
 	private String index = "";
 	private String error_info = "";
 
-	public static FNResponse getInstance() {
-		return new FNResponse();
+	public static SearcherState getInstance() {
+		return new SearcherState();
 	}
 
 	public void setError_info(String err) {
@@ -41,11 +41,11 @@ public class FNResponse {
 		}
 	}   
 
-	public FNResultSet getResult() {
+	public SearcherResult getResult() {
 		return result;
 	}
 
-	public void setResult(FNResultSet result) {
+	public void setResult(SearcherResult result) {
 		this.result = result;
 	}
 
@@ -109,7 +109,7 @@ public class FNResponse {
 		Map<String, Object> contentMap = new LinkedHashMap<String, Object>();
 		contentMap.put("total", result.getTotalHit()); 
 		List<Object> objList = new ArrayList<Object>();
-		for (FNDataUnit unit : result.getUnitSet()) {
+		for (SearcherDataUnit unit : result.getUnitSet()) {
 			objList.add(unit.getContent());
 		}
 		if (objList.size() > 0)

@@ -5,11 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.ESSearcherModel;
+import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.FNRequest;
-import com.feiniu.model.FNResponse;
-import com.feiniu.model.SolrQueryModel;
+import com.feiniu.model.SearcherRequest;
+import com.feiniu.model.SearcherState;
+import com.feiniu.model.SearcherSolrModel;
 import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.SearchParamUtil;
@@ -46,8 +46,8 @@ public class Searcher {
 		}
 	}
 
-	public FNResponse startSearch(FNRequest rq) {
-		FNResponse response = FNResponse.getInstance();
+	public SearcherState startSearch(SearcherRequest rq) {
+		SearcherState response = SearcherState.getInstance();
 		response.setIndex(instanceName);
 		/** check validation */
 		if (!rq.isValid()) {
@@ -66,11 +66,11 @@ public class Searcher {
 		SearcherModel<?, ?, ?> searcherModel = null;
 		switch (this.searcher.getType()) {
 		case ES:
-			searcherModel = ESSearcherModel.getInstance(rq, analyzer,NodeConfig);
+			searcherModel = SearcherESModel.getInstance(rq, analyzer,NodeConfig);
 			SearchParamUtil.normalParam(rq, searcherModel,NodeConfig);
 			break;
 		case SOLR:
-			searcherModel = SolrQueryModel.getInstance(rq, analyzer,NodeConfig);
+			searcherModel = SearcherSolrModel.getInstance(rq, analyzer,NodeConfig);
 			SearchParamUtil.normalParam(rq, searcherModel,NodeConfig);
 			break; 
 		default:

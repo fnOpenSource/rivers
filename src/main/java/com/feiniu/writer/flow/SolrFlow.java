@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
@@ -109,7 +109,7 @@ public class SolrFlow extends WriterFlowSocket{
 	} 
 	
 	@Override
-	public void write(String keyColumn,WriteUnit unit,Map<String, TransParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		String name = Common.getStoreName(instantcName,storeId);
 		if (unit.getData().size() == 0){
 			log.warn("Empty IndexUnit for " + name );

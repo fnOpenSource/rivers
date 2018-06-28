@@ -11,7 +11,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.searcher.flow.SolrQueryBuilder;
 
-public class SolrQueryModel implements SearcherModel<SolrQuery, String, String> {
+public class SearcherSolrModel implements SearcherModel<SolrQuery, String, String> {
 	private SolrQuery query ; 
 	private int start = 0;
 	private int count = 5; 
@@ -26,8 +26,8 @@ public class SolrQueryModel implements SearcherModel<SolrQuery, String, String> 
 	private Map<String, SolrQuery> attrQueryMap = new HashMap<String, SolrQuery>(); 
 	private List<String> sortinfo;
 	
-	public static SolrQueryModel getInstance(FNRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
-		SolrQueryModel sq = new SolrQueryModel(); 
+	public static SearcherSolrModel getInstance(SearcherRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+		SearcherSolrModel sq = new SearcherSolrModel(); 
 		sq.setQuery(SolrQueryBuilder.queryBuilder(request, nodeConfig,
 				analyzer, new HashMap<String, String>()));
 		return sq;

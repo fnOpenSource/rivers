@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.NodeConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.handler.ConnectionHandler;
-import com.feiniu.model.FNDataUnit;
+import com.feiniu.model.SearcherDataUnit;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.FNResultSet;
+import com.feiniu.model.SearcherResult;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
@@ -60,9 +60,9 @@ public class SolrFlow extends SearcherFlowSocket {
 	} 
 
 	@Override
-	public FNResultSet Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler) throws FNException{
+	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler) throws FNException{
 		FnConnection<?> FC = LINK(true);
-		FNResultSet res = new FNResultSet();
+		SearcherResult res = new SearcherResult();
 		try {
 			CloudSolrClient conn = (CloudSolrClient) FC.getConnection(true);
 			int start = fq.getStart();
@@ -111,7 +111,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		return this.collectionName;
 	} 
 	
-	private void addResult(FNResultSet res, QueryResponse rps,SearcherModel<?, ?, ?> fq) { 
+	private void addResult(SearcherResult res, QueryResponse rps,SearcherModel<?, ?, ?> fq) { 
 		GroupResponse groupResponse = rps.getGroupResponse();
 		NamedList<Object> commonResponse = rps.getResponse();
 		boolean setnum = true;
@@ -124,7 +124,7 @@ public class SolrFlow extends SearcherFlowSocket {
 				setnum = false;
 				List<Group> tmps = groupCommand.getValues();
 				for (Group g : tmps) {
-					FNDataUnit u = FNDataUnit.getInstance();
+					SearcherDataUnit u = SearcherDataUnit.getInstance();
 					u.addObject(g.getGroupValue(), g.getResult());
 					res.getUnitSet().add(u);
 				}
@@ -139,7 +139,7 @@ public class SolrFlow extends SearcherFlowSocket {
 						res.setTotalHit((int) v.getNumFound());
 					setnum = false;
 					for (SolrDocument sd : v) {
-						FNDataUnit u = FNDataUnit.getInstance();
+						SearcherDataUnit u = SearcherDataUnit.getInstance();
 						for (String n : sd.getFieldNames()) {
 							if(fq.isShowQueryInfo()){ 
 								if(n.equals("score")){

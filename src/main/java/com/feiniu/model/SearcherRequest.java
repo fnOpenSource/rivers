@@ -9,15 +9,15 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.model.param.SearchParam;
 import com.feiniu.model.param.TransParam;
 
-public class FNRequest {
+public class SearcherRequest {
 	private String pipe = null;
 	private String detail = null;
 	private String originalKeyword = null; 
 	private Map<String, String> params = new HashMap<String, String>(); 
 	private ArrayList<String> errors = new ArrayList<String>(); 
 
-	public static FNRequest getInstance() {
-		return new FNRequest();
+	public static SearcherRequest getInstance() {
+		return new SearcherRequest();
 	} 
 	
 	public String getErrors(){

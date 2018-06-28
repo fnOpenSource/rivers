@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.QUERY_TYPE;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.model.FNRequest;
+import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearchParam;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
@@ -40,7 +40,7 @@ public class ESQueryBuilder{
 		return QueryBuilders.termQuery("EMPTY", "0x000");
 	}
 	
-	static public BoolQueryBuilder buildBooleanQuery(FNRequest request, NodeConfig nodeConfig, Analyzer analyzer,
+	static public BoolQueryBuilder buildBooleanQuery(SearcherRequest request, NodeConfig nodeConfig, Analyzer analyzer,
 			Map<String, QueryBuilder> attrQueryMap) {
 		BoolQueryBuilder bquery = QueryBuilders.boolQuery(); 
 		try { 
@@ -127,7 +127,7 @@ public class ESQueryBuilder{
 		return bquery;
 	} 
  
-	static private void QueryBoost (QueryBuilder query, TransParam tp, FNRequest request)throws Exception{
+	static private void QueryBoost (QueryBuilder query, TransParam tp, SearcherRequest request)throws Exception{
 		float boostValue = tp.getBoost();
 
 		Method m = query.getClass().getMethod("boost", new Class[]{float.class});
@@ -136,7 +136,7 @@ public class ESQueryBuilder{
 		m.invoke(query, boostValue);
 	}
 	
-	static private QueryBuilder buildSingleQuery(String key, String value, TransParam tp,SearchParam sp, FNRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception{
+	static private QueryBuilder buildSingleQuery(String key, String value, TransParam tp,SearchParam sp, SearcherRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception{
 		if (value == null || (tp.getDefaultvalue() == null && value.length() <= 0) || tp == null )
 			return null; 
 		boolean not_analyzed = tp.getAnalyzer().equalsIgnoreCase(GlobalParam.NOT_ANALYZED) ? true : false;
@@ -194,7 +194,7 @@ public class ESQueryBuilder{
 		return ESSimpleQuery.getQuery();
 	} 
 
-	static private QueryBuilder buildMultiQuery(String multifield, String value, NodeConfig nodeConfig, FNRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception {
+	static private QueryBuilder buildMultiQuery(String multifield, String value, NodeConfig nodeConfig, SearcherRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception {
 		DisMaxQueryBuilder bquery = null; 
 		String[] keys = multifield.split(",");
 

@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
@@ -21,7 +21,7 @@ public class ReaderFlowSocket<T> implements Flow{
 	
 	protected String poolName;
 	
-	protected LinkedList<WriteUnit> datas = new LinkedList<WriteUnit>(); 
+	protected LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>(); 
 	
 	protected AtomicBoolean isLocked = new AtomicBoolean(false); 
 	

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.connect.FnConnection;
-import com.feiniu.model.WriteUnit;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
@@ -158,7 +158,7 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			ResultSetMetaData metaData = rs.getMetaData();
 			int columncount = metaData.getColumnCount(); 
 			while (rs.next()) {
-				WriteUnit u = WriteUnit.getInstance();
+				PipeDataUnit u = PipeDataUnit.getInstance();
 				for (int i = 1; i < columncount + 1; i++) {
 					String v = rs.getString(i);
 					String k = metaData.getColumnLabel(i);

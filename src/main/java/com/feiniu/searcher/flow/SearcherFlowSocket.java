@@ -10,7 +10,7 @@ import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.FNResultSet;
+import com.feiniu.model.SearcherResult;
 import com.feiniu.searcher.handler.Handler;
 
 public class SearcherFlowSocket implements Flow{
@@ -32,7 +32,7 @@ public class SearcherFlowSocket implements Flow{
 		return this.analyzer;
 	}
 	/**need rewrite*/
-	public FNResultSet Search(SearcherModel<?, ?, ?> query, String instance,Handler handler) throws Exception {
+	public SearcherResult Search(SearcherModel<?, ?, ?> query, String instance,Handler handler) throws Exception {
 		return null;
 	}
 	
