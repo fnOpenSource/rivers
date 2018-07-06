@@ -1,6 +1,5 @@
 package com.feiniu.instruction.flow;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,14 +9,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.correspond.ReportStatus;
-import com.feiniu.model.SearcherModel;
+import com.feiniu.instruction.Instruction;
 import com.feiniu.model.ReaderState;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
+import com.feiniu.node.CPU;
 import com.feiniu.reader.Reader;
 import com.feiniu.reader.flow.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
@@ -27,53 +27,54 @@ import com.feiniu.util.FNException;
 import com.feiniu.writer.flow.WriterFlowSocket;
 
 /**
- * write data from source A to Source B
+ * Build river flow transfer data from A to B
  * @author chengwen
- * @version 1.0 
+ * @version 2.0 
  */
-public final class TransDataFlow {
+public final class TransDataFlow extends Instruction{
 
-	private final static Logger log = LoggerFactory.getLogger("TransDataFlow"); 
-	private ReaderFlowSocket<?> reader; 
-	private NodeConfig nodeConfig;
-	private WriterFlowSocket writer;
+	private final static Logger log = LoggerFactory.getLogger("TransDataFlow");   
 	/**defined custom read flow socket*/
 	private Handler readHandler; 
-	private Handler scanHandler; 
-
-	private SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private Handler scanHandler;   
 	
-	public static TransDataFlow getInstance(ReaderFlowSocket<?> flowSocket,WriterFlowSocket writer, NodeConfig nodeConfig){
-		return new TransDataFlow(flowSocket,writer,nodeConfig);
+	public static TransDataFlow getInstance(ReaderFlowSocket<?> reader,WriterFlowSocket writer, InstanceConfig instanceConfig){
+		return new TransDataFlow(reader,writer,instanceConfig);
 	}
  
-	private TransDataFlow(ReaderFlowSocket<?> reader,WriterFlowSocket writer, NodeConfig nodeConfig) {
-		this.writer = writer;
-		this.nodeConfig = nodeConfig;  
-		this.reader = reader;
+	private TransDataFlow(ReaderFlowSocket<?> reader,WriterFlowSocket writer, InstanceConfig instanceConfig) { 
+		CPU.prepare(getID(), instanceConfig, writer,reader);  
 		try {
-			if(nodeConfig.getPipeParam().getDataFromhandler()!=null){
-				this.readHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getDataFromhandler()).newInstance();
+			if(instanceConfig.getPipeParam().getDataFromhandler()!=null){
+				this.readHandler = (Handler) Class.forName(instanceConfig.getPipeParam().getDataFromhandler()).newInstance();
 			} 
-			if(nodeConfig.getPipeParam().getSqlParam().getHandler()!=null) {
-				this.scanHandler = (Handler) Class.forName(nodeConfig.getPipeParam().getSqlParam().getHandler()).newInstance();
+			if(instanceConfig.getPipeParam().getSqlParam().getHandler()!=null) {
+				this.scanHandler = (Handler) Class.forName(instanceConfig.getPipeParam().getSqlParam().getHandler()).newInstance();
 			}
 		}catch(Exception e){
 			log.error("TransDataFlow Instruction Exception,",e);
 		}
 	}   
 	
-	public String write(String instanceName, String storeId, String lastTime,
+	public String run(String instanceName, String storeId, String lastTime,
 			String DataSeq, boolean isFullIndex) throws FNException{
-		if(this.nodeConfig.getPipeParam().getNoSqlParam()!=null){
+		if(getInstanceConfig().getPipeParam().getNoSqlParam()!=null){
 			return doNosqlWrite(instanceName, storeId, lastTime, isFullIndex);
 		}else{
 			return doSqlWrite(instanceName, storeId, lastTime, DataSeq, isFullIndex);
 		}
 	}  
 	
-	public NodeConfig getNodeConfig() {
-		return nodeConfig;
+	public InstanceConfig getInstanceConfig() {
+		return CPU.getContext(getID()).getInstanceConfig();
+	}
+	
+	public ReaderFlowSocket<?> getReader() {
+		return CPU.getContext(getID()).getReader();
+	}
+	
+	public WriterFlowSocket getWriter() {
+		return CPU.getContext(getID()).getWriter();
 	}
 
 	/**
@@ -81,7 +82,7 @@ public final class TransDataFlow {
 	 */
 	public void scanDbWrite(String instanceName, String storeId,
 			String dbseq, HashMap<String, String> params) throws Exception {
-		MessageParam MP = nodeConfig.getMessageParam();
+		MessageParam MP = getInstanceConfig().getMessageParam();
 		String originalSql = MP.getSqlParam().getSql();
 		if (null == originalSql) {
 			log.error("scanData with null sql!");
@@ -93,60 +94,7 @@ public final class TransDataFlow {
 			writeDataSet("Message",indexName, storeId, "",
 					getSqlPageData(buildSql(originalSql, params),"",""), ",Message",false,false);
 		}
-	} 
-	 
-
-	public void optimizeIndex(String instance, String storeId) {
-		log.info("start optimize instance "+instance+"_"+storeId+" ...");
-		this.writer.getResource();
-		try{
-			this.writer.optimize(instance, storeId);
-		}finally{
-			this.writer.freeResource(false);
-		}  
-	} 
-
-	public String getNewStoreId(String instanceName, boolean isIncrement,
-			String dbseq) {
-		String taskId = null;
-		this.writer.getResource(); 
-		try{
-			taskId = this.writer.getNewStoreId(instanceName, isIncrement, dbseq,
-					this.nodeConfig);
-		}finally{
-			this.writer.freeResource(false);
-		}  
-		return taskId;
-	}
-	
-	public void createStorePosition(String store_main,String storeId){
-		this.writer.getResource();
-		try{
-			this.writer.settings(store_main, storeId,nodeConfig.getTransParams());
-		}finally{
-			this.writer.freeResource(false);
-		}  
-	}
-	
-	public void switchSearcher(String instance, String storeId) {
-		String removeId = ""; 
-		if (storeId.equals("a")) {
-			this.optimizeIndex(instance, "a");
-			removeId = "b";
-		} else {
-			this.optimizeIndex(instance, "b");
-			removeId = "a";
-		} 
-		this.writer.getResource();
-		try{
-			this.writer.remove(instance, removeId);
-			this.writer.setAlias(instance, storeId, nodeConfig.getAlias());
-		}finally{
-			this.writer.freeResource(true); 
-			this.writer.freeConnPool();
-		}   
-	}
- 
+	}    
 
 /**
  * do index one page
@@ -159,36 +107,41 @@ public final class TransDataFlow {
  * @param incrementField for SQL scan job
  * @param isUpdate write with update method
  * @param monopoly monopoly resource not release
- * @return FNWriteResponse 
+ * @return ReaderState 
  * @throws Exception
  */  
 	public ReaderState writeDataSet(String id,String instance, String storeId,
 			String seq, HashMap<String, Object> dataSet, String info,boolean isUpdate,boolean monopoly) throws Exception {
-		ReaderState resp = new ReaderState(); 
+		ReaderState rstate = new ReaderState(); 
 		Reader<HashMap<String, Object>> scaner = new DataSetReader();
 		scaner.init(dataSet);
 		long start = Common.getNow();
 		int num = 0; 
 		if (scaner.status()) {
+			boolean _connect;
 			if(monopoly) {
-				this.writer.MONOPOLY();
+				_connect = getWriter().MONOPOLY();
 			}else {
-				this.writer.getResource();
+				_connect = getWriter().LINK();
 			} 
+			if(!_connect) {
+				rstate.setStatus(false);
+				return rstate;
+			}
 			boolean freeConn = false;
 			try{
 				while (scaner.nextLine()) {   
-					this.writer.write(scaner.getkeyColumn(),scaner.getLineData(),nodeConfig.getTransParams(),instance, storeId,isUpdate);
+					getWriter().write(scaner.getkeyColumn(),scaner.getLineData(),getInstanceConfig().getTransParams(),instance, storeId,isUpdate);
 					num++;
 				}
 				String READER_LAST_STAMP = scaner.getScanStamp();
 				String maxId = scaner.getMaxId();
 				scaner.close();
-				resp.setReaderScanStamp(READER_LAST_STAMP);
-				resp.setMaxId(maxId);
-				resp.setCount(num);
-				indexLog(" -- "+id+" onepage ",instance, storeId, seq, String.valueOf(num), maxId,
-						String.valueOf(READER_LAST_STAMP), Common.getNow() - start, "onepage", info); 
+				rstate.setReaderScanStamp(READER_LAST_STAMP);
+				rstate.setMaxId(maxId);
+				rstate.setCount(num);
+				log.info(Common.formatLog(" -- "+id+" onepage ",instance, storeId, seq, String.valueOf(num), maxId,
+						String.valueOf(READER_LAST_STAMP), Common.getNow() - start, "onepage", info)); 
 			}catch(Exception e){
 				if(e.getMessage().equals("storeId not found")){
 					throw new FNException("storeId not found");
@@ -196,27 +149,18 @@ public final class TransDataFlow {
 					freeConn = true;
 				}
 			}finally{
-				this.writer.flush();
+				getWriter().flush();
 				if(!monopoly) 
-					this.writer.freeResource(freeConn);
+					getWriter().REALEASE(freeConn);
 			}  
+		}else {
+			rstate.setStatus(false);
 		}
-		reader.freeJobPage();
-		return resp;
+		getReader().freeJobPage();
+		return rstate;
 	}  
 	
-		public void deleteByQuery(SearcherModel<?, ?, ?> query,String instance, String storeId) {
-			this.writer.getResource(); 
-			boolean freeConn = false;
-			try{
-				this.writer.doDelete(query, instance, storeId);
-			}catch(Exception e){
-				log.error("DeleteByQuery Exception",e);
-				freeConn = true;
-			}finally{
-				this.writer.freeResource(freeConn);
-			}
-		}
+		
 	 
 		/**
 		 * write to not db platform
@@ -230,13 +174,15 @@ public final class TransDataFlow {
 		private String doNosqlWrite(String instanceName, String storeId, String lastTime,
 				boolean isFullIndex)  throws FNException{  
 			String desc = "increment";
-			String indexName = Common.getInstanceName(instanceName,"",nodeConfig.getPipeParam().getInstanceName()); 
-			if (isFullIndex) {
-				createStorePosition(indexName, storeId); 
-				desc = "full";
-			} 
-			NOSQLParam noSqlParam = nodeConfig.getPipeParam().getNoSqlParam();
+			String indexName = Common.getInstanceName(instanceName,"",getInstanceConfig().getPipeParam().getInstanceName(),""); 
+			
 			try {
+				if (isFullIndex) {
+					CPU.RUN(getID(), "Pond", "createStorePosition",indexName, storeId); 
+					desc = "full";
+				} 
+				NOSQLParam noSqlParam = getInstanceConfig().getPipeParam().getNoSqlParam();
+				
 				if(lastTime==null || lastTime.equals(""))
 					lastTime = "0";
 				HashMap<String, String> param = new HashMap<String, String>();
@@ -244,16 +190,16 @@ public final class TransDataFlow {
 				param.put("column", noSqlParam.getKeyColumn());
 				param.put("startTime", lastTime);  
 				param.put(GlobalParam._incrementField, noSqlParam.getIncrementField());  
-				List<String> pageList = reader.getPageSplit(param); 
+				List<String> pageList = getReader().getPageSplit(param); 
 				if (pageList.size() > 0) {
-					indexLog("start " + desc, indexName, storeId, "", "",
+					log.info(Common.formatLog("start " + desc, indexName, storeId, "", "",
 							"", lastTime, 0, "start", ",totalpage:"
-									+ pageList.size());
+									+ pageList.size()));
 					int processPos = 0;
 					String startId ="";
 					String endId = "";
 					int total = 0;
-					ReaderState resp = null;
+					ReaderState rstate;
 					long start = Common.getNow();
 					for (String page : pageList) { 
 						processPos++;
@@ -264,16 +210,16 @@ public final class TransDataFlow {
 						pageParams.put(GlobalParam._start_time, lastTime);
 						pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 						 
-						resp = writeDataSet(desc,indexName, storeId, "",
-								(HashMap<String, Object>) reader.getJobPage(pageParams,nodeConfig.getTransParams(),this.readHandler),
+						rstate = writeDataSet(desc,indexName, storeId, "",
+								(HashMap<String, Object>) getReader().getJobPage(pageParams,getInstanceConfig().getTransParams(),this.readHandler),
 								",complete:" + processPos + "/" + pageList.size(),false,false);
-
-						total += resp.getCount();
+						
+						total += rstate.getCount();
 						startId = endId;
 					}
-					indexLog("complete " + desc, indexName, storeId, "",
+					log.info(Common.formatLog("complete " + desc, indexName, storeId, "",
 							String.valueOf(total), "", lastTime,
-							Common.getNow() - start, "complete", "");
+							Common.getNow() - start, "complete", ""));
 				}
 			}catch(Exception e){
 				
@@ -294,15 +240,15 @@ public final class TransDataFlow {
 		private String doSqlWrite(String instanceName, String storeId, String lastTime,
 				String DataSeq, boolean isFullIndex) throws FNException{
 			String desc;
-			boolean isUpdate = nodeConfig.getPipeParam().getWriteType().equals("increment")?true:false;
-			String destName = Common.getInstanceName(instanceName,DataSeq,nodeConfig.getPipeParam().getInstanceName()); 
+			boolean isUpdate = getInstanceConfig().getPipeParam().getWriteType().equals("increment")?true:false;
+			String destName = Common.getInstanceName(instanceName,DataSeq,getInstanceConfig().getPipeParam().getInstanceName(),""); 
 			if (isFullIndex) {
-				createStorePosition(destName, storeId); 
+				CPU.RUN(getID(), "Pond", "createStorePosition",destName, storeId); 
 				desc = JOB_TYPE.FULL.name();
 			}else {
 				desc = JOB_TYPE.INCREMENT.name();
 			}
-			SQLParam sqlParam = nodeConfig.getPipeParam().getSqlParam();
+			SQLParam sqlParam = getInstanceConfig().getPipeParam().getSqlParam();
 			List<String> table_seqs = sqlParam.getSeq().size() > 0 ? sqlParam.getSeq()
 					: Arrays.asList("");
 			String originalSql = sqlParam.getSql();
@@ -350,12 +296,12 @@ public final class TransDataFlow {
 						this.scanHandler.Handle("",param); 
 					//control  repeat with time job 
 				do {
-					List<String> pageList = reader.getPageSplit(param);
+					List<String> pageList = getReader().getPageSplit(param);
 					HashMap<String, String> sqlParams;
 					GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq, "start count page...");
 					if (pageList.size() > 0) {
-						indexLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
-								",totalpage:" + pageList.size());
+						log.info(Common.formatLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
+								",totalpage:" + pageList.size()));
 						int processPos = 0;
 						for (String page : pageList) {
 							processPos++;
@@ -374,14 +320,15 @@ public final class TransDataFlow {
 							String sql = buildSql(originalSql, sqlParams);
 
 							if ((GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).get() & 4) > 0) {
-								indexLog("kill " + desc, instanceName, storeId, tseq, String.valueOf(total), maxId,
-										newLastUpdateTime, Common.getNow() - start, "complete", "");
+								log.info(Common.formatLog("kill " + desc, instanceName, storeId, tseq, String.valueOf(total), maxId,
+										newLastUpdateTime, Common.getNow() - start, "complete", ""));
 								break;
 							} else {
 								rState = writeDataSet(desc, destName, storeId, tseq,
 										getSqlPageData(sql, incrementField, keyColumn),
-										",complete:" + processPos + "/" + pageList.size(), isUpdate,false);
-
+										",complete:" + processPos + "/" + pageList.size(), isUpdate,false); 
+								if(rState.isStatus()==false)
+									break;
 								total += rState.getCount();
 								startId = maxId;
 							}
@@ -395,28 +342,28 @@ public final class TransDataFlow {
 								Common.saveTaskInfo(instanceName, DataSeq, storeId);
 							}
 						}
-						indexLog("complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
-								newLastUpdateTime, Common.getNow() - start, "complete", "");
-						if (nodeConfig.getPipeParam().getNextJob() != null
-								&& nodeConfig.getPipeParam().getNextJob().length > 0) {
+						log.info(Common.formatLog("complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
+								newLastUpdateTime, Common.getNow() - start, "complete", ""));
+						if (getInstanceConfig().getPipeParam().getNextJob() != null
+								&& getInstanceConfig().getPipeParam().getNextJob().length > 0) {
 							ReportStatus.report(instanceName, desc);
 						}
 					} else {
-						indexLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
-								" no data job finished!");
+						log.info(Common.formatLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
+								" no data job finished!"));
 					}
 				} while (param.get(GlobalParam._end_time).length()>0 && this.scanHandler.needLoop(param));
 					 
 				} catch (Exception e) { 
 					if (isFullIndex) {
-						this.writer.getResource();
+						getWriter().LINK();
 						try{
-							this.writer.remove(destName, storeId);
+							getWriter().remove(destName, storeId);
 						}finally{
-							this.writer.freeResource(false);
+							getWriter().REALEASE(false);
 						} 
 					} 
-					if(e.getMessage().equals("storeId not found")){
+					if(e.getMessage()!=null && e.getMessage().equals("storeId not found")){ 
 						throw new FNException("storeId not found");
 					}else{
 						log.error("[" + desc +" "+ destName + tseq + "_" + storeId
@@ -443,7 +390,7 @@ public final class TransDataFlow {
 						log.error("currentThreadState InterruptedException", e);
 					}
 				} 
-				switchSearcher(destName, storeId);  
+				CPU.RUN(getID(), "Pond", "switchInstance", destName, storeId);  
 			} 
 			
 			return getTimeString(newLastUpdateTimes);
@@ -460,7 +407,7 @@ public final class TransDataFlow {
 		params.put("sql", sql); 
 		params.put(GlobalParam.READER_SCAN_KEY, incrementField); 
 		params.put(GlobalParam.READER_KEY, keyColumn); 
-		return (HashMap<String, Object>) reader.getJobPage(params,nodeConfig.getTransParams(),this.readHandler);
+		return (HashMap<String, Object>) getReader().getJobPage(params,getInstanceConfig().getTransParams(),this.readHandler);
 	}
 	
 	private String getTimeString(String[] strs) {
@@ -476,45 +423,7 @@ public final class TransDataFlow {
 		}
 	}
 	
-	/**
-	 * 
-	 * @param heads
-	 * @param instanceName
-	 * @param storeId
-	 * @param seq table seq
-	 * @param total
-	 * @param maxId
-	 * @param lastUpdateTime
-	 * @param useTime
-	 * @param types
-	 * @param moreinfo
-	 */
 	
-	private void indexLog(String heads,String instanceName, String storeId,
-			String seq, String total, String maxId, String lastUpdateTime,
-			long useTime, String types, String moreinfo) {
-		String useTimeFormat = Common.seconds2time(useTime);
-		String str = "["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : "");
-		String update;
-		if(lastUpdateTime.length()>9 && lastUpdateTime.matches("[0-9]+")){ 
-			update = this.SDF.format(lastUpdateTime.length()<12?new Long(lastUpdateTime+"000"):new Long(lastUpdateTime));
-		}else{
-			update = lastUpdateTime;
-		} 
-		switch (types) {
-		case "complete":
-			str += " docs:" + total	+ " " + " useTime: " + useTimeFormat + "}";
-			break;
-		case "start": 
-			str +=" lastUpdate:" + update;
-			break;
-		default:
-			str +=" docs:" + total+ (maxId.equals("0") ? "" : " MaxId:" + maxId)
-			+ " lastUpdate:" + update + " useTime:"	+ useTimeFormat;
-			break;
-		} 
-		log.info(str + moreinfo);
-	}
 
 	/**
 	 * build sql from params

@@ -28,10 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.ESConnector;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
@@ -55,7 +55,7 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void getResource() {
+	public boolean LINK() {
 		synchronized (this) {
 			boolean renew = false;
 			if(this.ESC==null) {
@@ -65,18 +65,21 @@ public class ESFlow extends WriterFlowSocket {
 			if(retainer.incrementAndGet() == 1)
 				renew = true;
 			if (renew) {
-				LINK(false);
+				GETSOCKET(false);
+				if(!super.LINK())
+					return false; 
 				this.ESC = (ESConnector) this.FC.getConnection(false);
 			} 
+			return true;
 		}
 	}
 
 	@Override
-	public void freeResource(boolean releaseConn) { 
+	public void REALEASE(boolean releaseConn) { 
 		synchronized (this) {  
 			if (retainer.decrementAndGet() == 0) {
 				this.ESC = null;
-				UNLINK(this.FC, releaseConn);
+				REALEASE(this.FC, releaseConn);
 			}else {
 				log.info(this.ESC.toString() + " retainer is " + retainer.get());
 			}
@@ -84,13 +87,18 @@ public class ESFlow extends WriterFlowSocket {
 	}
 	
 	@Override
-	public void MONOPOLY() {  
+	public boolean MONOPOLY() {  
 		synchronized (this) {
 			if(this.ESC==null) { 
-				LINK(false); 
+				GETSOCKET(false); 
 				retainer.set(1);
+				
+				if(!super.LINK())
+					return false; 
+					
 				this.ESC = (ESConnector) this.FC.getConnection(false);
 			}
+			return true;
 		}
 	} 
 
@@ -166,7 +174,7 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
- 
+		 
 	}
 
 	@Override
@@ -260,18 +268,18 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public String getNewStoreId(String instance, boolean isIncrement, String dbseq, NodeConfig nodeConfig) {
-		String instanceName = Common.getInstanceName(instance, dbseq, nodeConfig.getPipeParam().getInstanceName());
+	public String getNewStoreId(String instance, boolean isIncrement, String dbseq, InstanceConfig instanceConfig) {
+		String instanceName = Common.getInstanceName(instance, dbseq, instanceConfig.getPipeParam().getInstanceName(),"");
 		boolean a_alias = false;
 		boolean b_alias = false;
 		boolean a = this.ESC.getClient().admin().indices()
 				.exists(new IndicesExistsRequest(Common.getStoreName(instanceName, "a"))).actionGet().isExists();
 		if (a)
-			a_alias = getIndexAlias(instanceName, "a", nodeConfig.getAlias());
+			a_alias = getIndexAlias(instanceName, "a", instanceConfig.getAlias());
 		boolean b = this.ESC.getClient().admin().indices()
 				.exists(new IndicesExistsRequest(Common.getStoreName(instanceName, "b"))).actionGet().isExists();
 		if (b)
-			b_alias = getIndexAlias(instanceName, "b", nodeConfig.getAlias());
+			b_alias = getIndexAlias(instanceName, "b", instanceConfig.getAlias());
 		String select = "";
 		if (isIncrement) {
 			if (a && b) {
@@ -297,12 +305,12 @@ public class ESFlow extends WriterFlowSocket {
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)) {
-				this.settings(instanceName, select, nodeConfig.getTransParams());
+				this.settings(instanceName, select, instanceConfig.getTransParams());
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)
-					|| !this.getIndexAlias(instanceName, select, nodeConfig.getAlias())) {
-				setAlias(instanceName, select, nodeConfig.getAlias());
+					|| !this.getIndexAlias(instanceName, select, instanceConfig.getAlias())) {
+				setAlias(instanceName, select, instanceConfig.getAlias());
 			}
 		} else {
 			if (a && b) {

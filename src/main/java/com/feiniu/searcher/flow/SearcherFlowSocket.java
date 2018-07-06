@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import org.apache.lucene.analysis.Analyzer;
 
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
@@ -16,15 +16,16 @@ import com.feiniu.searcher.handler.Handler;
 public class SearcherFlowSocket implements Flow{
 	
 	protected Analyzer analyzer;
-	protected NodeConfig NodeConfig;
+	protected InstanceConfig instanceConfig;
 	protected HashMap<String, Object> connectParams;
 	protected String poolName;
+	protected FnConnection<?> FC;
 	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.NodeConfig = (NodeConfig) this.connectParams.get("nodeConfig");
+		this.instanceConfig = (InstanceConfig) this.connectParams.get("instanceConfig");
 		this.analyzer = (Analyzer) this.connectParams.get("analyzer");
 	} 
 	
@@ -41,17 +42,28 @@ public class SearcherFlowSocket implements Flow{
 	}
 	
 	@Override
-	public FnConnection<?> LINK(boolean canSharePipe) {  
-		return FnConnectionPool.getConn(this.connectParams,
+	public FnConnection<?> GETSOCKET(boolean canSharePipe) {  
+		this.FC = FnConnectionPool.getConn(this.connectParams,
 				this.poolName,canSharePipe);
+		return this.FC;
 	}
 	
 	@Override
-	public void UNLINK(FnConnection<?> FC,boolean releaseConn) { 
+	public void REALEASE(FnConnection<?> FC,boolean releaseConn) { 
 		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
 	}
 
 	@Override
-	public void MONOPOLY() { 
+	public boolean MONOPOLY() {
+		if(this.FC==null) 
+			return false;
+		return true;
 	}
+
+	@Override
+	public boolean LINK() { 
+		if(this.FC==null) 
+			return false;
+		return true;
+	} 
 }

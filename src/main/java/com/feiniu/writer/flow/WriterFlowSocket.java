@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
@@ -38,28 +38,36 @@ public class WriterFlowSocket implements Flow{
 	}
 
 	@Override
-	public FnConnection<?> LINK(boolean canSharePipe) {  
+	public FnConnection<?> GETSOCKET(boolean canSharePipe) {  
 		this.FC = FnConnectionPool.getConn(this.connectParams,
 				this.poolName,canSharePipe);
 		return this.FC;
 	}
 	
 	@Override
-	public void UNLINK(FnConnection<?> FC,boolean releaseConn) { 
+	public void REALEASE(FnConnection<?> FC,boolean releaseConn) { 
 		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
 	}
 	
 	@Override
-	public void MONOPOLY() {  
+	public boolean MONOPOLY() {
+		if(this.FC==null) 
+			return false;
+		return true;
 	} 
 	
-	public void getResource(){}
+	@Override
+	public boolean LINK(){
+		if(this.FC==null) 
+			return false;
+		return true;
+	}
 	
-	public void freeResource(boolean releaseConn){
+	public void REALEASE(boolean releaseConn){
 		synchronized(retainer){
 			retainer.addAndGet(-1);
 			if(retainer.get()==0){
-				UNLINK(this.FC,releaseConn);   
+				REALEASE(this.FC,releaseConn);   
 			}else{
 				log.info(this.FC+" retainer is "+retainer.get());
 			}
@@ -74,7 +82,7 @@ public class WriterFlowSocket implements Flow{
 		return false;
 	}
 	
-	public String getNewStoreId(String instanceName,boolean isIncrement,String dbseq, NodeConfig nodeConfig) {
+	public String getNewStoreId(String instanceName,boolean isIncrement,String dbseq, InstanceConfig instanceConfig) {
 		return null;
 	}
 
@@ -94,6 +102,5 @@ public class WriterFlowSocket implements Flow{
 	}
 
 	public void optimize(String instantcName, String batchId) {
-	} 
-	
+	}  
 }

@@ -15,13 +15,13 @@ import org.wltea.analyzer.cfg.Configuration;
 import org.wltea.analyzer.dic.Dictionary;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.config.NodeTreeConfigs;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
-import com.feiniu.task.Task;
+import com.feiniu.task.FlowTask;
 import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNIoc;
@@ -36,7 +36,7 @@ import com.feiniu.util.email.FNEmailSender;
  */
 public final class Run {
 	@Autowired
-	private NodeTreeConfigs NodeTreeConfigs;
+	private NodeConfig nodeConfig;
 	@Autowired
 	private SearcherService SearcherService;
 	@Autowired
@@ -70,7 +70,7 @@ public final class Run {
 	private void start(){ 
 		GlobalParam.run_environment = String.valueOf(globalConfigBean.get("run_environment")); 
 		GlobalParam.mailSender = mailSender;
-		GlobalParam.tasks = new HashMap<String, Task>();
+		GlobalParam.tasks = new HashMap<String, FlowTask>();
 		GlobalParam.SOCKET_CENTER = SocketCenter;
 		GlobalParam.VERSION = version;
 		GlobalParam.nodeMonitor = nodeMonitor;
@@ -81,23 +81,25 @@ public final class Run {
 			SearcherService.start();
 		} 
 		if((GlobalParam.SERVICE_LEVEL&2)>0)
-			TaskManager.start(); 
+			TaskManager.startWriteJob(); 
 		if((GlobalParam.SERVICE_LEVEL&4)>0)
 			HttpReaderService.start();  
+		if((GlobalParam.SERVICE_LEVEL&8)>0)
+			TaskManager.startInstructions(); 
 		 
 	} 
 	 
 	private void init(){ 
-		NodeTreeConfigs.init();
-		GlobalParam.nodeTreeConfigs = NodeTreeConfigs;
+		nodeConfig.init();
+		GlobalParam.nodeConfig = nodeConfig;
 		GlobalParam.SERVICE_LEVEL = Integer.parseInt(globalConfigBean.get("service_level").toString()); 
 		
 		if((GlobalParam.SERVICE_LEVEL&6)>0) {
-			Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
-			for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) { 
-				NodeConfig nodeConfig = entry.getValue(); 
-				if(nodeConfig.checkStatus())
-						initParams(nodeConfig); 
+			Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+			for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) { 
+				InstanceConfig instanceConfig = entry.getValue(); 
+				if(instanceConfig.checkStatus())
+						initParams(instanceConfig); 
 			}
 		} 
 	}
@@ -113,13 +115,13 @@ public final class Run {
 				ZKUtil.createPath(path+"/RIVER_LOCKS", true);
 			}
 		} catch (Exception e) { 
-			GlobalParam.LOG.error("environmentCheck Exception",e);
+			Common.LOG.error("environmentCheck Exception",e);
 		}
 	}  
 	
-	private void initParams(NodeConfig nodeConfig){ 
-		String instance = nodeConfig.getName(); 
-		List<String> seqs = Common.getSeqs(instance, nodeConfig); 
+	private void initParams(InstanceConfig instanceConfig){ 
+		String instance = instanceConfig.getName(); 
+		List<String> seqs = Common.getSeqs(instance, instanceConfig); 
 		if (seqs.size() == 0) {
 			seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
 		} 

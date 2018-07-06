@@ -25,6 +25,8 @@ public class ReaderFlowSocket<T> implements Flow{
 	
 	protected AtomicBoolean isLocked = new AtomicBoolean(false); 
 	
+	protected FnConnection<?> FC;
+	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
@@ -32,20 +34,28 @@ public class ReaderFlowSocket<T> implements Flow{
 	}
 
 	@Override
-	public FnConnection<?> LINK(boolean canSharePipe) {
-		return FnConnectionPool.getConn(this.connectParams,
+	public FnConnection<?> GETSOCKET(boolean canSharePipe) {
+		this.FC = FnConnectionPool.getConn(this.connectParams,
 				this.poolName,canSharePipe);
+		return this.FC;
 	}
 
 	@Override
-	public void UNLINK(FnConnection<?> FC,boolean releaseConn) {
-		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
-	}
+	public boolean LINK(){
+		if(this.FC==null) 
+			return false;
+		return true;
+	} 
 	
 	@Override
-	public void MONOPOLY() { 
-		
+	public boolean MONOPOLY() {
+		return false;  
 	} 
+	
+	@Override
+	public void REALEASE(FnConnection<?> FC,boolean releaseConn) {
+		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
+	}
 
 	public T getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		return null;

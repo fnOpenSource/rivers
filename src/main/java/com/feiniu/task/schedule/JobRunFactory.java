@@ -8,6 +8,7 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.util.Common;
 
 /**
  * job run factory Disallow Concurrent run the same job
@@ -29,19 +30,19 @@ public class JobRunFactory implements Job {
     
     private boolean invokeMethod(JobModel scheduleJob) {   
         Object object = scheduleJob.getObject();  
-        Class<?> clazz = null;  
+        Class<?> CL = null;  
         if (object == null) {  
-        	GlobalParam.LOG.error("job [" + scheduleJob.getJobName() + "] not exists!");  
+        	Common.LOG.error("job [" + scheduleJob.getJobName() + "] not exists!");  
             return false;  
         }  
-        clazz = object.getClass();  
+        CL = object.getClass();  
         Method method = null;  
         try {  
-            method = clazz.getDeclaredMethod(scheduleJob.getMethodName());  
+            method = CL.getDeclaredMethod(scheduleJob.getMethodName());  
             method.invoke(object); 
             return true;
         } catch (Exception e) {  
-        	GlobalParam.LOG.error(scheduleJob.getJobName()+" invokMethod "+method+" Exception ",e);  
+        	Common.LOG.error(scheduleJob.getJobName()+" invokMethod "+method+" Exception ",e);  
         } 
         return false;
     }  

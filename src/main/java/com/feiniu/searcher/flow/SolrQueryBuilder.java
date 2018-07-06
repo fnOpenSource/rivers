@@ -10,7 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.solr.client.solrj.SolrQuery;
 
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearcherParam;
@@ -19,7 +19,7 @@ import com.feiniu.util.Common;
 
 public class SolrQueryBuilder {
 
-	public static SolrQuery queryBuilder(SearcherRequest request, NodeConfig prs,
+	public static SolrQuery queryBuilder(SearcherRequest request, InstanceConfig prs,
 			Analyzer analyzer, Map<String, String> attrQueryMap) {
 		SolrQuery sq = new SolrQuery();
 		StringBuffer qr = new StringBuffer();

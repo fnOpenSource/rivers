@@ -16,17 +16,24 @@ import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.param.WarehouseParam;
+import com.feiniu.node.CPU;
 
 public class Common {
+	
+	public static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	
+	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
 
 	private static Set<String> defaultParamSet = new HashSet<String>() {
 		private static final long serialVersionUID = 1L;
@@ -227,7 +234,8 @@ public class Common {
 	}
 
 	/**
-	 * 
+	 * @param seq
+	 * 			  for get uniform resource but not store name
 	 * @param seq
 	 *            for series data source sequence
 	 * @param instanceName
@@ -235,13 +243,13 @@ public class Common {
 	 * @param fixName instance name is fixed will not auto generate instance name and ab change will limit
 	 * @return String
 	 */
-	public static String getInstanceName(String instanceName, String seq,String fixName) {
+	public static String getInstanceName(String instanceName, String seq,String fixName,String tag) {
 		if(fixName!=null)
 			return fixName;
 		if (seq != null && seq.length()>0) {
-			return instanceName + seq;
+			return instanceName + seq+tag;
 		} else {
-			return instanceName + GlobalParam.DEFAULT_RESOURCE_SEQ;
+			return instanceName + GlobalParam.DEFAULT_RESOURCE_SEQ+tag;
 		}
 
 	}
@@ -271,7 +279,7 @@ public class Common {
 					if (strs[0].equals("a") || strs[0].equals("b")) {
 						storeId = strs[0];
 					} else {
-						storeId = writer.getNewStoreId(instanceName, true, seq);
+						storeId = (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId", instanceName, true, seq);
 					}
 				}
 				if (strs.length > 1) {
@@ -279,14 +287,14 @@ public class Common {
 				}
 			}
 			if (storeId.length() == 0 || reCompute) {
-				storeId = writer.getNewStoreId(instanceName, true, seq);
+				storeId = (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId", instanceName, true, seq); 
 				if (storeId == null)
 					storeId = "a";
 				saveTaskInfo(instanceName, seq, storeId);
 			}
 			return storeId;
 		} else {
-			return writer.getNewStoreId(instanceName, false, seq);
+			return  (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId", instanceName, false, seq);
 		}
 	}
 	
@@ -315,22 +323,62 @@ public class Common {
 	/**
 	 * get read data source seq flags
 	 * @param instanceName
-	 * @param NodeConfig
+	 * @param instanceConfig
 	 * @return
 	 */
-	public static List<String> getSeqs(String instanceName, NodeConfig NodeConfig){
+	public static List<String> getSeqs(String instanceName, InstanceConfig instanceConfig){
 		List<String> seqs = null;
 		WarehouseParam whParam;
-		if(GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(NodeConfig.getPipeParam().getDataFrom())!=null){
-			whParam = GlobalParam.nodeTreeConfigs.getNoSqlParamMap().get(
-					NodeConfig.getPipeParam().getDataFrom());
+		if(GlobalParam.nodeConfig.getNoSqlParamMap().get(instanceConfig.getPipeParam().getDataFrom())!=null){
+			whParam = GlobalParam.nodeConfig.getNoSqlParamMap().get(
+					instanceConfig.getPipeParam().getDataFrom());
 		}else{
-			whParam = GlobalParam.nodeTreeConfigs.getSqlParamMap().get(
-					NodeConfig.getPipeParam().getDataFrom());
+			whParam = GlobalParam.nodeConfig.getSqlParamMap().get(
+					instanceConfig.getPipeParam().getDataFrom());
 		}
 		if (null != whParam) {
 			seqs = whParam.getSeq();
 		}  
 		return seqs;
 	} 
+	
+	/**
+	 * 
+	 * @param heads
+	 * @param instanceName
+	 * @param storeId
+	 * @param seq table seq
+	 * @param total
+	 * @param maxId
+	 * @param lastUpdateTime
+	 * @param useTime
+	 * @param types
+	 * @param moreinfo
+	 */
+	
+	public static String formatLog(String heads,String instanceName, String storeId,
+			String seq, String total, String maxId, String lastUpdateTime,
+			long useTime, String types, String moreinfo) {
+		String useTimeFormat = Common.seconds2time(useTime);
+		StringBuffer str = new StringBuffer("["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : ""));
+		String update;
+		if(lastUpdateTime.length()>9 && lastUpdateTime.matches("[0-9]+")){ 
+			update = SDF.format(lastUpdateTime.length()<12?new Long(lastUpdateTime+"000"):new Long(lastUpdateTime));
+		}else{
+			update = lastUpdateTime;
+		} 
+		switch (types) {
+		case "complete":
+			str.append(" docs:" + total	+ " " + " useTime: " + useTimeFormat + "}");
+			break;
+		case "start": 
+			str.append(" lastUpdate:" + update);
+			break;
+		default:
+			str.append(" docs:" + total+ (maxId.equals("0") ? "" : " MaxId:" + maxId)
+			+ " lastUpdate:" + update + " useTime:"	+ useTimeFormat);
+			break;
+		} 
+		return str.append(moreinfo).toString();
+	}
 }

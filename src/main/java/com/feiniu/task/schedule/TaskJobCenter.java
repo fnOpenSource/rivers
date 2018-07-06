@@ -11,7 +11,7 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.feiniu.config.GlobalParam;
+import com.feiniu.util.Common;
 
 /**
  * shedule job manager
@@ -26,7 +26,7 @@ public class TaskJobCenter{
 
 	public boolean addJob(JobModel job) throws SchedulerException {
 		if (job == null){
-			GlobalParam.LOG.error("add null Job!");
+			Common.LOG.error("add null Job!");
 			return false;
 		} 
 
@@ -34,16 +34,16 @@ public class TaskJobCenter{
 		CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
 
 		if (trigger == null) {
-			GlobalParam.LOG.info("add Schedule Job " + job.getJobName());			
+			Common.LOG.info("add Schedule Job " + job.getJobName());			
 			JobDetail jobDetail = JobBuilder.newJob(JobRunFactory.class).withIdentity(job.getJobName()).build();
 			jobDetail.getJobDataMap().put("scheduleJob", job);
-			GlobalParam.LOG.info(job.getJobName() + " DisallowedConcurrentExection " +  jobDetail.isConcurrentExectionDisallowed());
+			Common.LOG.info(job.getJobName() + " DisallowedConcurrentExection " +  jobDetail.isConcurrentExectionDisallowed());
 
 			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
 			trigger = TriggerBuilder.newTrigger().withIdentity(job.getJobName(),job.getJobName()).withSchedule(scheduleBuilder).build();
 			scheduler.scheduleJob(jobDetail, trigger);
 		} else {
-			GlobalParam.LOG.info("modify Schedule Job " + job.getJobName());
+			Common.LOG.info("modify Schedule Job " + job.getJobName());
 			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
 			trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(scheduleBuilder).build();
 			scheduler.rescheduleJob(triggerKey, trigger);
@@ -56,7 +56,7 @@ public class TaskJobCenter{
 		try { 
 			scheduler.pauseJob(jobKey);
 		} catch (Exception e) {
-			GlobalParam.LOG.error("SchedulerException stop Job",e);
+			Common.LOG.error("SchedulerException stop Job",e);
 			return false;
 		} 	 
 		return true;
@@ -67,7 +67,7 @@ public class TaskJobCenter{
 		try {
 			scheduler.triggerJob(jobKey);
 		} catch (Exception e) {
-			GlobalParam.LOG.error("SchedulerException start do Job now",e);
+			Common.LOG.error("SchedulerException start do Job now",e);
 			return false;
 		}
 		return true;
@@ -78,7 +78,7 @@ public class TaskJobCenter{
 		try {
 			scheduler.resumeJob(jobKey);
 		} catch (Exception e) {
-			GlobalParam.LOG.error("SchedulerException restart Job",e);
+			Common.LOG.error("SchedulerException restart Job",e);
 			return false;
 		}
 		return true;
@@ -89,7 +89,7 @@ public class TaskJobCenter{
 		try {
 			scheduler.deleteJob(jobKey);
 		} catch (Exception e) {
-			GlobalParam.LOG.error("SchedulerException delete Job",e);
+			Common.LOG.error("SchedulerException delete Job",e);
 			return false;
 		} 
 		return true;

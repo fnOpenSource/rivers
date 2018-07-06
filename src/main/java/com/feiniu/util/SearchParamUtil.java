@@ -12,7 +12,7 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearcherParam;
@@ -20,16 +20,16 @@ import com.feiniu.model.param.TransParam;
 
 public class SearchParamUtil {
 
-	public static void normalParam(SearcherRequest request, SearcherModel<?, ?, ?> fq,NodeConfig nodeConfig) {
+	public static void normalParam(SearcherRequest request, SearcherModel<?, ?, ?> fq,InstanceConfig instanceConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
-				nodeConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
+				instanceConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
 		if (o != null) {
 			int start = (int) o;
 			if (start >= 0)
 				fq.setStart(start);
 		}
 		o = request.get(KEY_PARAM.count.toString(),
-				nodeConfig.getSearchParam(KEY_PARAM.count.toString()),"java.lang.Integer");
+				instanceConfig.getSearchParam(KEY_PARAM.count.toString()),"java.lang.Integer");
 		if (o != null) {
 			int count = (int) o;
 			if (count >= 1 && count <= 2000) {
@@ -46,7 +46,7 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder> getSortField(SearcherRequest request, NodeConfig nodeConfig) {  
+	public static List<SortBuilder> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
 		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
 		List<SortBuilder> sortList = new ArrayList<SortBuilder>();
 		boolean useScore = false;
@@ -83,10 +83,10 @@ public class SearchParamUtil {
 				default:
 					TransParam checked; 
 					SearcherParam sp;
-					if ((checked = nodeConfig.getTransParam(fieldname)) != null) { 
+					if ((checked = instanceConfig.getTransParam(fieldname)) != null) { 
 						sortList.add(SortBuilders.fieldSort(checked.getAlias()).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));
-					}else if((sp = nodeConfig.getSearchParam(fieldname))!=null){
+					}else if((sp = instanceConfig.getSearchParam(fieldname))!=null){
 						String fields = sp.getFields();
 						if(fields!=null) {
 							for(String k:fields.split(",")) {
@@ -114,7 +114,7 @@ public class SearchParamUtil {
 	 * @return
 	 */
 		public static Map<String,List<String[]>> getFacetParams(SearcherRequest rq,
-				NodeConfig prs) {
+				InstanceConfig prs) {
 			Map<String,List<String[]>> res = new LinkedHashMap<String,List<String[]>>();
 			if(rq.getParam("facet")!=null){
 				for(String pair:rq.getParams().get("facet").split("#")){

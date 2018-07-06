@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
@@ -74,13 +74,16 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	
 	@Override
-	public void getResource(){
+	public boolean LINK(){
 		synchronized(retainer){
 			if(retainer.get()==0){
-				LINK(false);
+				GETSOCKET(false);
+				if(!super.LINK())
+					return false; 
 				this.conn = (CloudSolrClient) this.FC.getConnection(false);
 			}
 			retainer.addAndGet(1); 
+			return true;
 		} 
 	}
 	 
@@ -246,8 +249,8 @@ public class SolrFlow extends WriterFlowSocket{
 	
 
 	@Override
-	public String getNewStoreId(String instance,boolean isIncrement,String seq, final NodeConfig nodeConfig) { 
-		String instanceName = Common.getInstanceName(instance, seq,nodeConfig.getPipeParam().getInstanceName());
+	public String getNewStoreId(String instance,boolean isIncrement,String seq, final InstanceConfig instanceConfig) { 
+		String instanceName = Common.getInstanceName(instance, seq,instanceConfig.getPipeParam().getInstanceName(),"");
 		String b = Common.getStoreName(instanceName, "b");
 		String a = Common.getStoreName(instanceName, "a");
 		String select="";  
@@ -258,15 +261,15 @@ public class SolrFlow extends WriterFlowSocket{
 				select = "b"; 
 			}else{
 				select = "a"; 
-				settings(instanceName,select, nodeConfig.getTransParams());
-				setAlias(instanceName, select, nodeConfig.getAlias());
+				settings(instanceName,select, instanceConfig.getTransParams());
+				setAlias(instanceName, select, instanceConfig.getAlias());
 			}   
 		}else{
 			select =  "b";
 			if(this.existsCollection(b)){ 
 				select =  "a";
 			}
-			settings(instanceName,select, nodeConfig.getTransParams());
+			settings(instanceName,select, instanceConfig.getTransParams());
 		} 
 		return select;
 	}

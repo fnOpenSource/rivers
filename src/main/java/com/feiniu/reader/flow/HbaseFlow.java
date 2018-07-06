@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil; 
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.connect.FnConnection;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
@@ -29,6 +28,8 @@ import com.feiniu.reader.handler.Handler;
 public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
 	 
 	private final static Logger log = LoggerFactory.getLogger(HbaseFlow.class);
+	
+	private Table table;
 
 	public static HbaseFlow getInstance(HashMap<String, Object> connectParams) {
 		HbaseFlow o = new HbaseFlow();
@@ -50,6 +51,15 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		}
 		this.poolName = String.valueOf(connectParams.get("poolName")); 
 	}
+	
+	@Override
+	public boolean LINK() {
+		if(this.FC==null) 
+			return false;
+		 
+		this.table = (Table) this.FC.getConnection(true);
+		return true;
+	}
 
 	@Override
 	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
@@ -62,11 +72,12 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			return null;
 		}
 		isLocked.set(true);
-		FnConnection<?> FC = LINK(false);
+		GETSOCKET(false);
 		this.jobPage.clear();
 		boolean releaseConn = false;
 		try {
-			Table conn = (Table) FC.getConnection(false);
+			if(!LINK())
+				return this.jobPage;
 			Scan scan = new Scan();
 			List<Filter> filters = new ArrayList<Filter>();
 			SingleColumnValueFilter range = new SingleColumnValueFilter(
@@ -85,7 +96,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			scan.setCaching(GlobalParam.MAX_PER_PAGE);
 			scan.addFamily(Bytes.toBytes(this.connectParams.get("columnFamily")
 					.toString()));
-			ResultScanner resultScanner = conn.getScanner(scan);
+			ResultScanner resultScanner = this.table.getScanner(scan);
 			try {   
 				String maxId = null;
 				String updateFieldValue=null;
@@ -127,7 +138,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			releaseConn = true;
 			log.error("getJobPage Exception", e);
 		}finally{
-			UNLINK(FC,releaseConn);
+			REALEASE(FC,releaseConn);
 		} 
 		return this.jobPage;
 	}
@@ -135,9 +146,11 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	@Override
 	public List<String> getPageSplit(HashMap<String, String> param) {
 		int i = 0;
-		FnConnection<?> FC = LINK(false);
-		Table conn = (Table) FC.getConnection(false);
 		List<String> dt = new ArrayList<String>();
+		
+		GETSOCKET(false);
+		if(!LINK())
+			return dt; 
 		boolean releaseConn = false;
 		try {
 			Scan scan = new Scan();
@@ -161,7 +174,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 					.get(GlobalParam._incrementField)));
 			scan.addColumn(Bytes.toBytes(this.connectParams.get("columnFamily")
 					.toString()), Bytes.toBytes(param.get("column")));
-			ResultScanner resultScanner = conn.getScanner(scan);
+			ResultScanner resultScanner = this.table.getScanner(scan);
 			for (Result r : resultScanner) {
 				if (i % GlobalParam.MAX_PER_PAGE == 0) {
 					dt.add(Bytes.toString(r.getRow()));
@@ -172,10 +185,9 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			releaseConn = true;
 			log.error("getPageSplit Exception", e);
 		}finally{ 
-			UNLINK(FC,releaseConn);
+			REALEASE(FC,releaseConn);
 		}
 		return dt;
-	}
- 
+	} 
 
 }

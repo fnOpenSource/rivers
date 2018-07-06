@@ -10,7 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
+import com.feiniu.model.param.InstructionParam;
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
 import com.feiniu.util.Common;
@@ -30,23 +31,30 @@ public class TaskManager{
 	
 	private HashSet<String> cron_exists=new HashSet<String>();
 
-	public void start() { 
-		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
-		for (Map.Entry<String, NodeConfig> entry : configMap.entrySet()) {
+	public void startWriteJob() { 
+		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+		for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
 			String instanceName = entry.getKey();
-			NodeConfig NodeConfig = entry.getValue(); 
-			startInstance(instanceName, NodeConfig,false); 
+			InstanceConfig instanceConfig = entry.getValue(); 
+			startInstance(instanceName, instanceConfig,false); 
 		}
 		//startRabbitmqMessage(MQconsumerMonitorMap);
+	}
+	
+	public void startInstructions() {
+		Map<String, InstructionParam> instructions = GlobalParam.nodeConfig.getInstructions();
+		for (Map.Entry<String,InstructionParam> entry : instructions.entrySet()){
+			createInstructionScheduleJob(entry.getValue(),InstructionTask.createTask(entry.getKey()));
+		}
 	}
 	
 	/**
 	 * run job now
 	 */
-	public boolean runIndexJobNow(String instanceName, NodeConfig NodeConfig,String type){
-		if (NodeConfig.isIndexer() == false)
+	public boolean runIndexJobNow(String instanceName, InstanceConfig instanceConfig,String type){
+		if (instanceConfig.isIndexer() == false)
 			return false; 
-		List<String> seqs = Common.getSeqs(instanceName, NodeConfig); 
+		List<String> seqs = Common.getSeqs(instanceName, instanceConfig); 
 		if (seqs == null) { 
 			log.error(instanceName+" job start run Exception with invalid data source!");
 			return false;
@@ -75,12 +83,12 @@ public class TaskManager{
 	 * @return
 	 */
 	public boolean removeInstance(String instanceName){
-		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getNodeConfigs();
+		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
 		boolean state = true;
 		if(configMap.containsKey(instanceName)){
 			try{
-				NodeConfig nodeConfig = configMap.get(instanceName);
-				List<String> seqs = Common.getSeqs(instanceName, nodeConfig);
+				InstanceConfig instanceConfig = configMap.get(instanceName);
+				List<String> seqs = Common.getSeqs(instanceName, instanceConfig);
 				if (seqs.size() > 0) {
 					for (String seq : seqs) {
 						if (seq == null)
@@ -88,13 +96,13 @@ public class TaskManager{
 						if(GlobalParam.tasks.containsKey(instanceName+seq)){
 							GlobalParam.tasks.remove(instanceName+seq);
 						}
-						state = removeFlowScheduleJob(instanceName + seq,nodeConfig) && state;
+						state = removeFlowScheduleJob(instanceName + seq,instanceConfig) && state;
 					}
 				}else{
 					if(GlobalParam.tasks.containsKey(instanceName)){
 						GlobalParam.tasks.remove(instanceName);
 					}
-					state = removeFlowScheduleJob(instanceName,nodeConfig) && state;
+					state = removeFlowScheduleJob(instanceName,instanceConfig) && state;
 				}
 			}catch(Exception e){
 				log.error("remove Instance "+instanceName+" Exception", e);
@@ -107,10 +115,10 @@ public class TaskManager{
 	/**
 	 * start or restart add flow job
 	 */
-	public void startInstance(String instanceName, NodeConfig NodeConfig,boolean needClear) { 
-		if (NodeConfig.checkStatus()==false || NodeConfig.isIndexer() == false)
+	public void startInstance(String instanceName, InstanceConfig instanceConfig,boolean needClear) { 
+		if (instanceConfig.checkStatus()==false || instanceConfig.isIndexer() == false)
 			return;
-		List<String> seqs = Common.getSeqs(instanceName, NodeConfig); 
+		List<String> seqs = Common.getSeqs(instanceName, instanceConfig); 
 		if (seqs == null) { 
 			log.error(instanceName+" job create Exception with invalid data source!");
 			return;
@@ -121,18 +129,18 @@ public class TaskManager{
 					if (seq == null)
 						continue; 
 					if(!GlobalParam.tasks.containsKey(instanceName+seq) || needClear){
-						GlobalParam.tasks.put(instanceName+seq, Task.createTask(instanceName,
-								GlobalParam.SOCKET_CENTER.getWriterChannel(instanceName, seq,needClear,GlobalParam.DEFAULT_RESOURCE_TAG), seq));
+						GlobalParam.tasks.put(instanceName+seq, FlowTask.createTask(instanceName,
+								GlobalParam.SOCKET_CENTER.getTransDataFlow(instanceName, seq,needClear,GlobalParam.DEFAULT_RESOURCE_TAG), seq));
 					}  
 					createFlowScheduleJob(instanceName + seq, GlobalParam.tasks.get(instanceName+seq),
-							NodeConfig,needClear);
+							instanceConfig,needClear);
 				}
 			} else { 
 				if(!GlobalParam.tasks.containsKey(instanceName) || needClear){
-					GlobalParam.tasks.put(instanceName, Task.createTask(instanceName,
-							GlobalParam.SOCKET_CENTER.getWriterChannel(instanceName, null,needClear,GlobalParam.DEFAULT_RESOURCE_TAG)));
+					GlobalParam.tasks.put(instanceName, FlowTask.createTask(instanceName,
+							GlobalParam.SOCKET_CENTER.getTransDataFlow(instanceName, null,needClear,GlobalParam.DEFAULT_RESOURCE_TAG)));
 				} 
-				createFlowScheduleJob(instanceName, GlobalParam.tasks.get(instanceName), NodeConfig,needClear);
+				createFlowScheduleJob(instanceName, GlobalParam.tasks.get(instanceName), instanceConfig,needClear);
 			} 
 		} catch (Exception e) {
 			log.error("Start Instance "+instanceName+" Exception", e);
@@ -173,49 +181,60 @@ public class TaskManager{
 		RC.init();
 	}
 	*/
-	private boolean removeFlowScheduleJob(String instance,NodeConfig NodeConfig)throws SchedulerException {
+	private boolean removeFlowScheduleJob(String instance,InstanceConfig instanceConfig)throws SchedulerException {
 		boolean state = true;
-		if (NodeConfig.getPipeParam().getFullCron() != null) { 
+		if (instanceConfig.getPipeParam().getFullCron() != null) { 
 			state= jobAction(instance, "full", "remove") && state;
 		}
-		if(NodeConfig.getPipeParam().getFullCron() == null || NodeConfig.getPipeParam().getOptimizeCron()!=null){
+		if(instanceConfig.getPipeParam().getFullCron() == null || instanceConfig.getPipeParam().getOptimizeCron()!=null){
 			state = jobAction(instance, "optimize", "remove") && state;
 		}
-		if(NodeConfig.getPipeParam().getDeltaCron() != null){
+		if(instanceConfig.getPipeParam().getDeltaCron() != null){
 			state = jobAction(instance, "increment", "remove") && state;
 		}
 		return state;
 	}
+	
+	private void createInstructionScheduleJob(InstructionParam param, InstructionTask task) {
+		JobModel _sj = new JobModel(
+				getJobName(param.getId(), "instruction"), param.getCron(),
+				"com.feiniu.task.InstructionTask", "startInstructions", task); 
+		try {
+			taskJobCenter.addJob(_sj); 
+		}catch (Exception e) {
+			log.error("create Instruction Job "+param.getId()+" Exception", e);
+		} 
+	}
 
-	private void createFlowScheduleJob(String instance, Task task,
-			NodeConfig NodeConfig,boolean needclear)
+	private void createFlowScheduleJob(String instance, FlowTask task,
+			InstanceConfig instanceConfig,boolean needclear)
 			throws SchedulerException {
-		if (NodeConfig.getPipeParam().getFullCron() != null) { 
+		if (instanceConfig.getPipeParam().getFullCron() != null) { 
 			if(needclear){
 				jobAction(instance, "full", "remove");
 			}
 			JobModel _sj = new JobModel(
-					getJobName(instance, "full"), NodeConfig.getPipeParam().getFullCron(),
-					"com.feiniu.manager.Task", "startFullJob", task); 
+					getJobName(instance, "full"), instanceConfig.getPipeParam().getFullCron(),
+					"com.feiniu.task.FlowTask", "startFullJob", task); 
 			taskJobCenter.addJob(_sj); 
 		} 
 		
-		if(NodeConfig.getPipeParam().getFullCron() == null || NodeConfig.getPipeParam().getOptimizeCron()!=null){
+		if(instanceConfig.getPipeParam().getFullCron() == null || instanceConfig.getPipeParam().getOptimizeCron()!=null){
 			if(needclear){
 				jobAction(instance, "optimize", "remove");
 			}
-			String cron = NodeConfig.getPipeParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):NodeConfig.getPipeParam().getOptimizeCron();
-			NodeConfig.getPipeParam().setOptimizeCron(cron);
-			if(NodeConfig.getPipeParam().getInstanceName()==null) {
+			String cron = instanceConfig.getPipeParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):instanceConfig.getPipeParam().getOptimizeCron();
+			instanceConfig.getPipeParam().setOptimizeCron(cron);
+			if(instanceConfig.getPipeParam().getInstanceName()==null) {
 				createOptimizeJob(instance, task,cron); 
 			} 
 		}
 		
-		if (NodeConfig.getPipeParam().getDeltaCron() != null) { 
+		if (instanceConfig.getPipeParam().getDeltaCron() != null) { 
 			if(needclear){
 				jobAction(instance, "increment", "remove");
 			}
-			String cron = NodeConfig.getPipeParam().getDeltaCron();
+			String cron = instanceConfig.getPipeParam().getDeltaCron();
 			if(this.cron_exists.contains(cron)){
 				String[] strs = cron.trim().split(" ");
 				strs[0] = String.valueOf((int)(Math.random()*60));
@@ -229,13 +248,13 @@ public class TaskManager{
 			}
 			JobModel _sj = new JobModel(
 					getJobName(instance, "increment"),
-					NodeConfig.getPipeParam().getDeltaCron(), "com.feiniu.manager.Task",
+					instanceConfig.getPipeParam().getDeltaCron(), "com.feiniu.task.FlowTask",
 					"startIncrementJob", task); 
 			taskJobCenter.addJob(_sj);
 		} 
 	}
 	
-	private void createOptimizeJob(String indexName, Task batch,String cron) throws SchedulerException{
+	private void createOptimizeJob(String indexName, FlowTask batch,String cron) throws SchedulerException{
 		JobModel _sj = new JobModel(
 				getJobName(indexName, "optimize"),cron,
 				"com.feiniu.manager.Task", "optimizeInstance", batch); 
@@ -247,6 +266,8 @@ public class TaskManager{
 			return indexName + "_FullJob";
 		} else if (type.equals("increment")) {
 			return indexName + "_IncrementJob";
+		}else if(type.equals("instruction")){
+			return indexName + "_InstructionJob";
 		}else{
 			return indexName + "_OptimizeJob";
 		}

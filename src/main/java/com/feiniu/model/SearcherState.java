@@ -8,7 +8,7 @@ import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 
 public class SearcherState {
 
@@ -33,7 +33,7 @@ public class SearcherState {
 		return params;
 	}
 
-	public void setParams(Map<String, String> params, NodeConfig prs) {
+	public void setParams(Map<String, String> params, InstanceConfig prs) {
 		if (prs != null) {
 			for (Map.Entry<String, String> entry : params.entrySet()) {
 				this.params.put(entry.getKey(), entry.getValue());

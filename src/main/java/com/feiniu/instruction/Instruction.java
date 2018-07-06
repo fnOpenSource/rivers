@@ -1,30 +1,26 @@
 package com.feiniu.instruction;
 
-import java.util.Stack;
+import com.feiniu.node.CPU;
 
-import com.feiniu.model.param.WarehouseParam;
-
-public class Instruction {
-	 
-	public Stack<Object> context = new Stack<>();
+public abstract class Instruction {  
 	
-	private WarehouseParam in;
+	private String ID = CPU.getUUID(); 
 	
-	private WarehouseParam out;
- 
-	public WarehouseParam getIn() {
-		return in;
-	}
+	public String getID() {
+		return ID;
+	} 
 
-	public void setIn(WarehouseParam in) {
-		this.in = in;
-	}
-
-	public WarehouseParam getOut() {
-		return out;
-	}
-
-	public void setOut(WarehouseParam out) {
-		this.out = out;
-	}  
+	/**
+	 * 
+	 * @param length need parameter nums
+	 * @param args 
+	 * @return
+	 */
+	protected static boolean isValid(int length,Object... args) {
+		if(args.length!=length) { 
+			return false;
+		}
+		return true;
+	};
+	
 }

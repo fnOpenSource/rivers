@@ -14,7 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
@@ -53,13 +53,16 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 	
 	@Override
-	public void getResource(){
+	public boolean LINK(){
 		synchronized(retainer){
 			if(retainer.get()==0){
-				LINK(false);
+				GETSOCKET(false);
+				if(!super.LINK())
+					return false; 
 				this.conn = (Table) this.FC.getConnection(false);
 			} 
 			retainer.addAndGet(1); 
+			return true;
 		} 
 	} 
 	  
@@ -132,7 +135,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public String getNewStoreId(String instanceName,boolean isIncrement,String dbseq, NodeConfig nodeConfig) {
+	public String getNewStoreId(String instanceName,boolean isIncrement,String dbseq, InstanceConfig instanceConfig) {
 		// TODO Auto-generated method stub
 		return "a";
 	}

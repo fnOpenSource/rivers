@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.connect.FnConnection;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
@@ -29,6 +28,12 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		o.INIT(connectParams);
 		return o;
 	} 
+	
+	private Connection GETLINK() {
+		if(this.FC==null) 
+			return null; 
+		return (Connection) FC.getConnection(false);
+	}
 
 	@Override
 	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
@@ -38,12 +43,16 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			}
 		} catch (Exception e) {
 		} 
-		isLocked.set(true);
-		FnConnection<?> FC = LINK(false);
+		isLocked.set(true); 
 		this.jobPage.clear(); 
+		GETSOCKET(false);
+		Connection conn;
+		if((conn = GETLINK())==null)
+			return this.jobPage; 
+		
 		boolean releaseConn = false;
 		this.jobPage.put(GlobalParam.READER_STATUS,true);
-		Connection conn = (Connection) FC.getConnection(false);
+	 
 		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){  
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
 			try(ResultSet rs = statement.executeQuery();){				
@@ -66,7 +75,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			this.jobPage.put(GlobalParam.READER_STATUS,false);
 			log.error("getJobPage Exception so free connection,details ", e);
 		}finally{
-			UNLINK(FC,releaseConn);
+			REALEASE(FC,releaseConn);
 		} 
 		return this.jobPage;
 	}
@@ -98,9 +107,12 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				.replace("#{START}", "0");
 		if (param.get(GlobalParam._seq) != null && param.get(GlobalParam._seq).length() > 0)
 			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
-		FnConnection<?> FC = LINK(false);;
-		Connection conn = (Connection) FC.getConnection(false);
+		 
 		List<String> page = new ArrayList<String>();
+		GETSOCKET(false);
+		Connection conn;
+		if((conn = GETLINK())==null)
+			return page;
 		PreparedStatement statement = null;
 		ResultSet rs  = null;
 		boolean releaseConn = false;
@@ -145,7 +157,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			UNLINK(FC,releaseConn);
+			REALEASE(FC,releaseConn);
 		}  
 		return page;
 	} 

@@ -20,8 +20,7 @@ import org.apache.solr.common.util.NamedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.config.NodeConfig;
-import com.feiniu.connect.FnConnection;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.handler.ConnectionHandler;
 import com.feiniu.model.SearcherDataUnit;
 import com.feiniu.model.SearcherModel;
@@ -35,6 +34,7 @@ public class SolrFlow extends SearcherFlowSocket {
 	private String collectionName = "";
 	private long storetime = 0; 
 	private ConnectionHandler handler;
+	private CloudSolrClient conn;
 
 	private final static Logger log = LoggerFactory.getLogger(SolrFlow.class);
 
@@ -43,11 +43,12 @@ public class SolrFlow extends SearcherFlowSocket {
 		o.INIT(connectParams);
 		return o;
 	}
+	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.NodeConfig = (NodeConfig) this.connectParams.get("nodeConfig");
+		this.instanceConfig = (InstanceConfig) this.connectParams.get("instanceConfig");
 		this.analyzer = (Analyzer) this.connectParams.get("analyzer");
 		if(this.connectParams.get("handler")!=null){ 
 			try {
@@ -58,13 +59,22 @@ public class SolrFlow extends SearcherFlowSocket {
 			}
 		} 
 	} 
+	
+	@Override
+	public boolean LINK() {
+		if(this.FC==null) 
+			return false;
+
+		this.conn = (CloudSolrClient) this.FC.getConnection(true);
+		return true;
+	}
 
 	@Override
 	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler) throws FNException{
-		FnConnection<?> FC = LINK(true);
 		SearcherResult res = new SearcherResult();
+		GETSOCKET(true);
 		try {
-			CloudSolrClient conn = (CloudSolrClient) FC.getConnection(true);
+			LINK();
 			int start = fq.getStart();
 			int count = fq.getCount();
 			SolrQuery qb = (SolrQuery) fq.getQuery();
@@ -93,7 +103,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		}catch(Exception e){   
 			throw new FNException("Search data from Solr exception!"+e.getMessage());
 		}finally{
-			UNLINK(FC,false);
+			REALEASE(FC,false);
 		} 
 		return res;
 	} 
@@ -198,7 +208,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		if (fq.getFl().length() > 0) {
 			fl = fq.getFl(); 
 		} else { 
-			for (Map.Entry<String, TransParam> e : NodeConfig
+			for (Map.Entry<String, TransParam> e : instanceConfig
 					.getTransParams().entrySet()) {
 				if (e.getValue().getStored().equalsIgnoreCase("true"))
 					fl += "," + e.getKey();

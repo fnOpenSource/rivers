@@ -4,7 +4,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherRequest;
@@ -23,23 +23,23 @@ import com.feiniu.util.SearchParamUtil;
 public class Searcher {
 	private final static Logger log = LoggerFactory.getLogger(Searcher.class);
 	private SearcherFlowSocket searcher = null;
-	private NodeConfig NodeConfig = null;
+	private InstanceConfig instanceConfig = null;
 	private String instanceName = null;
 	private Handler handler=null;
 
 	public static Searcher getInstance(String instanceName,
-			NodeConfig NodeConfig, SearcherFlowSocket searcher) {
-		return new Searcher(instanceName, NodeConfig, searcher);
+			InstanceConfig instanceConfig, SearcherFlowSocket searcher) {
+		return new Searcher(instanceName, instanceConfig, searcher);
 	}
 
-	private Searcher(String instanceName, NodeConfig NodeConfig,
+	private Searcher(String instanceName, InstanceConfig instanceConfig,
 			SearcherFlowSocket searcher) {
 		this.instanceName = instanceName;
 		this.searcher = searcher;
-		this.NodeConfig = NodeConfig;
+		this.instanceConfig = instanceConfig;
 		try {
-			if(NodeConfig.getPipeParam().getSearcherHandler()!=null) {
-				this.handler = (Handler) Class.forName(NodeConfig.getPipeParam().getSearcherHandler()).newInstance();
+			if(instanceConfig.getPipeParam().getSearcherHandler()!=null) {
+				this.handler = (Handler) Class.forName(instanceConfig.getPipeParam().getSearcherHandler()).newInstance();
 			}
 		}catch(Exception e){
 			log.error("FNSearcher Handler Exception",e);
@@ -60,18 +60,18 @@ public class Searcher {
 			response.setParams(rq.getParams(), null);
 			return response;
 		}
-		response.setParams(rq.getParams(), this.NodeConfig);
+		response.setParams(rq.getParams(), instanceConfig);
 		Analyzer analyzer = this.searcher.getAnalyzer();
 
 		SearcherModel<?, ?, ?> searcherModel = null;
 		switch (this.searcher.getType()) {
 		case ES:
-			searcherModel = SearcherESModel.getInstance(rq, analyzer,NodeConfig);
-			SearchParamUtil.normalParam(rq, searcherModel,NodeConfig);
+			searcherModel = SearcherESModel.getInstance(rq, analyzer,instanceConfig);
+			SearchParamUtil.normalParam(rq, searcherModel,instanceConfig);
 			break;
 		case SOLR:
-			searcherModel = SearcherSolrModel.getInstance(rq, analyzer,NodeConfig);
-			SearchParamUtil.normalParam(rq, searcherModel,NodeConfig);
+			searcherModel = SearcherSolrModel.getInstance(rq, analyzer,instanceConfig);
+			SearchParamUtil.normalParam(rq, searcherModel,instanceConfig);
 			break; 
 		default:
 			response.setError_info("Not Support Searcher Type!");

@@ -8,7 +8,7 @@ import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.solr.client.solrj.SolrQuery;
 
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.searcher.flow.SolrQueryBuilder;
 
 public class SearcherSolrModel implements SearcherModel<SolrQuery, String, String> {
@@ -26,9 +26,9 @@ public class SearcherSolrModel implements SearcherModel<SolrQuery, String, Strin
 	private Map<String, SolrQuery> attrQueryMap = new HashMap<String, SolrQuery>(); 
 	private List<String> sortinfo;
 	
-	public static SearcherSolrModel getInstance(SearcherRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+	public static SearcherSolrModel getInstance(SearcherRequest request, Analyzer analyzer,InstanceConfig instanceConfig) {
 		SearcherSolrModel sq = new SearcherSolrModel(); 
-		sq.setQuery(SolrQueryBuilder.queryBuilder(request, nodeConfig,
+		sq.setQuery(SolrQueryBuilder.queryBuilder(request, instanceConfig,
 				analyzer, new HashMap<String, String>()));
 		return sq;
 	}

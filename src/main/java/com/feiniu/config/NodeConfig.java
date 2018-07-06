@@ -2,7 +2,8 @@ package com.feiniu.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.HashMap; 
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -13,247 +14,187 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.feiniu.model.param.BasicParam;
-import com.feiniu.model.param.MessageParam;
-import com.feiniu.model.param.NOSQLParam;
-import com.feiniu.model.param.SQLParam;
-import com.feiniu.model.param.SearcherParam;
-import com.feiniu.model.param.PipeParam;
-import com.feiniu.model.param.TransParam;
+import com.feiniu.model.param.InstructionParam;
+import com.feiniu.model.param.WarehouseNosqlParam;
+import com.feiniu.model.param.WarehouseSqlParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
 /**
- * store single index node params
- * 
+ * node configs center,manage flows config and sql/nosql dataflows configs
  * @author chengwen
  * @version 1.0 
  */
-public class NodeConfig {
+public class NodeConfig { 
+	
+	private Map<String, InstanceConfig> instanceConfigs;
+	private Map<String, InstanceConfig> searchConfigMap = new HashMap<String, InstanceConfig>();
+	private Map<String, WarehouseSqlParam> SqlParamMap = new HashMap<String, WarehouseSqlParam>();
+	private Map<String, WarehouseNosqlParam> NoSqlParamMap = new HashMap<String, WarehouseNosqlParam>(); 
+	private Map<String,InstructionParam> instructions = new HashMap<String, InstructionParam>();
+	private String pondFile = null; 
+	private String instructionsFile = null; 
 
-	private String filename;
-	private String alias = "";
-	private boolean status = true;
-	private String name;
-	private Map<String, TransParam> transParams;
-	private Map<String,SearcherParam> searchParams;
-	private PipeParam pipeParam;
-	private MessageParam messageParam ; 
 	/**
-	 *  1 do index 2 do rabitmq 4 do kafka
+	 * load config from zk
+	 * @param cfgPath
+	 * @param instances
+	 * @param commonParam
+	 * @param noSqlFileName
+	 * @param sqlFileName
+	 * @param zkHost
 	 */
-	private int indexType = 0;  
-
-	public NodeConfig(String fileName, int indexType) {
-		this.filename = fileName;
-		this.indexType = indexType;
-	}
-
-	public void init() { 
-		this.pipeParam = new PipeParam();
-		this.transParams = new HashMap<String, TransParam>(); 
-		this.searchParams = new HashMap<String, SearcherParam>();
-		this.messageParam = new MessageParam(); 
-		loadConfigFromZk();
-		GlobalParam.LOG.info(filename + " config loaded");
-	}
-
-	public void reload() {
-		GlobalParam.LOG.info("starting reload " + filename);
-		init();
-	} 
-	
-	public boolean checkTransParam(String key, String value) {
-		if (!transParams.containsKey(key)) {
-			return true;
-		} else {
-			return transParams.get(key).isValid(value);
-		}
-	}
-
-	public TransParam getTransParam(String key) {
-		return this.transParams.get(key);
+	public NodeConfig(String cfgPath, String instances, String write_batch,String pool_size, String pondFile,
+			String instructionsFile,String zkHost) {
+		    ZKUtil.setZkHost(zkHost);
+		    GlobalParam.CONFIG_PATH = cfgPath;
+		    this.pondFile = pondFile;
+		    this.instructionsFile = instructionsFile;
+		    GlobalParam.POOL_SIZE = Integer.parseInt(pool_size);
+		    GlobalParam.WRITE_BATCH = write_batch.equals("false")?false:true;
+			loadConfig(instances,true);
 	}
 	
-	public SearcherParam getSearchParam(String key) {
-		return this.searchParams.get(key);
-	}
-
-	public PipeParam getPipeParam() {
-		return this.pipeParam;
-	}
-
-	public MessageParam getMessageParam() {
-		return this.messageParam;
-	} 
-
-	public Map<String, TransParam> getTransParams() {
-		return this.transParams;
-	}
- 
-	public boolean isIndexer() {
-		if((indexType & 1) > 0){
-			if(pipeParam.getDataFrom()!=null && pipeParam.getWriteTo()!=null){
-				return true;
+	public void loadConfig(String instances,boolean reset){
+		if(reset){
+			this.instanceConfigs = new HashMap<String, InstanceConfig>();
+		} 
+		parsePondFile(GlobalParam.CONFIG_PATH + "/" +  this.pondFile);
+		parseInstructionsFile(GlobalParam.CONFIG_PATH + "/" +  this.instructionsFile); 
+		for(String inst : instances.split(",")){
+			String[] strs = inst.split(":");
+			if (strs.length <= 0)
+				continue;
+			int indexType=0;
+			String name = strs[0];
+			if(strs.length==2){
+				indexType = Integer.parseInt(strs[1]); 
 			}
-		}
-		return false;
+			String filename = GlobalParam.CONFIG_PATH + "/" +  name  + "/" +  name + ".xml";
+			InstanceConfig nconfig = new InstanceConfig(filename, indexType);  
+			nconfig.init();
+			if(nconfig.getAlias().equals("")){
+				nconfig.setAlias(name);
+			}  
+			nconfig.setName(name);
+			this.searchConfigMap.put(nconfig.getAlias(), nconfig);
+			this.instanceConfigs.put(name, nconfig);  
+		}	  
 	}
 	
-	public int getIndexType(){
-		return this.indexType;
-	}
-
-	public boolean hasKafka() {
-		return (indexType & 4) > 0 && messageParam.getHandler() != null ? true
-				: false;
-	}
-
-	public boolean hasRabitmq() {
-		return (indexType & 2) > 0 && messageParam.getHandler() != null ? true
-				: false;
-	}
-	
-	public void setAlias(String alias) {
-		this.alias = alias;
-	}
-
-	public String getAlias() {
-		return this.alias;
-	} 
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getName() {
-		return this.name;
-	} 
- 
-	public boolean checkStatus() {
-		return status;
-	}
-
-	public void setStatus(boolean status) {
-		this.status = status;
-	}
-
-	private void loadConfigFromZk() {
-		InputStream in;
+	private void parseInstructionsFile(String src){
+		InputStream in = null;
 		try {
-			byte[] bt = ZKUtil.getData(this.filename,false);
-			if (bt.length <= 0)
-				return;
-			in = new ByteArrayInputStream(bt, 0, bt.length);
-			configParse(in);
-			in.close();
-		} catch (Exception e) {
-			in = null;
-			setStatus(false);
-			GlobalParam.LOG.error("loadConfigFromZk error,",e);
-		}
-	}
-	
-	/**
-	 * node xml config parse
-	 * searchparams store in readParamTypes all can for search
-	 */
-	private void configParse(InputStream in) {
-		try {
+		    byte[] bt = ZKUtil.getData(src,false);
+		    if (bt.length <= 0)
+		    	return; 
+			in = new ByteArrayInputStream(bt, 0, bt.length);  
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			Document doc = db.parse(in);
-
-			Element params;
-			NodeList paramlist;
-			Element tmp;
-
-			params = (Element) doc.getElementsByTagName("dataflow").item(0);
-
-			if (params != null) { 
-				if (!params.getAttribute("alias").equals("")) {
-					this.alias = params.getAttribute("alias");
-				} 
-			 
-				paramlist = params.getElementsByTagName("configs");
-				if (paramlist.getLength() > 0) {
-					tmp = (Element) doc.getElementsByTagName("configs").item(0);
-					parseNode(tmp.getElementsByTagName("sql"), "dumpSql",
-							SQLParam.class); 
-					parseNode(tmp.getElementsByTagName("nosql"), "nosql",
-							NOSQLParam.class);
-					tmp = (Element) doc.getElementsByTagName("TransParam").item(0); 
-					if (tmp!=null) {
-						parseNode(tmp.getElementsByTagName("param"), "pipeParam", BasicParam.class);
-					}else{
-						GlobalParam.LOG.error(this.filename+" config setting not correct");
-						return;
-					}
-					if(doc.getElementsByTagName("pageSql").getLength() > 0) {
-						SQLParam _sq = (SQLParam) Common.getNode2Obj(doc.getElementsByTagName("pageSql").item(0), SQLParam.class);
-						pipeParam.getSqlParam().setPageSql(_sq.getPageSql());
-					} 
-				}
-
-				paramlist = params.getElementsByTagName("message");
-				if (paramlist.getLength() > 0) {
-					parseNode(paramlist, "MessageParam", MessageParam.class);
-					tmp = (Element) doc.getElementsByTagName("message").item(0);
-					parseNode(tmp.getElementsByTagName("sql"), "MessageSql",
-							SQLParam.class);
-				}
-			}
-
-			params = (Element) doc.getElementsByTagName("fields").item(0);
-			paramlist = params.getElementsByTagName("field");
-			parseNode(paramlist, "TransParam", TransParam.class); 
-
-			params = (Element) doc.getElementsByTagName("searchParams").item(0);
-			paramlist = params.getElementsByTagName("param");
-			parseNode(paramlist, "SearchParam", SearcherParam.class);
+			
+			Element sets = (Element) doc.getElementsByTagName("sets").item(0);
+			NodeList paramlist = sets.getElementsByTagName("instruction");
+			parseNode(paramlist,InstructionParam.class); 
+			
 		} catch (Exception e) {
-			setStatus(false);
-			GlobalParam.LOG.error(this.filename+" configParse error,",e);
+			Common.LOG.error("parse (" + src + ") error,",e);
+		} finally{
+			try {
+				if (null != in) {
+					in.close();
+				}
+			} catch (Exception e) {
+				Common.LOG.error("parse (" + src + ") error,",e);
+			}
 		}
 	}
 	
-	private void parseNode(NodeList paramlist, String type, Class<?> c)
-			throws Exception {
+	private void parsePondFile(String src){
+		InputStream in = null;
+		try {
+		    byte[] bt = ZKUtil.getData(src,false);
+		    if (bt.length <= 0)
+		    	return; 
+			in = new ByteArrayInputStream(bt, 0, bt.length);  
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse(in);
+			
+			Element NoSql = (Element) doc.getElementsByTagName("NoSql").item(0);
+			NodeList paramlist = NoSql.getElementsByTagName("socket");
+			parseNode(paramlist,WarehouseNosqlParam.class); 
+		 
+			Element Sql = (Element) doc.getElementsByTagName("Sql").item(0);
+			paramlist = Sql.getElementsByTagName("socket");
+			parseNode(paramlist,WarehouseSqlParam.class); 
+			
+		} catch (Exception e) {
+			Common.LOG.error("parse (" + src + ") error,",e);
+		} finally{
+			try {
+				if (null != in) {
+					in.close();
+				}
+			} catch (Exception e) {
+				Common.LOG.error("parse (" + src + ") error,",e);
+			}
+		}
+	} 
+	
+	private void parseNode(NodeList paramlist, Class<?> c)
+			throws NoSuchMethodException, SecurityException, IllegalAccessException, 
+			IllegalArgumentException,InvocationTargetException, InstantiationException 
+	{
 		if (paramlist != null && paramlist.getLength() > 0) {
 			for (int i = 0; i < paramlist.getLength(); i++) {
 				Node param = paramlist.item(i);
 				if (param.getNodeType() == Node.ELEMENT_NODE) {
 					Object o = Common.getNode2Obj(param, c);
-					switch (type) {
-					case "TransParam":
-						TransParam e = (TransParam) o;
-						transParams.put(e.getName(), e);
-						break;
-					case "pipeParam":
-						BasicParam tbp = (BasicParam) o;
-						pipeParam.setKeyValue(tbp.getName(), tbp.getValue());
-						break;
-					case "nosql":
-						pipeParam.setNoSqlParam((NOSQLParam) o);
-						break;
-					case "dumpSql":
-						pipeParam.setSqlParam((SQLParam) o);
-						break; 
-					case "MessageParam":
-						messageParam = (MessageParam) o;
-						break;
-					case "MessageSql":
-						messageParam.setSqlParam((SQLParam) o);
-						break;
-					case "SearchParam":
-						SearcherParam v  = (SearcherParam) o;
-						searchParams.put(v.getName(), v);
-						break;  
-					default: 
-						break;
+					if (c == WarehouseNosqlParam.class) {
+						WarehouseNosqlParam e = (WarehouseNosqlParam) o;
+						NoSqlParamMap.put(e.getAlias(), e);
+					}else if(c == WarehouseSqlParam.class){
+						WarehouseSqlParam e = (WarehouseSqlParam) o;
+						SqlParamMap.put(e.getAlias(), e);
+					}else if(c == InstructionParam.class) {
+						InstructionParam e = (InstructionParam) o;
+						instructions.put(e.getId(),e);
 					}
 				}
 			}
+		}
+	}
+	
+	public Map<String, InstructionParam> getInstructions(){
+		return this.instructions;
+	}
+	
+	public Map<String, InstanceConfig> getInstanceConfigs(){
+		return this.instanceConfigs;
+	}
+	
+	public Map<String, InstanceConfig> getSearchConfigs(){
+		return this.searchConfigMap;
+	}
+	
+    public Map<String, WarehouseSqlParam> getSqlParamMap() {
+		return this.SqlParamMap;
+	}
+    
+	public Map<String, WarehouseNosqlParam> getNoSqlParamMap() {
+		return this.NoSqlParamMap;
+	}
+
+	public void init(){
+		for(Map.Entry<String, InstanceConfig> e : this.instanceConfigs.entrySet()){  
+			this.searchConfigMap.put(e.getValue().getAlias(), e.getValue());
+		}
+	}
+	
+	public void reload() {
+		for(Map.Entry<String, InstanceConfig> e : this.instanceConfigs.entrySet()){
+			e.getValue().reload();
 		}
 	} 
 }

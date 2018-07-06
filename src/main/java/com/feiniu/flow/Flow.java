@@ -4,17 +4,21 @@ import java.util.HashMap;
 
 import com.feiniu.connect.FnConnection;
 /**
- * data pipe flow control center
+ * data pipe flow model
+ * first INIT and get connect socket (GETSOCKET)
+ * build connect (MONOPOLY/LINK) start use,when finished use Dismantling pipe (REALEASE)
  * @author chengwen
- * @version 1.0 
+ * @version 1.2
  */
 public interface Flow {
 	
-	public void INIT(HashMap<String, Object> connectParams);
-
-	public FnConnection<?> LINK(boolean canSharePipe);
-
-	public void UNLINK(FnConnection<?> FC,boolean releaseConn);
+	public void INIT(HashMap<String, Object> connectParams); 
 	
-	public void MONOPOLY();
+	public FnConnection<?> GETSOCKET(boolean canSharePipe);
+	
+	public boolean LINK(); 
+
+	public boolean MONOPOLY();
+
+	public void REALEASE(FnConnection<?> FC,boolean releaseConn); 
 }

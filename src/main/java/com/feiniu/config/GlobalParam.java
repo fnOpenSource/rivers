@@ -4,13 +4,11 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.feiniu.model.RiverState;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
-import com.feiniu.task.Task;
+import com.feiniu.task.FlowTask;
 import com.feiniu.util.email.FNEmailSender;
 /**
  * global node data store position  
@@ -51,9 +49,9 @@ public class GlobalParam {
 	/** CONNECT_EXPIRED is milliseconds time */
 	public static int CONNECT_EXPIRED = 7200000; 
 	
-	public static NodeTreeConfigs nodeTreeConfigs;
+	public static NodeConfig nodeConfig;
 	
-	public static HashMap<String, Task> tasks; 
+	public static HashMap<String, FlowTask> tasks; 
 	
 	public static enum KEY_PARAM {
 		start, count, sort, facet, detail, facet_count,group,fl
@@ -120,7 +118,5 @@ public class GlobalParam {
 	public static final String READER_KEY = "keyColumn";
 	public static final String READER_SCAN_KEY = "IncrementColumn";
 	public static final String READER_LAST_STAMP = "lastUpdateTime";
-	public static final String READER_STATUS = "status";
-	
-	public final static Logger LOG = LoggerFactory.getLogger("RIVER");
+	public static final String READER_STATUS = "status"; 
 }

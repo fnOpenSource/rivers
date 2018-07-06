@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.flow.TransDataFlow;
+import com.feiniu.node.CPU;
 import com.feiniu.util.Common;
 
 /**
@@ -14,10 +15,10 @@ import com.feiniu.util.Common;
  * @author chengwen 
  * @version 1.0 
  */
-public class Task{
+public class FlowTask{
 	private boolean recompute = true;
 	private String instanceName;
-	private TransDataFlow jobWriter;
+	private TransDataFlow transDataFlow;
 	/**
 	 * seq for scan series datas
 	 */
@@ -28,19 +29,19 @@ public class Task{
 	private AtomicInteger runState = new AtomicInteger(0);
 	
 	private final static Logger log = LoggerFactory
-			.getLogger(Task.class);
+			.getLogger(FlowTask.class);
 	
-	public static Task createTask(String instanceName, TransDataFlow writer){
-		return new Task(instanceName, writer, GlobalParam.DEFAULT_RESOURCE_SEQ);
+	public static FlowTask createTask(String instanceName, TransDataFlow transDataFlow){
+		return new FlowTask(instanceName, transDataFlow, GlobalParam.DEFAULT_RESOURCE_SEQ);
 	}
 	
-	public static Task createTask(String instanceName, TransDataFlow writer, String seq){
-		return new Task(instanceName, writer, seq);
+	public static FlowTask createTask(String instanceName, TransDataFlow transDataFlow, String seq){
+		return new FlowTask(instanceName, transDataFlow, seq);
 	}
 	
-    private Task(String instanceName, TransDataFlow jobWriter, String seq) {
+    private FlowTask(String instanceName, TransDataFlow transDataFlow, String seq) {
     	this.instanceName = instanceName;
-    	this.jobWriter = jobWriter;
+    	this.transDataFlow = transDataFlow;
     	this.seq = seq;
     }   
 	
@@ -49,8 +50,8 @@ public class Task{
 	 */
 	public void optimizeInstance(){
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(0);
-		String storeName = Common.getInstanceName(instanceName, seq, null); 
-		jobWriter.optimizeIndex(storeName, Common.getStoreId(instanceName,seq,jobWriter,true,false));
+		String storeName = Common.getInstanceName(instanceName, seq, null,""); 
+		CPU.RUN(transDataFlow.getID(), "Pond", "optimizeInstance", storeName, Common.getStoreId(instanceName,seq,transDataFlow,true,false)); 
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 	}
 	
@@ -58,11 +59,11 @@ public class Task{
 		if((this.runState.get()&2)==0){   
 			this.runState.getAndAdd(2); 
 			try{  
-				Common.getStoreId(instanceName,seq,jobWriter,true,false);
+				Common.getStoreId(instanceName,seq,transDataFlow,true,false);
 				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq);
 					
-				String storeId = Common.getStoreId(instanceName,seq,jobWriter,false,false); 
-				jobWriter.write(instanceName, storeId, "-1", seq, true);
+				String storeId = Common.getStoreId(instanceName,seq,transDataFlow,false,false); 
+				transDataFlow.run(instanceName, storeId, "-1", seq, true);
 				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq,keepCurrentUpdateTime);
 				GlobalParam.FLOW_STATUS.get(instanceName,seq).set(4); 
 				Common.saveTaskInfo(instanceName,seq,storeId); 
@@ -84,16 +85,16 @@ public class Task{
 				if((GlobalParam.FLOW_STATUS.get(instanceName,seq).get()&1)>0){  
 					this.runState.getAndAdd(1);
 					GlobalParam.FLOW_STATUS.get(instanceName,seq).set(3);
-					String storeId = Common.getStoreId(instanceName,seq,jobWriter,true,recompute);
+					String storeId = Common.getStoreId(instanceName,seq,transDataFlow,true,recompute);
 					String lastUpdateTime; 
 					try {
-						lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq), seq,false);
+						lastUpdateTime = transDataFlow.run(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq), seq,false);
 						GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, lastUpdateTime); 
 					} catch (Exception e) { 
 						if(e.getMessage().equals("storeId not found")){
-							storeId = Common.getStoreId(instanceName,seq,jobWriter,true,true);
+							storeId = Common.getStoreId(instanceName,seq,transDataFlow,true,true);
 							try {
-								lastUpdateTime = jobWriter.write(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq), seq,false);
+								lastUpdateTime = transDataFlow.run(instanceName, storeId, GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq), seq,false);
 								GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, lastUpdateTime); 
 							}catch (Exception ex) {
 								log.error(instanceName+" Increment Exception",e);
@@ -112,5 +113,6 @@ public class Task{
 				log.info(instanceName+" increment job is running, ignore this time job!");
 			}
 		}
-	} 
+	}  
+	
 }

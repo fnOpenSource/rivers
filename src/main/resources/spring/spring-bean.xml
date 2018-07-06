@@ -19,13 +19,13 @@
 	<context:component-scan base-package="com.feiniu" />
 	<util:properties id="configPathConfig" location="classpath:config/configPath.properties"></util:properties>
 	<util:properties id="chechksrvConfig" location="classpath:config/checksrv.properties"></util:properties>
-	<context:property-placeholder location="classpath:config/configPath.properties" />
+ 
 	<bean id="log4jInitialization" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
 	   <property name="targetClass" value="org.springframework.util.Log4jConfigurer" />
 	   <property name="targetMethod" value="initLogging" />
 	   <property name="arguments">
 	      <list>
-	         <value>${config.path}/config/log4j.properties
+	         <value>#{configPathConfig['config.path']}/config/log4j.properties
 	         </value>
 	      </list>
 	   </property>
@@ -41,13 +41,13 @@
 		</property>
 	</bean>
 
-	<bean id="NodeTreeConfigs" class="com.feiniu.config.NodeTreeConfigs">
+	<bean id="NodeConfig" class="com.feiniu.config.NodeConfig">
 		<constructor-arg value="#{globalConfigBean['zkConfigPath']}" />
 		<constructor-arg value="#{globalConfigBean['instances']}" />
 		<constructor-arg value="#{globalConfigBean['write_batch']}" />
 		<constructor-arg value="#{globalConfigBean['pool_size']}" />
-		<constructor-arg value="#{globalConfigBean['nosql_flow']}" />
-		<constructor-arg value="#{globalConfigBean['sql_flow']}" />
+		<constructor-arg value="#{globalConfigBean['pond']}" /> 
+		<constructor-arg value="#{globalConfigBean['instructions']}" /> 
 		<constructor-arg value="#{globalConfigBean['zkhost']}" />
 	</bean>
 

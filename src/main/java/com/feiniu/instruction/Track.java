@@ -1,0 +1,74 @@
+package com.feiniu.instruction;
+
+import java.util.HashMap;
+
+import com.feiniu.config.GlobalParam;
+import com.feiniu.node.CPU;
+
+public class Track extends Instruction {
+	
+	static HashMap<String, HashMap<String, Object>> tmpStore = new HashMap<>();
+
+	public static boolean cpuPrepare(Context context, Object[] args) {
+		if (context != null)
+			return true;
+		String seq = null;
+		String instance;
+		String id;
+		if (args.length == 2) {
+			instance = (String) args[0];
+			id = (String) args[1];
+		} else if (args.length == 3) {
+			instance = (String) args[0];
+			seq = (String) args[1];
+			id = (String) args[2];
+		} else {
+			return false;
+		}
+		CPU.prepare(id, GlobalParam.nodeConfig.getInstanceConfigs().get(instance),
+				GlobalParam.SOCKET_CENTER.getWriterSocket(instance, seq,""), GlobalParam.SOCKET_CENTER.getReaderSocket(instance, seq,""));
+		return true;
+
+	}
+
+	public static boolean cpuFree(Context context, Object[] args) {
+		if(isValid(1, args)) { 
+			String id = (String) args[0];
+			if(tmpStore.containsKey(id)) {
+				tmpStore.remove(id);
+			} 
+		} 
+		return true;
+	}
+
+	/**
+	 * @param args
+	 *            parameter order is: String key,Object val
+	 */
+	public static void store(Context context, Object[] args) {
+		if(isValid(3, args)) {
+			String key = (String) args[0];
+			Object val =  args[1];
+			String id = (String) args[2];
+			if(!tmpStore.containsKey(id)) {
+				tmpStore.put(id, new HashMap<String,Object>()); 
+			}
+			tmpStore.get(id).put(key, val);
+		}
+	}
+
+	/**
+	 * @param args
+	 *            parameter order is: String key
+	 */
+	public static Object fetch(Context context, Object[] args) {
+		if(isValid(2, args)) { 
+			String key = (String) args[0];
+			String id = (String) args[1];
+			if(tmpStore.containsKey(id)) {
+				return tmpStore.get(id).get(key);
+			}
+		}
+		return null;
+	}
+}

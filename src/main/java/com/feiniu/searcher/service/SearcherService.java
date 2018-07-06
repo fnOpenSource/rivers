@@ -16,13 +16,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.SearcherState;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.searcher.Searcher;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
+import com.feiniu.util.Common;
 
 /**
  * searcher open http port support service
@@ -87,7 +88,7 @@ public class SearcherService{
 		long startTime = System.currentTimeMillis();
 		SearcherState response = null; 
 		String pipe = request.getPipe(); 
-		Map<String, NodeConfig> configMap = GlobalParam.nodeTreeConfigs.getSearchConfigs();
+		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getSearchConfigs();
 		if (configMap.containsKey(pipe)) { 
 			Searcher searcher = SocketCenter.getSearcher(pipe);
 			response = searcher.startSearch(request);
@@ -114,13 +115,13 @@ public class SearcherService{
 			rq.setHandled(true);
 			SearcherRequest _request = parseRequest((Object) rq);
 
-			if (GlobalParam.nodeTreeConfigs.getSearchConfigs().containsKey(
+			if (GlobalParam.nodeConfig.getSearchConfigs().containsKey(
 					_request.getPipe())) {
 				SearcherState _response = null;
 				try {
 					_response = process(_request);
 				} catch (Exception e) {
-					GlobalParam.LOG.error("httpHandle error,",e);
+					Common.LOG.error("httpHandle error,",e);
 				}
 				if (_response != null)
 					response.getWriter().println(_response.toJson());

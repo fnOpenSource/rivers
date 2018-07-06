@@ -18,7 +18,6 @@ import org.elasticsearch.search.sort.SortBuilder;
 
 import com.alibaba.fastjson.JSON;
 import com.feiniu.connect.ESConnector;
-import com.feiniu.connect.FnConnection;
 import com.feiniu.model.SearcherDataUnit;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherResult;
@@ -26,22 +25,35 @@ import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
-public class ESFlow extends SearcherFlowSocket { 
-
+public class ESFlow extends SearcherFlowSocket {  
+	
+	private ESConnector ESC;
+	
 	public static ESFlow getInstance(HashMap<String, Object> connectParams) {
 		ESFlow o = new ESFlow();
 		o.INIT(connectParams);
 		return o;
 	} 
+	
+	@Override
+	public boolean LINK() {
+		if(this.FC==null) {
+			return false;
+		}else {
+			this.ESC = (ESConnector) this.FC.getConnection(true);
+		}
+		return true;  
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler)
 			throws FNException {
-		FnConnection<?> FC = LINK(true);
+		GETSOCKET(true);
 		SearcherResult res = new SearcherResult();
-		try{
-			ESConnector ESC = (ESConnector) FC.getConnection(true);
+		if(!LINK())
+			return res;
+		try{ 
 			Client conn = ESC.getClient();
 			int start = fq.getStart();
 			int count = fq.getCount(); 
@@ -56,7 +68,7 @@ public class ESFlow extends SearcherFlowSocket {
 					returnFields.add(s);
 				}
 			} else {
-				Map<String, TransParam> tmpFields = NodeConfig.getTransParams();
+				Map<String, TransParam> tmpFields = instanceConfig.getTransParams();
 				for (Map.Entry<String, TransParam> e : tmpFields.entrySet()) {
 					if (e.getValue().getStored().equalsIgnoreCase("true"))
 						returnFields.add(e.getKey());
@@ -67,12 +79,12 @@ public class ESFlow extends SearcherFlowSocket {
 			if(handler==null) {
 				addResult(res,response,fq,returnFields);
 			}else {
-				handler.Handle(res,response,fq,NodeConfig,returnFields);
+				handler.Handle(res,response,fq,instanceConfig,returnFields);
 			} 
 		}catch(Exception e){ 
 			throw e;
 		}finally{
-			UNLINK(FC,false); 
+			REALEASE(FC,false); 
 		} 
 		return res;
 	} 
@@ -87,7 +99,7 @@ public class ESFlow extends SearcherFlowSocket {
 			SearcherDataUnit u = SearcherDataUnit.getInstance();
 			for (Map.Entry<String, SearchHitField> e : fieldMap.entrySet()) {
 				String name = e.getKey();
-				TransParam param = NodeConfig.getTransParams().get(name);
+				TransParam param = instanceConfig.getTransParams().get(name);
 				SearchHitField v = e.getValue();  
 				if (param!=null && param.getSeparator() != null) { 
 					u.addObject(name, v.getValues());

@@ -20,7 +20,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.searcher.flow.ESQueryBuilder;
 import com.feiniu.util.SearchParamUtil;
 
@@ -44,16 +44,16 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder,A
 	private String facet_ext="";
 	private String requesthandler="";
 	
-	public static SearcherESModel getInstance(SearcherRequest request, Analyzer analyzer,NodeConfig nodeConfig) {
+	public static SearcherESModel getInstance(SearcherRequest request, Analyzer analyzer,InstanceConfig instanceConfig) {
 		SearcherESModel eq = new SearcherESModel(); 
-		eq.setSorts(SearchParamUtil.getSortField(request, nodeConfig));
-		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, nodeConfig));
+		eq.setSorts(SearchParamUtil.getSortField(request, instanceConfig));
+		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, instanceConfig));
 		if(request.getParam("facet_ext")!=null){
 			eq.setFacet_ext(request.getParams().get("facet_ext"));
 		} 
 		Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>();
 		BoolQueryBuilder query = ESQueryBuilder.buildBooleanQuery(request,
-				nodeConfig, analyzer, attrQueryMap);
+				instanceConfig, analyzer, attrQueryMap);
 		eq.setQuery(query);
 		eq.setAttrQueryMap(attrQueryMap);
 		return eq;

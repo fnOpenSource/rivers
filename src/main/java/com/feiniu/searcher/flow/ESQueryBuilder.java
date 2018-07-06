@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.QUERY_TYPE;
-import com.feiniu.config.NodeConfig;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.TransParam;
@@ -40,7 +40,7 @@ public class ESQueryBuilder{
 		return QueryBuilders.termQuery("EMPTY", "0x000");
 	}
 	
-	static public BoolQueryBuilder buildBooleanQuery(SearcherRequest request, NodeConfig nodeConfig, Analyzer analyzer,
+	static public BoolQueryBuilder buildBooleanQuery(SearcherRequest request, InstanceConfig instanceConfig, Analyzer analyzer,
 			Map<String, QueryBuilder> attrQueryMap) {
 		BoolQueryBuilder bquery = QueryBuilders.boolQuery(); 
 		try { 
@@ -101,14 +101,14 @@ public class ESQueryBuilder{
 					occur = Occur.MUST_NOT;
 				}
 
-				TransParam tp = nodeConfig.getTransParam(key);
-				SearcherParam sp = nodeConfig.getSearchParam(key);
+				TransParam tp = instanceConfig.getTransParam(key);
+				SearcherParam sp = instanceConfig.getSearchParam(key);
 				if ((tp == null && sp==null) || Common.isDefaultParam(key)){ 
 					continue;
 				} 
 				QueryBuilder query = null;  
 				if (sp!=null && sp.getFields() != null && sp.getFields().length() > 0)
-					query = buildMultiQuery(sp.getFields(), value, nodeConfig, request, analyzer, key,fuzzy);
+					query = buildMultiQuery(sp.getFields(), value, instanceConfig, request, analyzer, key,fuzzy);
 				else
 					query = buildSingleQuery(tp.getAlias(), value, tp,sp, request, analyzer, key,fuzzy);
 
@@ -194,7 +194,7 @@ public class ESQueryBuilder{
 		return ESSimpleQuery.getQuery();
 	} 
 
-	static private QueryBuilder buildMultiQuery(String multifield, String value, NodeConfig nodeConfig, SearcherRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception {
+	static private QueryBuilder buildMultiQuery(String multifield, String value, InstanceConfig instanceConfig, SearcherRequest request, Analyzer analyzer, String paramKey,int fuzzy) throws Exception {
 		DisMaxQueryBuilder bquery = null; 
 		String[] keys = multifield.split(",");
 
@@ -202,8 +202,8 @@ public class ESQueryBuilder{
 			return null;
 
 		if (keys.length == 1) {
-			TransParam tp = nodeConfig.getTransParam(keys[0]);
-			return buildSingleQuery(tp.getAlias(), value, tp,nodeConfig.getSearchParam(keys[0]), request, analyzer, paramKey,fuzzy);
+			TransParam tp = instanceConfig.getTransParam(keys[0]);
+			return buildSingleQuery(tp.getAlias(), value, tp,instanceConfig.getSearchParam(keys[0]), request, analyzer, paramKey,fuzzy);
 		}
 
 		String[] word_vals = value.split(",");
@@ -214,8 +214,8 @@ public class ESQueryBuilder{
 			for (String val : vals) {
 				DisMaxQueryBuilder parsedDisMaxQuery = null;
 				for (String key2 : keys) {
-					TransParam _tp = nodeConfig.getTransParam(key2);
-					QueryBuilder query = buildSingleQuery(_tp.getAlias(), _tp.getAnalyzer().equals("NOT_ANALYZED")? word : val, _tp,nodeConfig.getSearchParam(key2), request, analyzer, paramKey,fuzzy);
+					TransParam _tp = instanceConfig.getTransParam(key2);
+					QueryBuilder query = buildSingleQuery(_tp.getAlias(), _tp.getAnalyzer().equals("NOT_ANALYZED")? word : val, _tp,instanceConfig.getSearchParam(key2), request, analyzer, paramKey,fuzzy);
 					if (query != null) {
 						if (parsedDisMaxQuery == null)
 							parsedDisMaxQuery = QueryBuilders.disMaxQuery().tieBreaker(GlobalParam.DISJUNCTION_QUERY_WEIGHT);

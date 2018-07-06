@@ -26,6 +26,7 @@ import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.WarehouseParam;
+import com.feiniu.node.CPU;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
@@ -114,7 +115,7 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
 							if (coreWriter == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
@@ -140,13 +141,13 @@ public class HttpReaderService {
 							try {
 								coreWriter.writeDataSet("HTTP PUT",
 										Common.getInstanceName(instance, seq,
-												coreWriter.getNodeConfig().getPipeParam().getInstanceName()),
+												coreWriter.getInstanceConfig().getPipeParam().getInstanceName(),""),
 										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
-												coreWriter.getNodeConfig().getTransParams()),
+												coreWriter.getInstanceConfig().getTransParams()),
 										"", isUpdate,monopoly);
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
-								GlobalParam.LOG.error("Http Write Exception,",e);
+								Common.LOG.error("Http Write Exception,",e);
 								response.getWriter().println("{\"status\":0,\"info\":\"写入失败!参数错误，instance:" + instance
 										+ ",seq:" + seq + "\"}");
 								try {
@@ -161,11 +162,11 @@ public class HttpReaderService {
 						break;
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(rq.getParameter("instance"),
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getTransDataFlow(rq.getParameter("instance"),
 									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
 									coreWriter, false, false);
-							coreWriter.createStorePosition(rq.getParameter("instance"), storeid);
+							CPU.RUN(coreWriter.getID(), "Pond", "createStorePosition",rq.getParameter("instance"), storeid);   
 							response.getWriter()
 									.println("{\"status\":1,\"info\":\"success\",\"storeid\":\"" + storeid + "\"}");
 						} else {
@@ -178,18 +179,16 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
 								storeid = Common.getStoreId(instance, seq,
 										coreWriter, false, false);
-								coreWriter.createStorePosition(instance, storeid);
-							}
-							GlobalParam.SOCKET_CENTER
-									.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG)
-									.switchSearcher(instance, storeid);
-							coreWriter.write(instance, storeid, "-1", seq, true);
+								CPU.RUN(coreWriter.getID(), "Pond", "createStorePosition",instance, storeid);    
+							} 
+							CPU.RUN(coreWriter.getID(), "Pond", "switchInstance", instance, storeid);
+							coreWriter.run(instance, storeid, "-1", seq, true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"切换索引失败!\"}");
@@ -201,21 +200,21 @@ public class HttpReaderService {
 							SearcherModel<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getWriterChannel(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
-							if (coreWriter == null) {
+							TransDataFlow transFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
+							if (transFlow == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
 							}
-							String storeid = Common.getStoreId(instance,seq, coreWriter, true, true);
-							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(coreWriter.getNodeConfig().getPipeParam().getWriteTo());
+							String storeid = Common.getStoreId(instance,seq, transFlow, true, true);
+							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,coreWriter.getNodeConfig());
+								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,transFlow.getInstanceConfig());
 								break; 
 							default:
 								break;
 							}
-							coreWriter.deleteByQuery(query, instance, storeid);
+							CPU.RUN(transFlow.getID(), "Pond", "deleteByQuery", query, instance, storeid);							 
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"instance,seq,search_dsl not set!\"}");
