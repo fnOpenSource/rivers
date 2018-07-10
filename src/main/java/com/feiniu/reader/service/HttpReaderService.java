@@ -141,7 +141,7 @@ public class HttpReaderService {
 							try {
 								coreWriter.writeDataSet("HTTP PUT",
 										Common.getInstanceName(instance, seq,
-												coreWriter.getInstanceConfig().getPipeParam().getInstanceName(),""),
+												coreWriter.getInstanceConfig().getPipeParam().getInstanceName()),
 										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
 												coreWriter.getInstanceConfig().getTransParams()),
 										"", isUpdate,monopoly);

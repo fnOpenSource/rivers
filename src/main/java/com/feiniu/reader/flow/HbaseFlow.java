@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
+import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
 public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> { 

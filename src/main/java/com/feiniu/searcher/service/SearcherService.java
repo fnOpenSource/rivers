@@ -90,7 +90,7 @@ public class SearcherService{
 		String pipe = request.getPipe(); 
 		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getSearchConfigs();
 		if (configMap.containsKey(pipe)) { 
-			Searcher searcher = SocketCenter.getSearcher(pipe);
+			Searcher searcher = SocketCenter.getSearcher(pipe,"","");
 			response = searcher.startSearch(request);
 		} 
 		long endTime = System.currentTimeMillis();

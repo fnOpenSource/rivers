@@ -1,8 +1,8 @@
 package com.feiniu.instruction;
 
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.reader.flow.ReaderFlowSocket;
-import com.feiniu.writer.flow.WriterFlowSocket;
+import com.feiniu.reader.ReaderFlowSocket;
+import com.feiniu.writer.WriterFlowSocket;
 
 public class Context { 
 	

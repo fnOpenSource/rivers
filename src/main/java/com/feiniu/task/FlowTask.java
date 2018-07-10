@@ -50,7 +50,7 @@ public class FlowTask{
 	 */
 	public void optimizeInstance(){
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(0);
-		String storeName = Common.getInstanceName(instanceName, seq, null,""); 
+		String storeName = Common.getInstanceName(instanceName, seq, null); 
 		CPU.RUN(transDataFlow.getID(), "Pond", "optimizeInstance", storeName, Common.getStoreId(instanceName,seq,transDataFlow,true,false)); 
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 	}

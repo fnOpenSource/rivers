@@ -22,6 +22,7 @@ import com.feiniu.model.SearcherDataUnit;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherResult;
 import com.feiniu.model.param.TransParam;
+import com.feiniu.searcher.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 

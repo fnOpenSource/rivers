@@ -1,4 +1,4 @@
-package com.feiniu.searcher.flow;
+package com.feiniu.searcher;
 
 import java.util.HashMap;
 

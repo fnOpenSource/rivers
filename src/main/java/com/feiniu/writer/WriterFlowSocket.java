@@ -1,4 +1,4 @@
-package com.feiniu.writer.flow;
+package com.feiniu.writer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +18,12 @@ import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 
+/**
+ * Flow into Pond Manage
+ * create with a/b switch mechanism
+ * @author chengwen
+ * @version 1.0
+ */
 @NotThreadSafe
 public class WriterFlowSocket implements Flow{
 	
@@ -78,7 +84,7 @@ public class WriterFlowSocket implements Flow{
 		FnConnectionPool.release(this.poolName);
 	}
 	
-	public boolean settings(String instantcName, String batchId, Map<String,TransParam> transParams) {
+	public boolean create(String instantcName, String batchId, Map<String,TransParam> transParams) {
 		return false;
 	}
 	
@@ -89,10 +95,10 @@ public class WriterFlowSocket implements Flow{
 	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams,String instantcName, String batchId,boolean isUpdate) throws Exception {
 	}
 
-	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
 	}
   
-	public void remove(String instanceName, String batchId) {
+	public void removeInstance(String instanceName, String batchId) {
 	}
 	
 	public void setAlias(String instanceName, String batchId, String aliasName) {

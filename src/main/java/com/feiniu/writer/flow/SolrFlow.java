@@ -39,6 +39,7 @@ import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.FNIoc;
+import com.feiniu.writer.WriterFlowSocket;
 
 /**
  * solr flow Writer Manager
@@ -88,7 +89,7 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	 
 	@Override
-	public boolean settings(String instantcName, String storeId, Map<String, TransParam> transParams) {
+	public boolean create(String instantcName, String storeId, Map<String, TransParam> transParams) {
 		String name = Common.getStoreName(instantcName, storeId);
 		String path = null; 
 		try {
@@ -177,12 +178,12 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	 
 	@Override
-	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {  
+	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {  
 	 
 	} 
 
 	@Override
-	public void remove(String instanceName, String storeId) {
+	public void removeInstance(String instanceName, String storeId) {
 		if(null == storeId){
 			log.info("storeId is Null");
 			return;
@@ -250,7 +251,7 @@ public class SolrFlow extends WriterFlowSocket{
 
 	@Override
 	public String getNewStoreId(String instance,boolean isIncrement,String seq, final InstanceConfig instanceConfig) { 
-		String instanceName = Common.getInstanceName(instance, seq,instanceConfig.getPipeParam().getInstanceName(),"");
+		String instanceName = Common.getInstanceName(instance, seq,instanceConfig.getPipeParam().getInstanceName());
 		String b = Common.getStoreName(instanceName, "b");
 		String a = Common.getStoreName(instanceName, "a");
 		String select="";  
@@ -261,7 +262,7 @@ public class SolrFlow extends WriterFlowSocket{
 				select = "b"; 
 			}else{
 				select = "a"; 
-				settings(instanceName,select, instanceConfig.getTransParams());
+				create(instanceName,select, instanceConfig.getTransParams());
 				setAlias(instanceName, select, instanceConfig.getAlias());
 			}   
 		}else{
@@ -269,7 +270,7 @@ public class SolrFlow extends WriterFlowSocket{
 			if(this.existsCollection(b)){ 
 				select =  "a";
 			}
-			settings(instanceName,select, instanceConfig.getTransParams());
+			create(instanceName,select, instanceConfig.getTransParams());
 		} 
 		return select;
 	}

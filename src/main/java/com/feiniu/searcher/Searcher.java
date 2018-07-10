@@ -10,7 +10,6 @@ import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.SearcherState;
 import com.feiniu.model.SearcherSolrModel;
-import com.feiniu.searcher.flow.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.SearchParamUtil;
 

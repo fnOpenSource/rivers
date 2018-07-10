@@ -3,23 +3,18 @@ package com.feiniu.node;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
-import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.model.param.WarehouseParam;
-import com.feiniu.model.param.WarehouseSqlParam;
-import com.feiniu.reader.flow.ReaderFlowSocket;
-import com.feiniu.reader.flow.ReaderFlowSocketFactory;
+import com.feiniu.reader.ReaderFlowSocket;
+import com.feiniu.reader.ReaderFlowSocketFactory;
 import com.feiniu.searcher.Searcher;
-import com.feiniu.searcher.SearcherFactory;
-import com.feiniu.searcher.flow.SearcherFlowSocket;
+import com.feiniu.searcher.SearcherFlowSocket;
+import com.feiniu.searcher.SearcherSocketFactory;
 import com.feiniu.util.Common;
-import com.feiniu.writer.WriterFactory;
-import com.feiniu.writer.flow.WriterFlowSocket;
+import com.feiniu.writer.WriterFlowSocket;
+import com.feiniu.writer.WriterSocketFactory;
 
 /**
  * data-flow router reader searcher and writer control center seq only support
@@ -29,25 +24,27 @@ import com.feiniu.writer.flow.WriterFlowSocket;
  * @author chengwen
  * @version 1.0
  */
+
 public final class SocketCenter {
 
 	private Map<String, TransDataFlow> transDataFlowMap = new ConcurrentHashMap<String, TransDataFlow>();
+	private Map<String, Searcher> searcherMap = new ConcurrentHashMap<String, Searcher>();
+	
 	private Map<String, WriterFlowSocket> writerSocketMap = new ConcurrentHashMap<String, WriterFlowSocket>();
 	private Map<String, ReaderFlowSocket<?>> readerSocketMap = new ConcurrentHashMap<String, ReaderFlowSocket<?>>();
-	private Map<String, SearcherFlowSocket> searcherSocketMap = new ConcurrentHashMap<String, SearcherFlowSocket>();
-	private Map<String, Searcher> searcherMap = new ConcurrentHashMap<String, Searcher>();
-
-	private final static Logger log = LoggerFactory.getLogger(SocketCenter.class);
-
-	public Searcher getSearcher(String instanceName) {
-		if (!searcherMap.containsKey(instanceName)) {
-			if (!GlobalParam.nodeConfig.getSearchConfigs().containsKey(instanceName))
-				return null;
-			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getSearchConfigs().get(instanceName);
-			Searcher searcher = Searcher.getInstance(instanceName, instanceConfig, getSearcherSocket(instanceName));
-			searcherMap.put(instanceName, searcher);
-		}
-		return searcherMap.get(instanceName);
+	private Map<String, SearcherFlowSocket> searcherSocketMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
+ 
+	public Searcher getSearcher(String instance, String seq,String tag) {
+		synchronized (searcherMap) {
+			if (!searcherMap.containsKey(instance)) {
+				if (!GlobalParam.nodeConfig.getSearchConfigs().containsKey(instance))
+					return null;
+				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getSearchConfigs().get(instance);
+				Searcher searcher = Searcher.getInstance(instance, instanceConfig, getSearcherSocket(instance,seq,tag));
+				searcherMap.put(instance, searcher);
+			}
+			return searcherMap.get(instance);
+		} 
 	}
 
 	/**
@@ -64,14 +61,62 @@ public final class SocketCenter {
 	 *            Marking resource
 	 */
 	public TransDataFlow getTransDataFlow(String instance, String seq, boolean needClear, String tag) {
-		if (!transDataFlowMap.containsKey(Common.getInstanceName(instance, seq, null,tag) + tag) || needClear) { 
-			TransDataFlow transDataFlow  = TransDataFlow.getInstance(getReaderSocket(instance, seq,tag), getWriterSocket(instance, seq,tag),
-					GlobalParam.nodeConfig.getInstanceConfigs().get(instance));
-			transDataFlowMap.put(Common.getInstanceName(instance, seq, null,tag), transDataFlow);
-		}
-		return transDataFlowMap.get(Common.getInstanceName(instance, seq, null,tag));
+		synchronized (transDataFlowMap) {
+			String tags = Common.getResourceTag(instance, seq,tag);
+			if (!transDataFlowMap.containsKey(tags) || needClear) { 
+				TransDataFlow transDataFlow  = TransDataFlow.getInstance(getReaderSocket(instance, seq,tag), getWriterSocket(instance, seq,tag),
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance));
+				transDataFlowMap.put(tags, transDataFlow);
+			}
+			return transDataFlowMap.get(tags);
+		} 
+	} 
+
+	public ReaderFlowSocket<?> getReaderSocket(String instance, String seq,String tag) {
+		synchronized (readerSocketMap) {
+			String tags = Common.getResourceTag(instance, seq,tag);
+			if (!readerSocketMap.containsKey(tags)) {  
+				WarehouseParam param = getWHP(
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getDataFrom());
+				if (param == null)
+					return null;  
+				readerSocketMap.put(tags, ReaderFlowSocketFactory.getInstance(param, seq,GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getDataFromhandler()));
+			}
+			return readerSocketMap.get(tags);
+		} 
 	}
 
+	public WriterFlowSocket getWriterSocket(String instance, String seq,String tag) {
+		synchronized (writerSocketMap) {
+			String tags = Common.getResourceTag(instance, seq,tag);
+			if (!writerSocketMap.containsKey(tags)) {
+				WarehouseParam param = getWHP(
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTo());
+				if (param == null)
+					return null;
+				writerSocketMap.put(tags, WriterSocketFactory.getInstance(param, seq,GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTohandler()));
+			}
+			return writerSocketMap.get(tags);
+		} 
+	}
+
+	private SearcherFlowSocket getSearcherSocket(String instance, String seq,String tag) {
+		synchronized (searcherSocketMap) {
+			String tags = Common.getResourceTag(instance, seq,tag);
+			if (!searcherSocketMap.containsKey(tags)) {
+				WarehouseParam param = getWHP(
+						GlobalParam.nodeConfig.getSearchConfigs().get(instance).getPipeParam().getSearcher());
+				if (param == null)
+					return null;
+
+				InstanceConfig paramConfig = GlobalParam.nodeConfig.getSearchConfigs().get(instance);
+				SearcherFlowSocket searcher = SearcherSocketFactory.getInstance(param, paramConfig, null);
+				searcherSocketMap.put(tags, searcher);
+			}
+			return searcherSocketMap.get(tags); 
+		} 
+	}
+	
 	public WarehouseParam getWHP(String destination) {
 		WarehouseParam param = null;
 		if (GlobalParam.nodeConfig.getNoSqlParamMap().containsKey(destination)) {
@@ -80,55 +125,6 @@ public final class SocketCenter {
 			param = GlobalParam.nodeConfig.getSqlParamMap().get(destination);
 		}
 		return param;
-	}
-
-	public ReaderFlowSocket<?> getReaderSocket(String instance, String seq,String tag) {
-		if (!readerSocketMap.containsKey(Common.getInstanceName(instance, seq, null,tag))) {
-			ReaderFlowSocket<?> reader;
-			String readFrom = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getDataFrom();
-			if (GlobalParam.nodeConfig.getNoSqlParamMap().get(readFrom) != null) {
-				Map<String, WarehouseNosqlParam> dataMap = GlobalParam.nodeConfig.getNoSqlParamMap();
-				if (!dataMap.containsKey(readFrom)) {
-					log.error("data source config " + readFrom + " not exists");
-					return null;
-				}
-				reader = ReaderFlowSocketFactory.getChannel(dataMap.get(readFrom), seq);
-			} else {
-				Map<String, WarehouseSqlParam> dataMap = GlobalParam.nodeConfig.getSqlParamMap();
-				if (!dataMap.containsKey(readFrom)) {
-					log.error("data source config " + readFrom + " not exists");
-					return null;
-				}
-				reader = ReaderFlowSocketFactory.getChannel(dataMap.get(readFrom), seq);
-			}
-			readerSocketMap.put(Common.getInstanceName(instance, seq, null,tag), reader);
-		}
-		return readerSocketMap.get(Common.getInstanceName(instance, seq, null,tag));
-	}
-
-	public WriterFlowSocket getWriterSocket(String instance, String seq,String tag) {
-		if (!writerSocketMap.containsKey(instance)) {
-			WarehouseParam param = getWHP(
-					GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTo());
-			if (param == null)
-				return null;
-			writerSocketMap.put(instance, WriterFactory.getWriter(param, seq));
-		}
-		return writerSocketMap.get(instance);
-	}
-
-	private SearcherFlowSocket getSearcherSocket(String secname) {
-		if (!searcherSocketMap.containsKey(secname)) {
-			WarehouseParam param = getWHP(
-					GlobalParam.nodeConfig.getSearchConfigs().get(secname).getPipeParam().getSearcher());
-			if (param == null)
-				return null;
-
-			InstanceConfig paramConfig = GlobalParam.nodeConfig.getSearchConfigs().get(secname);
-			SearcherFlowSocket searcher = SearcherFactory.getSearcherFlow(param, paramConfig, null);
-			searcherSocketMap.put(secname, searcher);
-		}
-		return searcherSocketMap.get(secname); 
 	}
 
 }

@@ -22,7 +22,7 @@ public class Pond extends Instruction {
 			}
 			String storeName = (String) args[0];
 			String storeId = (String) args[1];
-			context.getWriter().settings(storeName, storeId, context.getInstanceConfig().getTransParams());
+			context.getWriter().create(storeName, storeId, context.getInstanceConfig().getTransParams());
 		} finally {
 			context.getWriter().REALEASE(false);
 		}
@@ -44,7 +44,7 @@ public class Pond extends Instruction {
 			SearcherModel<?, ?, ?> query = (SearcherModel<?, ?, ?>) args[0];
 			String instance = (String) args[1];
 			String storeId = (String) args[2];
-			context.getWriter().doDelete(query, instance, storeId);
+			context.getWriter().delete(query, instance, storeId);
 		} catch (Exception e) {
 			log.error("DeleteByQuery Exception", e);
 			freeConn = true;
@@ -93,7 +93,7 @@ public class Pond extends Instruction {
 				context.getWriter().optimize(instance, "b");
 				removeId = "a";
 			} 
-			context.getWriter().remove(instance, removeId);
+			context.getWriter().removeInstance(instance, removeId);
 			context.getWriter().setAlias(instance, storeId, context.getInstanceConfig().getAlias());
 		}catch (Exception e) {
 			log.error("switchInstance Exception",e);

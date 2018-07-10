@@ -35,6 +35,7 @@ import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
+import com.feiniu.writer.WriterFlowSocket;
 
 /**
  * ElasticSearch Writer Manager
@@ -173,7 +174,7 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
 		 
 	}
 
@@ -197,7 +198,7 @@ public class ESFlow extends WriterFlowSocket {
 	 *            data source main tag name
 	 */
 	@Override
-	public boolean settings(String instanceName, String storeId, Map<String, TransParam> transParams) {
+	public boolean create(String instanceName, String storeId, Map<String, TransParam> transParams) {
 		String name = Common.getStoreName(instanceName, storeId);
 		String type = instanceName;
 		try {
@@ -244,7 +245,7 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void remove(String instanceName, String storeId) {
+	public void removeInstance(String instanceName, String storeId) {
 		if (storeId == null || storeId.length() == 0)
 			return;
 		String name = Common.getStoreName(instanceName, storeId);
@@ -269,7 +270,7 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public String getNewStoreId(String instance, boolean isIncrement, String dbseq, InstanceConfig instanceConfig) {
-		String instanceName = Common.getInstanceName(instance, dbseq, instanceConfig.getPipeParam().getInstanceName(),"");
+		String instanceName = Common.getInstanceName(instance, dbseq, instanceConfig.getPipeParam().getInstanceName());
 		boolean a_alias = false;
 		boolean b_alias = false;
 		boolean a = this.ESC.getClient().admin().indices()
@@ -305,7 +306,7 @@ public class ESFlow extends WriterFlowSocket {
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)) {
-				this.settings(instanceName, select, instanceConfig.getTransParams());
+				this.create(instanceName, select, instanceConfig.getTransParams());
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)

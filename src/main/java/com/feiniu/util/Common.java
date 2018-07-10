@@ -243,15 +243,22 @@ public class Common {
 	 * @param fixName instance name is fixed will not auto generate instance name and ab change will limit
 	 * @return String
 	 */
-	public static String getInstanceName(String instanceName, String seq,String fixName,String tag) {
+	public static String getInstanceName(String instanceName, String seq,String fixName) {
 		if(fixName!=null)
 			return fixName;
 		if (seq != null && seq.length()>0) {
-			return instanceName + seq+tag;
+			return instanceName + seq;
 		} else {
-			return instanceName + GlobalParam.DEFAULT_RESOURCE_SEQ+tag;
-		}
-
+			return instanceName + GlobalParam.DEFAULT_RESOURCE_SEQ;
+		} 
+	}
+	
+	public static String getResourceTag(String instance,String seq,String tag) {
+		if (seq != null && seq.length()>0) {
+			return instance + seq+tag;
+		} else {
+			return instance + GlobalParam.DEFAULT_RESOURCE_SEQ+tag;
+		} 
 	}
 
 	/**

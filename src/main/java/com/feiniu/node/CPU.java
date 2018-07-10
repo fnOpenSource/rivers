@@ -6,9 +6,9 @@ import java.util.UUID;
 
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.Context;
-import com.feiniu.reader.flow.ReaderFlowSocket;
+import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.util.Common;
-import com.feiniu.writer.flow.WriterFlowSocket;
+import com.feiniu.writer.WriterFlowSocket;
 
 /**
  * Instructions Dispatch, RUN and Track Center

@@ -18,13 +18,12 @@ import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
 import com.feiniu.node.CPU;
-import com.feiniu.reader.Reader;
-import com.feiniu.reader.flow.ReaderFlowSocket;
+import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 import com.feiniu.reader.util.DataSetReader;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
-import com.feiniu.writer.flow.WriterFlowSocket;
+import com.feiniu.writer.WriterFlowSocket;
 
 /**
  * Build river flow transfer data from A to B
@@ -113,11 +112,11 @@ public final class TransDataFlow extends Instruction{
 	public ReaderState writeDataSet(String id,String instance, String storeId,
 			String seq, HashMap<String, Object> dataSet, String info,boolean isUpdate,boolean monopoly) throws Exception {
 		ReaderState rstate = new ReaderState(); 
-		Reader<HashMap<String, Object>> scaner = new DataSetReader();
-		scaner.init(dataSet);
+		DataSetReader DSReader = new DataSetReader();
+		DSReader.init(dataSet);
 		long start = Common.getNow();
 		int num = 0; 
-		if (scaner.status()) {
+		if (DSReader.status()) {
 			boolean _connect;
 			if(monopoly) {
 				_connect = getWriter().MONOPOLY();
@@ -130,13 +129,13 @@ public final class TransDataFlow extends Instruction{
 			}
 			boolean freeConn = false;
 			try{
-				while (scaner.nextLine()) {   
-					getWriter().write(scaner.getkeyColumn(),scaner.getLineData(),getInstanceConfig().getTransParams(),instance, storeId,isUpdate);
+				while (DSReader.nextLine()) {   
+					getWriter().write(DSReader.getkeyColumn(),DSReader.getLineData(),getInstanceConfig().getTransParams(),instance, storeId,isUpdate);
 					num++;
 				}
-				String READER_LAST_STAMP = scaner.getScanStamp();
-				String maxId = scaner.getMaxId();
-				scaner.close();
+				String READER_LAST_STAMP = DSReader.getScanStamp();
+				String maxId = DSReader.getMaxId();
+				DSReader.close();
 				rstate.setReaderScanStamp(READER_LAST_STAMP);
 				rstate.setMaxId(maxId);
 				rstate.setCount(num);
@@ -174,7 +173,7 @@ public final class TransDataFlow extends Instruction{
 		private String doNosqlWrite(String instanceName, String storeId, String lastTime,
 				boolean isFullIndex)  throws FNException{  
 			String desc = "increment";
-			String indexName = Common.getInstanceName(instanceName,"",getInstanceConfig().getPipeParam().getInstanceName(),""); 
+			String indexName = Common.getInstanceName(instanceName,"",getInstanceConfig().getPipeParam().getInstanceName()); 
 			
 			try {
 				if (isFullIndex) {
@@ -241,7 +240,7 @@ public final class TransDataFlow extends Instruction{
 				String DataSeq, boolean isFullIndex) throws FNException{
 			String desc;
 			boolean isUpdate = getInstanceConfig().getPipeParam().getWriteType().equals("increment")?true:false;
-			String destName = Common.getInstanceName(instanceName,DataSeq,getInstanceConfig().getPipeParam().getInstanceName(),""); 
+			String destName = Common.getInstanceName(instanceName,DataSeq,getInstanceConfig().getPipeParam().getInstanceName()); 
 			if (isFullIndex) {
 				CPU.RUN(getID(), "Pond", "createStorePosition",destName, storeId); 
 				desc = JOB_TYPE.FULL.name();
@@ -358,7 +357,7 @@ public final class TransDataFlow extends Instruction{
 					if (isFullIndex) {
 						getWriter().LINK();
 						try{
-							getWriter().remove(destName, storeId);
+							getWriter().removeInstance(destName, storeId);
 						}finally{
 							getWriter().REALEASE(false);
 						} 

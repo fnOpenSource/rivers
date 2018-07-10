@@ -18,6 +18,7 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
+import com.feiniu.writer.WriterFlowSocket;
 
 /**
  * HBase flow Writer Manager
@@ -102,12 +103,12 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void doDelete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
 		
 	}
 
 	@Override
-	public void remove(String instanceName, String batchId) {
+	public void removeInstance(String instanceName, String batchId) {
 		
 	}
 
@@ -130,7 +131,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	}
  
 	@Override
-	public boolean settings(String instantcName, String batchId, Map<String, TransParam> transParams) {
+	public boolean create(String instantcName, String batchId, Map<String, TransParam> transParams) {
 		return true;
 	}
 
