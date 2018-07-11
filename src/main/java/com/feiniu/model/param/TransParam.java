@@ -4,20 +4,20 @@ import com.feiniu.writerUnit.handler.Handler;
 
 public class TransParam { 
 	/**read name*/
-	private String name = null;
+	private String name;
 	/**write name*/
-	private String alias = null;
-	private String defaultvalue = null;
-	private String analyzer = null;
+	private String alias;
+	private String defaultvalue;
+	private String analyzer;
 	private String stored = "false";
-	private String separator = null;
+	private String separator;
 	/**for data storetype*/
-	private String indextype = null;
+	private String indextype;
 	private String indexed = "true";
 	private float boost = 1.0f;
 	private Handler handler;
 	private boolean router=false;
-	private String paramtype = null;
+	private String paramtype;
 
 	public boolean isValid(String value) { 
 		return true;

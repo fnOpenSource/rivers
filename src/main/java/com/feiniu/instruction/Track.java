@@ -2,10 +2,15 @@ package com.feiniu.instruction;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.feiniu.config.GlobalParam;
 import com.feiniu.node.CPU;
 
 public class Track extends Instruction {
+	
+	private final static Logger log = LoggerFactory.getLogger("Track");
 	
 	static HashMap<String, HashMap<String, Object>> tmpStore = new HashMap<>();
 
@@ -54,6 +59,8 @@ public class Track extends Instruction {
 				tmpStore.put(id, new HashMap<String,Object>()); 
 			}
 			tmpStore.get(id).put(key, val);
+		}else {
+			log.error("store parameter not match!");
 		}
 	}
 
@@ -68,7 +75,9 @@ public class Track extends Instruction {
 			if(tmpStore.containsKey(id)) {
 				return tmpStore.get(id).get(key);
 			}
-		}
+		}else {
+			log.error("fetch parameter not match!"); 
+		} 
 		return null;
 	}
 }

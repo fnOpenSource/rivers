@@ -81,8 +81,8 @@ public final class NodeMonitor {
 			add("reloadConfig");
 			add("resetInstanceState");
 			add("getInstanceSeqs");
-			add("getInstanceConfig");
-			add("setInstanceConfig");
+			add("getNodeConfig"); 
+			add("setNodeConfig");
 			add("stopInstance");
 			add("removeInstance");
 			add("deleteInstanceData");
@@ -130,7 +130,7 @@ public final class NodeMonitor {
 		}
 	}
 
-	public void getInstanceConfig(Request rq) {
+	public void getNodeConfig(Request rq) {
 		setResponse(1, globalConfigBean);
 	}
 
@@ -138,7 +138,7 @@ public final class NodeMonitor {
 	 * @param type
 	 *            set or remove
 	 */
-	public void setInstanceConfig(Request rq) {
+	public void setNodeConfig(Request rq) {
 		if (rq.getParameter("k") != null && rq.getParameter("v") != null && rq.getParameter("type") != null) {
 			if (rq.getParameter("type").equals("set")) {
 				globalConfigBean.setProperty(rq.getParameter("k"), rq.getParameter("v"));

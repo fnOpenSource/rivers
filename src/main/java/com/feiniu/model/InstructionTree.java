@@ -10,8 +10,9 @@ public class InstructionTree {
 	
 	private String codeID;
  
-    public InstructionTree(String val){
+    public InstructionTree(String val,String codeID){
         this.root = new Node(val);
+        this.codeID = codeID;
     } 
     
     public Node getRoot() {

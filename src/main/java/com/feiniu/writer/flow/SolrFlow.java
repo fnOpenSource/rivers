@@ -77,7 +77,7 @@ public class SolrFlow extends WriterFlowSocket{
 	@Override
 	public boolean LINK(){
 		synchronized(retainer){
-			if(retainer.get()==0){
+			if(retainer.get()==0 || this.FC==null){
 				GETSOCKET(false);
 				if(!super.LINK())
 					return false; 

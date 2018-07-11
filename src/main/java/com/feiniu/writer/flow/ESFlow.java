@@ -54,33 +54,27 @@ public class ESFlow extends WriterFlowSocket {
 		o.INIT(connectParams);
 		return o;
 	}
-
-	@Override
+ 
 	public boolean LINK() {
-		synchronized (this) {
-			boolean renew = false;
-			if(this.ESC==null) {
-				retainer.set(0);
-				renew = true;
-			}
-			if(retainer.incrementAndGet() == 1)
-				renew = true;
-			if (renew) {
+		synchronized (this) { 
+			if(retainer.get()==0 || this.FC==null) {
 				GETSOCKET(false);
 				if(!super.LINK())
 					return false; 
 				this.ESC = (ESConnector) this.FC.getConnection(false);
-			} 
+				retainer.incrementAndGet();
+			}  
 			return true;
 		}
 	}
 
 	@Override
 	public void REALEASE(boolean releaseConn) { 
-		synchronized (this) {  
+		synchronized (this.FC) {  
 			if (retainer.decrementAndGet() == 0) {
-				this.ESC = null;
+				this.ESC = null; 
 				REALEASE(this.FC, releaseConn);
+				this.FC = null;
 			}else {
 				log.info(this.ESC.toString() + " retainer is " + retainer.get());
 			}
@@ -92,11 +86,9 @@ public class ESFlow extends WriterFlowSocket {
 		synchronized (this) {
 			if(this.ESC==null) { 
 				GETSOCKET(false); 
-				retainer.set(1);
-				
+				retainer.set(1); 
 				if(!super.LINK())
-					return false; 
-					
+					return false;
 				this.ESC = (ESConnector) this.FC.getConnection(false);
 			}
 			return true;
@@ -126,12 +118,16 @@ public class ESFlow extends WriterFlowSocket {
 					transParam = transParams.get(field.toLowerCase());
 				if (transParam == null)
 					continue;
-
+				
 				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))) {
 					if (transParam.getSeparator() != null) {
 						String[] vs = value.split(transParam.getSeparator());
 						cbuilder.array(field, vs);
-					} else
+					} else if(transParam.getIndextype().equalsIgnoreCase("geo_point")) {
+						String[] vs = value.split(transParam.getSeparator());
+						if(vs.length==2)
+							cbuilder.latlon(field, Double.parseDouble(vs[0]), Double.parseDouble(vs[1]));
+					}else
 						cbuilder.field(field, value);
 				} else {
 					cbuilder.field(field, value);

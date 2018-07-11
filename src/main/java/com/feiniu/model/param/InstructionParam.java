@@ -32,7 +32,7 @@ public class InstructionParam {
 			Node tmp=null;
 			for(String str:line.trim().split("->")) {  
 				if(instructionSets==null) {
-					instructionSets = new InstructionTree(str);
+					instructionSets = new InstructionTree(str,this.id);
 					tmp = instructionSets.getRoot();
 				}else { 
 					String[] params = str.trim().split(",");
@@ -45,7 +45,7 @@ public class InstructionParam {
 					}
 					 
 				} 
-			}
+			} 
 			this.code.add(instructionSets);
 		}
 	}

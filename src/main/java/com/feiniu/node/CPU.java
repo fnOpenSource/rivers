@@ -44,7 +44,7 @@ public class CPU {
 				Object[] argsNew = new Object[args.length+1];
 				argsNew[args.length] = runId;
 				System.arraycopy(args,0,argsNew,0,args.length);
-				return m.invoke(null,null,args);
+				return m.invoke(null,null,argsNew);
 			}else if(Contexts.containsKey(runId)) {
 				return m.invoke(null,Contexts.get(runId),args);
 			}else {
