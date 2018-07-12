@@ -3,8 +3,6 @@ package com.feiniu.config;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.lucene.analysis.Analyzer;
-
 import com.feiniu.model.RiverState;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
@@ -29,9 +27,7 @@ public class GlobalParam {
 	
 	public static boolean WRITE_BATCH = false;
 	
-	public static int SERVICE_LEVEL;
-	
-	public static Analyzer SEARCH_ANALYZER; 
+	public static int SERVICE_LEVEL; 
 	
 	public static String CONFIG_PATH;
 	

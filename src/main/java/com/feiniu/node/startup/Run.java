@@ -11,21 +11,18 @@ import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.wltea.analyzer.cfg.Configuration;
-import org.wltea.analyzer.dic.Dictionary;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.node.SocketCenter;
 import com.feiniu.node.NodeMonitor;
+import com.feiniu.node.SocketCenter;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.FlowTask;
 import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
-import com.feiniu.util.FNIoc;
-import com.feiniu.util.IKAnalyzer5;
+import com.feiniu.util.FNIoc; 
 import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
 
@@ -62,8 +59,7 @@ public final class Run {
 	NodeMonitor nodeMonitor;
 	
 	public static void main(String[] args) throws URISyntaxException{	
-		Run run = (Run)FNIoc.getInstance().getBean("FNStart");
-		Dictionary.initial(new Configuration(run.configPath));
+		Run run = (Run)FNIoc.getInstance().getBean("FNStart"); 
 		run.start();
 	}
 	
@@ -76,8 +72,7 @@ public final class Run {
 		GlobalParam.nodeMonitor = nodeMonitor;
 		environmentCheck();
 		init();   
-		if((GlobalParam.SERVICE_LEVEL&1)>0){
-			GlobalParam.SEARCH_ANALYZER = IKAnalyzer5.getInstance(true);
+		if((GlobalParam.SERVICE_LEVEL&1)>0){ 
 			SearcherService.start();
 		} 
 		if((GlobalParam.SERVICE_LEVEL&2)>0)

@@ -209,7 +209,7 @@ public class HttpReaderService {
 							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,transFlow.getInstanceConfig());
+								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), transFlow.getInstanceConfig());
 								break; 
 							default:
 								break;

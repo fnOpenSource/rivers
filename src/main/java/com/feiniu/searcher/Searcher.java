@@ -65,7 +65,7 @@ public class Searcher {
 		SearcherModel<?, ?, ?> searcherModel = null;
 		switch (this.searcher.getType()) {
 		case ES:
-			searcherModel = SearcherESModel.getInstance(rq, analyzer,instanceConfig);
+			searcherModel = SearcherESModel.getInstance(rq,instanceConfig);
 			SearchParamUtil.normalParam(rq, searcherModel,instanceConfig);
 			break;
 		case SOLR:

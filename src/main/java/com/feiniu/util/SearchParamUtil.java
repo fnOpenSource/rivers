@@ -5,7 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.script.Script;
+import org.elasticsearch.script.Script; 
+import org.elasticsearch.search.sort.ScriptSortBuilder.ScriptSortType;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -46,9 +47,9 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
+	public static List<SortBuilder<?>> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
 		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
-		List<SortBuilder> sortList = new ArrayList<SortBuilder>();
+		List<SortBuilder<?>> sortList = new ArrayList<SortBuilder<?>>();
 		boolean useScore = false;
 		if (sortstrs != null && sortstrs.length() > 0) { 
 			boolean reverse = false;
@@ -67,8 +68,7 @@ public class SearchParamUtil {
 				} else {
 					reverse = false;
 					fieldname = str;
-				}
-
+				} 
 				switch (fieldname) {
 				case GlobalParam.PARAM_FIELD_SCORE:
 					sortList.add(SortBuilders.scoreSort().order(
@@ -76,10 +76,8 @@ public class SearchParamUtil {
 					useScore = true;
 					break;
 				case GlobalParam.PARAM_FIELD_RANDOM:
-					sortList.add(SortBuilders.scriptSort(
-							new Script("random()"), "number"));
-					break;
-
+					sortList.add(SortBuilders.scriptSort(new Script("random()"), ScriptSortType.NUMBER)); 
+					break; 
 				default:
 					TransParam checked; 
 					SearcherParam sp;

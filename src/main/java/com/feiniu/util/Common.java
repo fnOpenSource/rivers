@@ -1,7 +1,5 @@
 package com.feiniu.util;
 
-import java.io.Reader;
-import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,9 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -23,8 +18,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.node.CPU;
@@ -90,29 +85,10 @@ public class Common {
 		return o;
 	}
 
-	public static List<String> getKeywords(String queryStr, Analyzer analyzer) {
+	public static List<String> getKeywords(String queryStr) {
 		List<String> ret = new ArrayList<String>();
-		if (analyzer == null) {
-			ret.add(queryStr);
-			return ret;
-		}
-
-		try {
-			Reader reader = new StringReader(queryStr);
-			TokenStream tokenStream = analyzer.tokenStream("default", reader);
-			tokenStream.addAttribute(CharTermAttribute.class);
-
-			tokenStream.reset();
-			while (tokenStream.incrementToken()) {
-				String text = tokenStream.getAttribute(CharTermAttribute.class).toString();
-				ret.add(text);
-			}
-			tokenStream.end();
-			tokenStream.close();
-			return ret;
-		} catch (Exception e) {
-			return null;
-		}
+		ret.add(queryStr);
+		return ret;
 	}
 
 	public static String long2DateFormat(long t) {
