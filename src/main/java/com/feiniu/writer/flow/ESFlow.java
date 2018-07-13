@@ -56,21 +56,22 @@ public class ESFlow extends WriterFlowSocket {
 	}
  
 	public boolean LINK() {
-		synchronized (this) { 
+		synchronized (retainer) { 
 			if(retainer.get()==0 || this.FC==null) {
 				GETSOCKET(false);
 				if(!super.LINK())
 					return false; 
 				this.ESC = (ESConnector) this.FC.getConnection(false);
+				retainer.set(1);
+			}else
 				retainer.incrementAndGet();
-			}  
 			return true;
 		}
 	}
 
 	@Override
 	public void REALEASE(boolean releaseConn) { 
-		synchronized (this.FC) {  
+		synchronized (retainer) {  
 			if (retainer.decrementAndGet() == 0) {
 				this.ESC = null; 
 				REALEASE(this.FC, releaseConn);
@@ -83,7 +84,7 @@ public class ESFlow extends WriterFlowSocket {
 	
 	@Override
 	public boolean MONOPOLY() {  
-		synchronized (this) {
+		synchronized (retainer) {
 			if(this.ESC==null) { 
 				GETSOCKET(false); 
 				retainer.set(1); 
@@ -386,7 +387,9 @@ public class ESFlow extends WriterFlowSocket {
 		} catch (Exception e) {
 			log.error("getSettingMap error:" + e.getMessage());
 		}
-		config_map.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){{put("type", "long");}});
+		config_map.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){ 
+			private static final long serialVersionUID = -6737592052630708555L; 
+		{put("type", "long");}});
 		Map<String, Object> root_map = new HashMap<String, Object>();
 		root_map.put("properties", config_map);
 		Map<String, Object> _source_map = new HashMap<String, Object>();

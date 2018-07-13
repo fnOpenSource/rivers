@@ -32,7 +32,7 @@ public class WriterFlowSocket implements Flow{
 	protected HashMap<String, Object> connectParams;
 	protected volatile String poolName;  
 	protected FnConnection<?> FC;
-	protected volatile AtomicInteger retainer = new AtomicInteger(0);
+	protected AtomicInteger retainer = new AtomicInteger(0);
 	private final static Logger log = LoggerFactory.getLogger(WriterFlowSocket.class);
 	
 	@Override
