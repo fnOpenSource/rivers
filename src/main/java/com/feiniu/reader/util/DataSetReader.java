@@ -26,7 +26,8 @@ public class DataSetReader{
 			this.maxId = String.valueOf(rs.get("maxId"));
 			if(rs.containsKey(GlobalParam.READER_LAST_STAMP))
 				this.READER_LAST_STAMP = String.valueOf(rs.get(GlobalParam.READER_LAST_STAMP));
-			this.status = (boolean) rs.get(GlobalParam.READER_STATUS);
+			if(rs.containsKey(GlobalParam.READER_STATUS))
+				this.status = (boolean) rs.get(GlobalParam.READER_STATUS);
 			this.datas = (LinkedList<PipeDataUnit>) rs.get("datas");
 		}
 	}

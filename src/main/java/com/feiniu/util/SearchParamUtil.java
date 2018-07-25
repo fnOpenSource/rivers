@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.script.Script; 
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.sort.ScriptSortBuilder.ScriptSortType;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -68,7 +68,8 @@ public class SearchParamUtil {
 				} else {
 					reverse = false;
 					fieldname = str;
-				} 
+				}
+
 				switch (fieldname) {
 				case GlobalParam.PARAM_FIELD_SCORE:
 					sortList.add(SortBuilders.scoreSort().order(
@@ -78,6 +79,7 @@ public class SearchParamUtil {
 				case GlobalParam.PARAM_FIELD_RANDOM:
 					sortList.add(SortBuilders.scriptSort(new Script("random()"), ScriptSortType.NUMBER)); 
 					break; 
+
 				default:
 					TransParam checked; 
 					SearcherParam sp;

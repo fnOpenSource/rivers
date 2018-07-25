@@ -73,6 +73,10 @@ public class GlobalParam {
 	
 	public final static String JOB_STATE_SPERATOR = ":"; 
 	
+	public final static String JOB_INCREMENTINFO_PATH = "batch"; 
+	
+	public final static String JOB_FULLINFO_PATH = "full_info"; 
+	
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
 	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f;
 		 
@@ -114,5 +118,5 @@ public class GlobalParam {
 	public static final String READER_KEY = "keyColumn";
 	public static final String READER_SCAN_KEY = "IncrementColumn";
 	public static final String READER_LAST_STAMP = "lastUpdateTime";
-	public static final String READER_STATUS = "status"; 
+	public static final String READER_STATUS = "_reader_status"; 
 }

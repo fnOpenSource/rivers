@@ -54,7 +54,7 @@ public class TaskManager{
 	public boolean runIndexJobNow(String instanceName, InstanceConfig instanceConfig,String type){
 		if (instanceConfig.isIndexer() == false)
 			return false; 
-		List<String> seqs = Common.getSeqs(instanceName, instanceConfig); 
+		List<String> seqs = Common.getSeqs(instanceConfig); 
 		if (seqs == null) { 
 			log.error(instanceName+" job start run Exception with invalid data source!");
 			return false;
@@ -88,7 +88,7 @@ public class TaskManager{
 		if(configMap.containsKey(instanceName)){
 			try{
 				InstanceConfig instanceConfig = configMap.get(instanceName);
-				List<String> seqs = Common.getSeqs(instanceName, instanceConfig);
+				List<String> seqs = Common.getSeqs(instanceConfig);
 				if (seqs.size() > 0) {
 					for (String seq : seqs) {
 						if (seq == null)
@@ -118,7 +118,7 @@ public class TaskManager{
 	public void startInstance(String instanceName, InstanceConfig instanceConfig,boolean needClear) { 
 		if (instanceConfig.checkStatus()==false || instanceConfig.isIndexer() == false)
 			return;
-		List<String> seqs = Common.getSeqs(instanceName, instanceConfig); 
+		List<String> seqs = Common.getSeqs(instanceConfig); 
 		if (seqs == null) { 
 			log.error(instanceName+" job create Exception with invalid data source!");
 			return;

@@ -36,7 +36,8 @@ public class CPU {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object RUN(String runId,String instructionsSet,String instruction,Object... args){ 
+	public static Object RUN(String runId,String instructionsSet,String instruction,boolean runCheck,Object... args){ 
+		Object rs=null;
 		try {
 			Class<?> clz = Class.forName("com.feiniu.instruction."+instructionsSet); 
 			Method m = clz.getMethod(instruction, Context.class,Object[].class);  
@@ -44,16 +45,16 @@ public class CPU {
 				Object[] argsNew = new Object[args.length+1];
 				argsNew[args.length] = runId;
 				System.arraycopy(args,0,argsNew,0,args.length);
-				return m.invoke(null,null,argsNew);
+				rs = m.invoke(null,null,argsNew);
 			}else if(Contexts.containsKey(runId)) {
-				return m.invoke(null,Contexts.get(runId),args);
+				rs = m.invoke(null,Contexts.get(runId),args);
 			}else {
 				Common.LOG.error("CPU not ready to run!");
 			}
 		}catch (Exception e) {
 			Common.LOG.error("CPU RUN Exception",e);
 		} 
-		return null; 
+		return rs;
 	}
 	
 	public static String getUUID() {

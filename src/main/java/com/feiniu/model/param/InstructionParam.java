@@ -30,6 +30,8 @@ public class InstructionParam {
 		for(String line:code.trim().split("\\n")) {  
 			InstructionTree instructionSets=null; 
 			Node tmp=null;
+			if(line.indexOf("//")>-1)
+				line=line.substring(0, line.indexOf("//"));
 			for(String str:line.trim().split("->")) {  
 				if(instructionSets==null) {
 					instructionSets = new InstructionTree(str,this.id);

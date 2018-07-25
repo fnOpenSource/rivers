@@ -35,7 +35,7 @@ public class InstructionTree {
     		} 
 		} 
 		int pos = nodes.value.lastIndexOf("."); 
-		return CPU.RUN(codeID, nodes.value.substring(0, pos), nodes.value.substring(pos+1), args); 
+		return CPU.RUN(codeID, nodes.value.substring(0, pos), nodes.value.substring(pos+1),true, args); 
     }
   
     

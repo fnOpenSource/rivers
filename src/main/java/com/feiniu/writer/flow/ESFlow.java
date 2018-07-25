@@ -56,13 +56,13 @@ public class ESFlow extends WriterFlowSocket {
 	}
  
 	public boolean LINK() {
-		synchronized (retainer) { 
-			if(retainer.get()==0 || this.FC==null) {
+		synchronized (this) { 
+			if(this.ESC==null) {
 				GETSOCKET(false);
 				if(!super.LINK())
 					return false; 
 				this.ESC = (ESConnector) this.FC.getConnection(false);
-				retainer.set(1);
+				retainer.set(1);;
 			}else
 				retainer.incrementAndGet();
 			return true;
@@ -71,11 +71,10 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public void REALEASE(boolean releaseConn) { 
-		synchronized (retainer) {  
-			if (retainer.decrementAndGet() == 0) {
+		synchronized (this) {  
+			if (retainer.decrementAndGet() <= 0) {
 				this.ESC = null; 
 				REALEASE(this.FC, releaseConn);
-				this.FC = null;
 			}else {
 				log.info(this.ESC.toString() + " retainer is " + retainer.get());
 			}
@@ -84,7 +83,7 @@ public class ESFlow extends WriterFlowSocket {
 	
 	@Override
 	public boolean MONOPOLY() {  
-		synchronized (retainer) {
+		synchronized (this) {
 			if(this.ESC==null) { 
 				GETSOCKET(false); 
 				retainer.set(1); 

@@ -59,18 +59,17 @@ public class SolrQueryBuilder {
 			
 			TransParam tp = prs.getTransParam(k);
 			SearcherParam sp = prs.getSearchParam(k);
-			if (tp == null || sp==null){
+			if (tp == null && sp==null){
 				continue; 
 			}  
 			if (!start) {
 				qr.append(" AND ");
-			}  
-			if(sp.getFields() != null && sp.getFields().length() > 0){
+			}   
+			if(sp!=null && sp.getFields() != null && sp.getFields().length() > 0){
 				qr.append(buildMultiQuery(v, sp.getFields(), paramMap));
 			}else{
 				qr.append(buildSingleQuery(tp.getAlias(), v));
-			}
-			
+			} 
 			start = false;
 		}
 		if (qr.length() < 1) {

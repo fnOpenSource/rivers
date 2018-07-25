@@ -87,7 +87,6 @@ public class Common {
 
 	public static List<String> getKeywords(String queryStr) {
 		List<String> ret = new ArrayList<String>();
-		ret.add(queryStr);
 		return ret;
 	}
 
@@ -180,14 +179,14 @@ public class Common {
 	 *            series data source fetch
 	 * @return
 	 */
-	public static String getTaskStorePath(String instanceName, String seq) {
+	public static String getTaskStorePath(String instanceName, String seq,String location) {
 		return GlobalParam.CONFIG_PATH + "/" + instanceName + "/" + ((seq != null && seq.length() > 0) ? seq + "/" : "")
-				+ "batch";
+				+location;
 	}
 
-	public static void saveTaskInfo(String instanceName, String seq, String storeId) {
+	public static void saveTaskInfo(String instanceName, String seq, String storeId,String location) {
 		if (storeId.length() > 0) {
-			ZKUtil.setData(getTaskStorePath(instanceName, seq),
+			ZKUtil.setData(getTaskStorePath(instanceName, seq,location),
 					storeId + GlobalParam.JOB_STATE_SPERATOR + GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq));
 		}
 	} 
@@ -236,9 +235,22 @@ public class Common {
 			return instance + GlobalParam.DEFAULT_RESOURCE_SEQ+tag;
 		} 
 	}
+	
+	public static String getFullStartInfo(String instanceName, String seq) {
+		String info = null;
+		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_FULLINFO_PATH);
+		byte[] b = ZKUtil.getData(path,true); 
+		if (b != null && b.length > 0) {
+			String str = new String(b); 
+			if (str.length() > 1) {
+				info = str;
+			}
+		}
+		return info;
+	}
 
 	/**
-	 * get store tag name and will auto create new one with some conditions.
+	 * get increment store tag name and will auto create new one with some conditions.
 	 * 
 	 * @param isIncrement
 	 * @param reCompute
@@ -252,7 +264,7 @@ public class Common {
 	public static String getStoreId(String instanceName, String seq, TransDataFlow writer, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) {
-			String path = Common.getTaskStorePath(instanceName, seq);
+			String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
 			byte[] b = ZKUtil.getData(path,true);
 			String storeId = "";
 			if (b != null && b.length > 0) {
@@ -262,7 +274,7 @@ public class Common {
 					if (strs[0].equals("a") || strs[0].equals("b")) {
 						storeId = strs[0];
 					} else {
-						storeId = (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId", instanceName, true, seq);
+						storeId = "";
 					}
 				}
 				if (strs.length > 1) {
@@ -270,14 +282,14 @@ public class Common {
 				}
 			}
 			if (storeId.length() == 0 || reCompute) {
-				storeId = (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId", instanceName, true, seq); 
+				storeId = (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId",false, instanceName, true, seq); 
 				if (storeId == null)
 					storeId = "a";
-				saveTaskInfo(instanceName, seq, storeId);
+				saveTaskInfo(instanceName, seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 			return storeId;
 		} else {
-			return  (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId", instanceName, false, seq);
+			return  (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId",true, instanceName, false, seq);
 		}
 	}
 	
@@ -288,7 +300,7 @@ public class Common {
 	 * @return String
 	 */
 	public static String getStoreId(String instanceName, String seq) {
-		String path = Common.getTaskStorePath(instanceName, seq);
+		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
 		byte[] b = ZKUtil.getData(path, true);
 		String storeId = "";
 		if (b != null && b.length > 0) {
@@ -309,8 +321,8 @@ public class Common {
 	 * @param instanceConfig
 	 * @return
 	 */
-	public static List<String> getSeqs(String instanceName, InstanceConfig instanceConfig){
-		List<String> seqs = null;
+	public static List<String> getSeqs(InstanceConfig instanceConfig){
+		List<String> seqs = new ArrayList<>();
 		WarehouseParam whParam;
 		if(GlobalParam.nodeConfig.getNoSqlParamMap().get(instanceConfig.getPipeParam().getDataFrom())!=null){
 			whParam = GlobalParam.nodeConfig.getNoSqlParamMap().get(

@@ -5,14 +5,10 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
- 
 import org.mortbay.jetty.HttpConnection;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
@@ -22,18 +18,21 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.flow.TransDataFlow;
+import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.param.TransParam;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.node.CPU;
-import com.feiniu.model.param.TransParam;
+import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.MD5Util;
-import com.feiniu.searcher.service.SearcherService;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 /**
  * Reader open http port support data read
@@ -55,9 +54,7 @@ public class HttpReaderService {
 	@Value("#{globalConfigBean['http_reader_confident_port']}")
 	private String http_reader_confident_port;
 
-	private final static Logger log = LoggerFactory.getLogger(HttpReaderService.class);
-
-	private static ConcurrentHashMap<String, Boolean> reCompute = new ConcurrentHashMap<String, Boolean>();
+	private final static Logger log = LoggerFactory.getLogger(HttpReaderService.class);  
 
 	private FNService FS;
 
@@ -115,8 +112,8 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
-							if (coreWriter == null) {
+							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
+							if (transDataFlow == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
 							}
@@ -124,26 +121,20 @@ public class HttpReaderService {
 							if (rq.getParameter("type").equals("full") && rq.getParameterMap().get("storeid") != null) {
 								storeid = rq.getParameter("storeid");
 							} else {
-								if (reCompute.containsKey(instance + seq)) {
-									storeid = Common.getStoreId(instance, seq, coreWriter, true, false);
-								} else {
-									reCompute.put(instance + seq, true);
-									storeid = Common.getStoreId(instance, seq, coreWriter, true, true);
-								}
+								storeid = Common.getStoreId(instance, seq, transDataFlow, true, false);
 							}
 							boolean isUpdate = false; 
 							
 							if (rq.getParameterMap().get("fn_is_update") != null
 									&& rq.getParameter("fn_is_update").equals("true"))
-								isUpdate = true; 
-							
+								isUpdate = true;  
 							
 							try {
-								coreWriter.writeDataSet("HTTP PUT",
+								transDataFlow.writeDataSet("HTTP PUT",
 										Common.getInstanceName(instance, seq,
-												coreWriter.getInstanceConfig().getPipeParam().getInstanceName()),
+												transDataFlow.getInstanceConfig().getPipeParam().getInstanceName()),
 										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
-												coreWriter.getInstanceConfig().getTransParams()),
+												transDataFlow.getInstanceConfig().getTransParams()),
 										"", isUpdate,monopoly);
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
@@ -162,11 +153,11 @@ public class HttpReaderService {
 						break;
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getTransDataFlow(rq.getParameter("instance"),
+							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(rq.getParameter("instance"),
 									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
-									coreWriter, false, false);
-							CPU.RUN(coreWriter.getID(), "Pond", "createStorePosition",rq.getParameter("instance"), storeid);   
+									transDataFlow, false, false);
+							CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition",true,rq.getParameter("instance"), storeid);   
 							response.getWriter()
 									.println("{\"status\":1,\"info\":\"success\",\"storeid\":\"" + storeid + "\"}");
 						} else {
@@ -185,9 +176,9 @@ public class HttpReaderService {
 							}else {
 								storeid = Common.getStoreId(instance, seq,
 										coreWriter, false, false);
-								CPU.RUN(coreWriter.getID(), "Pond", "createStorePosition",instance, storeid);    
+								CPU.RUN(coreWriter.getID(), "Pond", "createStorePosition",true,instance, storeid);    
 							} 
-							CPU.RUN(coreWriter.getID(), "Pond", "switchInstance", instance, storeid);
+							CPU.RUN(coreWriter.getID(), "Pond", "switchInstance",true, instance, storeid);
 							coreWriter.run(instance, storeid, "-1", seq, true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
@@ -214,7 +205,7 @@ public class HttpReaderService {
 							default:
 								break;
 							}
-							CPU.RUN(transFlow.getID(), "Pond", "deleteByQuery", query, instance, storeid);							 
+							CPU.RUN(transFlow.getID(), "Pond", "deleteByQuery",true, query, instance, storeid);							 
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"instance,seq,search_dsl not set!\"}");

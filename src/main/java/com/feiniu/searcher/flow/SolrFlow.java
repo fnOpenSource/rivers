@@ -101,8 +101,9 @@ public class SolrFlow extends SearcherFlowSocket {
 			}else {
 				handler.Handle(res,response,fq);
 			}
-		}catch(Exception e){   
-			throw new FNException("Search data from Solr exception!"+e.getMessage());
+		}catch(Exception e){
+			log.error("SearcherResult Exception",e);
+			throw new FNException("SearcherResult Search data from Solr exception!");
 		}finally{
 			REALEASE(FC,false);
 		} 
@@ -116,9 +117,9 @@ public class SolrFlow extends SearcherFlowSocket {
 				this.collectionName = this.handler.getData();
 				this.storetime = System.currentTimeMillis() / 1000;
 			}  
-		}else{
-			this.collectionName = String.valueOf(this.connectParams.get("defaultValue"));
 		}
+		if(this.collectionName==null || this.collectionName=="")
+				this.collectionName = String.valueOf(this.connectParams.get("defaultValue"));
 		return this.collectionName;
 	} 
 	

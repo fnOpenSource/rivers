@@ -10,13 +10,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Value; 
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
+import com.feiniu.node.NodeMonitor;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.FlowTask;
@@ -116,7 +116,7 @@ public final class Run {
 	
 	private void initParams(InstanceConfig instanceConfig){ 
 		String instance = instanceConfig.getName(); 
-		List<String> seqs = Common.getSeqs(instance, instanceConfig); 
+		List<String> seqs = Common.getSeqs(instanceConfig); 
 		if (seqs.size() == 0) {
 			seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
 		} 

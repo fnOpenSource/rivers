@@ -237,6 +237,9 @@ public final class NodeMonitor {
 		if (rq.getParameter("instance").length() > 1) {
 			try {
 				String instance = rq.getParameter("instance");
+				String val =  "0";
+				if(rq.getParameterMap().get("set_value")!=null)
+					val =  rq.getParameter("set_value");
 				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance); 
 				WarehouseParam dataMap = GlobalParam.nodeConfig.getNoSqlParamMap().get(instanceConfig.getPipeParam().getDataFrom());
 				if (dataMap == null) {
@@ -247,8 +250,8 @@ public final class NodeMonitor {
 					seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
 				}
 				for (String seq : seqs) { 
-					GlobalParam.LAST_UPDATE_TIME.set(instance,seq, "0");
-					Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq));
+					GlobalParam.LAST_UPDATE_TIME.set(instance,seq, val);
+					Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq),GlobalParam.JOB_INCREMENTINFO_PATH);
 				}
 				setResponse(1, rq.getParameter("instance") + " reset Success!");
 			}catch (Exception e) { 
@@ -293,7 +296,7 @@ public final class NodeMonitor {
 				if (tmpDBParam.getSeq().size() > 0) {
 					sb.append(",[当前存储状态]");
 					for (String seriesDataSeq : tmpDBParam.getSeq()) {
-						String strs = getZkData(Common.getTaskStorePath(rq.getParameter("instance"), seriesDataSeq));
+						String strs = getZkData(Common.getTaskStorePath(rq.getParameter("instance"), seriesDataSeq,GlobalParam.JOB_INCREMENTINFO_PATH));
 						sb.append("\r\n;(" + seriesDataSeq + ") " + strs.split(GlobalParam.JOB_STATE_SPERATOR)[0] + ":");
 						for (String str : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
 							String update;
@@ -307,7 +310,7 @@ public final class NodeMonitor {
 						}
 					}
 				} else {
-					String strs = getZkData(Common.getTaskStorePath(rq.getParameter("instance"), null));
+					String strs = getZkData(Common.getTaskStorePath(rq.getParameter("instance"), null,GlobalParam.JOB_INCREMENTINFO_PATH));
 					StringBuffer stateStr = new StringBuffer();
 					String time = strs.split(GlobalParam.JOB_STATE_SPERATOR)[1];
 					for (String tm : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
@@ -536,14 +539,14 @@ public final class NodeMonitor {
 				deleteRequest = new DeleteIndexRequest(indexname + seq + "_" + batchid);
 				DeleteIndexResponse deleteResponse = es.admin().indices().delete(deleteRequest).actionGet();
 				if (deleteResponse.isAcknowledged()) {
-					resetZk(Common.getTaskStorePath(indexname, seq));
+					resetZk(Common.getTaskStorePath(indexname, seq,GlobalParam.JOB_INCREMENTINFO_PATH));
 					Common.LOG.info("index " + indexname + seq + "_" + batchid + " removed ");
 				}
 			} else {
 				deleteRequest = new DeleteIndexRequest(indexname);
 				DeleteIndexResponse deleteResponse = es.admin().indices().delete(deleteRequest).actionGet();
 				if (deleteResponse.isAcknowledged()) {
-					resetZk(Common.getTaskStorePath(indexname, null));
+					resetZk(Common.getTaskStorePath(indexname, null,GlobalParam.JOB_INCREMENTINFO_PATH));
 					Common.LOG.info(indexname + " success removed!"); 
 				}
 			}

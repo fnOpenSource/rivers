@@ -177,7 +177,7 @@ public final class TransDataFlow extends Instruction{
 			
 			try {
 				if (isFullIndex) {
-					CPU.RUN(getID(), "Pond", "createStorePosition",indexName, storeId); 
+					CPU.RUN(getID(), "Pond", "createStorePosition",true,indexName, storeId); 
 					desc = "full";
 				} 
 				NOSQLParam noSqlParam = getInstanceConfig().getPipeParam().getNoSqlParam();
@@ -242,7 +242,7 @@ public final class TransDataFlow extends Instruction{
 			boolean isUpdate = getInstanceConfig().getPipeParam().getWriteType().equals("increment")?true:false;
 			String destName = Common.getInstanceName(instanceName,DataSeq,getInstanceConfig().getPipeParam().getInstanceName()); 
 			if (isFullIndex) {
-				CPU.RUN(getID(), "Pond", "createStorePosition",destName, storeId); 
+				CPU.RUN(getID(), "Pond", "createStorePosition",true,destName, storeId); 
 				desc = JOB_TYPE.FULL.name();
 			}else {
 				desc = JOB_TYPE.INCREMENT.name();
@@ -338,7 +338,7 @@ public final class TransDataFlow extends Instruction{
 							}
 							if (!isFullIndex) {
 								GlobalParam.LAST_UPDATE_TIME.set(instanceName,DataSeq, getTimeString(newLastUpdateTimes));
-								Common.saveTaskInfo(instanceName, DataSeq, storeId);
+								Common.saveTaskInfo(instanceName, DataSeq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 							}
 						}
 						log.info(Common.formatLog("complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
@@ -355,12 +355,16 @@ public final class TransDataFlow extends Instruction{
 					 
 				} catch (Exception e) { 
 					if (isFullIndex) {
-						getWriter().LINK();
-						try{
-							getWriter().removeInstance(destName, storeId);
-						}finally{
-							getWriter().REALEASE(false);
-						} 
+						for(int t=0;t<5;t++) {
+							if(getWriter().LINK()) {
+								try{
+									getWriter().removeInstance(destName, storeId);
+								}finally{
+									getWriter().REALEASE(false);
+								} 
+								break;
+							}
+						}  
 					} 
 					if(e.getMessage()!=null && e.getMessage().equals("storeId not found")){ 
 						throw new FNException("storeId not found");
@@ -389,7 +393,7 @@ public final class TransDataFlow extends Instruction{
 						log.error("currentThreadState InterruptedException", e);
 					}
 				} 
-				CPU.RUN(getID(), "Pond", "switchInstance", destName, storeId);  
+				CPU.RUN(getID(), "Pond", "switchInstance",true, destName, storeId);  
 			} 
 			
 			return getTimeString(newLastUpdateTimes);

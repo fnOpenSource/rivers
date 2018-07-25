@@ -51,22 +51,20 @@ public class FlowTask{
 	public void optimizeInstance(){
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(0);
 		String storeName = Common.getInstanceName(instanceName, seq, null); 
-		CPU.RUN(transDataFlow.getID(), "Pond", "optimizeInstance", storeName, Common.getStoreId(instanceName,seq,transDataFlow,true,false)); 
+		CPU.RUN(transDataFlow.getID(), "Pond", "optimizeInstance",true, storeName, Common.getStoreId(instanceName,seq,transDataFlow,true,false)); 
 		GlobalParam.FLOW_STATUS.get(instanceName,seq).set(1);
 	}
 	
 	public void startFullJob() {
 		if((this.runState.get()&2)==0){   
 			this.runState.getAndAdd(2); 
-			try{  
-				Common.getStoreId(instanceName,seq,transDataFlow,true,false);
-				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq);
-					
+			try{   
+				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq); 
 				String storeId = Common.getStoreId(instanceName,seq,transDataFlow,false,false); 
-				transDataFlow.run(instanceName, storeId, "-1", seq, true);
+				transDataFlow.run(instanceName, storeId, Common.getFullStartInfo(instanceName,seq), seq, true);
 				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq,keepCurrentUpdateTime);
 				GlobalParam.FLOW_STATUS.get(instanceName,seq).set(4); 
-				Common.saveTaskInfo(instanceName,seq,storeId); 
+				Common.saveTaskInfo(instanceName,seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH); 
 			}catch(Exception e){
 				log.error(instanceName+" Full Exception",e);
 			}finally{
