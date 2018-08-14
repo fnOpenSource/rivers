@@ -13,4 +13,4 @@
 Rivers正是为了解决这些问题而生。 
 
 
-==>>详细文档参照wiki
+==>>[详细文档参照wiki](https://github.com/fnOpenSource/rivers/wiki)  
