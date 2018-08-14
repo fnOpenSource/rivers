@@ -258,7 +258,6 @@ public final class TransDataFlow extends Instruction{
 				ReaderState rState = null;
 				long start = Common.getNow();
 				String READER_LAST_STAMP = "0";
-				String newLastUpdateTime = "0";
 				String maxId = "0";
 				String startId = "0";
 				String tseq = table_seqs.get(i);
@@ -309,7 +308,7 @@ public final class TransDataFlow extends Instruction{
 
 							if ((GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).get() & 4) > 0) {
 								log.info(Common.formatLog("kill " + desc, instanceName, storeId, tseq, String.valueOf(total), maxId,
-										newLastUpdateTime, Common.getNow() - start, "complete", ""));
+										READER_LAST_STAMP, Common.getNow() - start, "complete", ""));
 								break;
 							} else {
 								rState = writeDataSet(desc, writeTo, storeId, tseq,
@@ -331,7 +330,7 @@ public final class TransDataFlow extends Instruction{
 							}
 						}
 						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
-								newLastUpdateTime, Common.getNow() - start, "complete", ""));
+								READER_LAST_STAMP, Common.getNow() - start, "complete", ""));
 						if (getInstanceConfig().getPipeParam().getNextJob() != null
 								&& getInstanceConfig().getPipeParam().getNextJob().length > 0) {
 							ReportStatus.report(instanceName, desc);
