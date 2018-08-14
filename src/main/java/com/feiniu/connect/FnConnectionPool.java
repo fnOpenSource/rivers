@@ -117,7 +117,7 @@ public final class FnConnectionPool {
 		private String poolName = null;
 		private HashMap<String, Object> params = null;
 		private ConcurrentLinkedQueue<FnConnection<?>> freeConnections = new ConcurrentLinkedQueue<FnConnection<?>>();
-		private volatile FnConnection<?> shareConn;
+		private FnConnection<?> shareConn;
 		
 		public ConnectionPool(int maxConn, String poolName,
 				HashMap<String, Object> params) {
@@ -131,71 +131,30 @@ public final class FnConnectionPool {
 			this.params = params;
 			this.shareConn = newConnection();
 			this.shareConn.setShare(true);
-		}
-
-		public synchronized FnConnection<?> getConnection() { 
-			if (!freeConnections.isEmpty()) {
-				FnConnection<?> conn = null;
-				conn = freeConnections.poll();
-				while(conn.status() == false && !freeConnections.isEmpty()){
-					conn.free();
-					conn = freeConnections.poll();
-				}
-				if(conn.status()){
-					activeNum.addAndGet(1);
-					return conn;
-				}
-			} 
-			if (activeNum.get() < maxConn) { 
-				activeNum.addAndGet(1);
-				return newConnection();
-			} 
-			return null;
-		}
+		} 
 		
 		public FnConnection<?> getConnection(long timeout,boolean canShareConn) {
 			FnConnection<?> conn = null;
 			int tryTime=0;
-			while ((conn = getConnection()) == null) {
-				try {
-					Thread.sleep(timeout);
-				} catch (Exception e) {
-					log.error(this.poolName+ " Thread Exception", e);
-				}
-				tryTime++; 
+			while ((conn = getConnection()) == null) {  
 				if (canShareConn && conn==null){
 					if(this.shareConn.status() == false){
 						this.shareConn.connect();
 					}
 					return this.shareConn;
 				} 
+				try {
+					tryTime++; 
+					Thread.sleep(timeout);
+				} catch (Exception e) {
+					log.error(this.poolName+ " Thread Exception", e);
+				}
 				if(tryTime > 10)
 					break;
 			}  
 			return conn;
-		} 
+		}  
 		
-
-		/**
-		 * free connection and add to pool auto keep fixed connections
-		 * 
-		 * @param conn free connection
-		 * 
-		 */
-		public void freeConnection(FnConnection<?> conn,boolean releaseConn) {
-			if(conn.isShare()){
-				if(releaseConn){
-					conn.free();
-				} 
-			}else{
-				if(releaseConn){
-					conn.free();
-				}else{
-					freeConnections.add(conn);
-				} 
-				activeNum.addAndGet(-1);
-			} 
-		}
 		
 		public String getState(){
 			return "Active Connections:"+activeNum+",Free Connections:"+freeConnections.size()+",Max Connection:"+maxConn;
@@ -214,6 +173,51 @@ public final class FnConnectionPool {
 					+ " ,Active Connections:"+activeNum+",Release Connections:"+freeConnections.size());
 			freeConnections.clear();
 		}
+		
+		/**
+		 * free connection and add to pool auto keep fixed connections
+		 * 
+		 * @param conn free connection
+		 * 
+		 */
+		private void freeConnection(FnConnection<?> conn,boolean releaseConn) {
+			synchronized(this) {
+				if(conn.isShare()){
+					if(releaseConn){
+						conn.free();
+					} 
+				}else{
+					if(releaseConn){
+						conn.free();
+					}else{
+						freeConnections.add(conn);
+					} 
+					activeNum.decrementAndGet(); 
+				} 
+			} 
+		}
+		private FnConnection<?> getConnection() { 
+			synchronized(this) {
+				if (!freeConnections.isEmpty()) {
+					FnConnection<?> conn = null;
+					conn = freeConnections.poll();
+					while(conn.status() == false && !freeConnections.isEmpty()){
+						conn.free();
+						conn = freeConnections.poll();
+					}
+					if(conn.status()){
+						activeNum.incrementAndGet(); 
+						return conn;
+					}
+				} 
+				if (activeNum.get() < maxConn) { 
+					activeNum.incrementAndGet(); 
+					return newConnection();
+				} 
+				return null;
+			} 
+		}
+		
 		
 		private FnConnection<?> newConnection() {
 			FnConnection<?> conn = null;

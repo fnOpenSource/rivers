@@ -130,9 +130,12 @@ public class HttpReaderService {
 								isUpdate = true;  
 							
 							try {
+								String writeTo = transDataFlow.getInstanceConfig().getPipeParam().getInstanceName();
+								if(writeTo==null) {
+									writeTo = Common.getInstanceName(instance, seq);
+								}
 								transDataFlow.writeDataSet("HTTP PUT",
-										Common.getInstanceName(instance, seq,
-												transDataFlow.getInstanceConfig().getPipeParam().getInstanceName()),
+										writeTo,
 										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
 												transDataFlow.getInstanceConfig().getTransParams()),
 										"", isUpdate,monopoly);
@@ -170,16 +173,16 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow coreWriter = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
 								storeid = Common.getStoreId(instance, seq,
-										coreWriter, false, false);
-								CPU.RUN(coreWriter.getID(), "Pond", "createStorePosition",true,instance, storeid);    
+										transDataFlow, false, false);
+								CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition",true,instance, storeid);    
 							} 
-							CPU.RUN(coreWriter.getID(), "Pond", "switchInstance",true, instance, storeid);
-							coreWriter.run(instance, storeid, "-1", seq, true);
+							CPU.RUN(transDataFlow.getID(), "Pond", "switchInstance",true, Common.getInstanceName(instance,seq),storeid);
+							transDataFlow.run(instance, storeid, "-1", seq, true,transDataFlow.getInstanceConfig().getPipeParam().getInstanceName()==null?false:true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"切换索引失败!\"}");
@@ -200,7 +203,7 @@ public class HttpReaderService {
 							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), transFlow.getInstanceConfig());
+								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,transFlow.getInstanceConfig());
 								break; 
 							default:
 								break;

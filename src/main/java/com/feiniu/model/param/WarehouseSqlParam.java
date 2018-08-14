@@ -1,11 +1,8 @@
 package com.feiniu.model.param;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
-import com.feiniu.util.Common;
 
 /**
  * 
@@ -22,7 +19,7 @@ public class WarehouseSqlParam implements WarehouseParam{
 	private String user = "";
 	private String password = "";
 	private DATA_TYPE type = DATA_TYPE.UNKNOWN;
-	private List<String> seq = new ArrayList<String>();
+	private String[] seq = {};
 	private String handler;
 	
 	public String getName() {
@@ -90,13 +87,13 @@ public class WarehouseSqlParam implements WarehouseParam{
 		this.alias = alias;
 	}
 	@Override
-	public List<String> getSeq() {
+	public String[] getSeq() {
 		return this.seq;
 	}
 	
 	@Override
 	public void setSeq(String seqs) {
-		this.seq = Common.String2List(seqs, ",");
+		this.seq = seqs.split(",");
 	}
 	@Override
 	public String getPoolName(String seq) {  

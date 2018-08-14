@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.writer.WriterFlowSocket;
 
@@ -28,8 +28,7 @@ import com.feiniu.writer.WriterFlowSocket;
 @ThreadSafe
 public class HBaseFlow extends WriterFlowSocket { 
 	 
-	private List<Put> data = new CopyOnWriteArrayList<Put>();  
-	private Table conn;
+	private List<Put> data = new CopyOnWriteArrayList<Put>();   
 	private final static Logger log = LoggerFactory.getLogger("HBaseFlow"); 
 	
 	public static HBaseFlow getInstance(HashMap<String, Object> connectParams) {
@@ -49,24 +48,15 @@ public class HBaseFlow extends WriterFlowSocket {
 			if (strs != null && strs.length > 1)
 				this.connectParams.put("columnFamily", strs[1]);
 		}
-		this.poolName = String.valueOf(connectParams.get("poolName"));;
-		retainer.set(0);
+		this.poolName = String.valueOf(connectParams.get("poolName"));
 	} 
 	
-	@Override
-	public boolean LINK(){
-		synchronized(retainer){
-			if(retainer.get()==0){
-				GETSOCKET(false);
-				if(!super.LINK())
-					return false; 
-				this.conn = (Table) this.FC.getConnection(false);
-			} 
-			retainer.addAndGet(1); 
-			return true;
-		} 
-	} 
-	  
+	
+	private Table getTable() { 
+		return (Table) GETSOCKET().getConnection(false);
+	}
+
+	 
 	@Override
 	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		if (unit.getData().size() == 0){
@@ -120,13 +110,13 @@ public class HBaseFlow extends WriterFlowSocket {
 	@Override
 	public void flush() throws Exception { 
 		synchronized (data) {
-			this.conn.put(data);
+			getTable().put(data);
 			data.clear();
 		} 
 	}
 
 	@Override
-	public void optimize(String instantcName, String batchId) {
+	public void optimize(String instantcName, String storeId) {
 		
 	}
  
@@ -136,7 +126,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public String getNewStoreId(String instanceName,boolean isIncrement,String dbseq, InstanceConfig instanceConfig) {
+	public String getNewStoreId(String mainName,boolean isIncrement,InstanceConfig instanceConfig) {
 		// TODO Auto-generated method stub
 		return "a";
 	}

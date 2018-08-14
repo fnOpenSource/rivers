@@ -3,7 +3,7 @@ package com.feiniu.model.param;
 import java.util.ArrayList;
 
 import com.feiniu.model.InstructionTree;
-import com.feiniu.model.InstructionTree.Node;
+import com.feiniu.util.Common;
 
 public class InstructionParam {
 	
@@ -27,28 +27,6 @@ public class InstructionParam {
 		return this.code;
 	}
 	public void setCode(String code) {
-		for(String line:code.trim().split("\\n")) {  
-			InstructionTree instructionSets=null; 
-			Node tmp=null;
-			if(line.indexOf("//")>-1)
-				line=line.substring(0, line.indexOf("//"));
-			for(String str:line.trim().split("->")) {  
-				if(instructionSets==null) {
-					instructionSets = new InstructionTree(str,this.id);
-					tmp = instructionSets.getRoot();
-				}else { 
-					String[] params = str.trim().split(",");
-					for(int i=0;i<params.length;i++) {
-						if(i==params.length-1) {
-							tmp = instructionSets.addNode(params[i], tmp);
-						}else {
-							instructionSets.addNode(params[i], tmp);
-						}
-					}
-					 
-				} 
-			} 
-			this.code.add(instructionSets);
-		}
+		 this.code = Common.compileCodes(code, this.id);
 	}
 }

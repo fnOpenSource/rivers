@@ -28,14 +28,8 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		MysqlFlow o = new MysqlFlow();
 		o.INIT(connectParams);
 		return o;
-	} 
-	 
-	private Connection GETLINK() {
-		if(this.FC==null) 
-			return null; 
-		return (Connection) FC.getConnection(false); 
-	}
-
+	}  
+ 
 	@Override
 	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		try {
@@ -48,10 +42,10 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		this.jobPage.clear(); 
 		this.jobPage.put(GlobalParam.READER_STATUS,true);
 		boolean releaseConn = false;
-		GETSOCKET(false);
-		Connection conn;
-		if((conn = GETLINK())==null)
+		PREPARE(false,false); 
+		if(!ISLINK())
 			return this.jobPage; 
+		Connection conn = (Connection) GETSOCKET().getConnection(false); 
 		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
 			try(ResultSet rs = statement.executeQuery();){				
@@ -74,7 +68,7 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			this.jobPage.put(GlobalParam.READER_STATUS,false);
 			log.error("getJobPage Exception so free connection,details ", e);
 		}finally{
-			REALEASE(FC,releaseConn);
+			REALEASE(false,releaseConn);
 		} 
 		return this.jobPage;
 	} 
@@ -109,10 +103,10 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		
 		 
 		List<String> page = new ArrayList<String>();
-		GETSOCKET(false);
-		Connection conn;
-		if((conn = GETLINK())==null)
+		PREPARE(false,false); 
+		if(!ISLINK())
 			return page;
+		Connection conn = (Connection) GETSOCKET().getConnection(false); 
 		PreparedStatement statement = null;
 		ResultSet rs  = null;
 		boolean releaseConn = false;
@@ -157,7 +151,7 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			REALEASE(FC,releaseConn);  
+			REALEASE(false,releaseConn);  
 		}  
 		return page;
 	} 

@@ -35,7 +35,6 @@ public class SolrFlow extends SearcherFlowSocket {
 	private String collectionName = "";
 	private long storetime = 0; 
 	private ConnectionHandler handler;
-	private CloudSolrClient conn;
 
 	private final static Logger log = LoggerFactory.getLogger(SolrFlow.class);
 
@@ -60,22 +59,15 @@ public class SolrFlow extends SearcherFlowSocket {
 			}
 		} 
 	} 
-	
-	@Override
-	public boolean LINK() {
-		if(this.FC==null) 
-			return false;
-
-		this.conn = (CloudSolrClient) this.FC.getConnection(true);
-		return true;
-	}
 
 	@Override
 	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler) throws FNException{
 		SearcherResult res = new SearcherResult();
-		GETSOCKET(true);
+		PREPARE(false, true);
+		if(!ISLINK())
+			return res;
 		try {
-			LINK();
+			CloudSolrClient conn = (CloudSolrClient) GETSOCKET().getConnection(true);
 			int start = fq.getStart();
 			int count = fq.getCount();
 			SolrQuery qb = (SolrQuery) fq.getQuery();
@@ -105,7 +97,7 @@ public class SolrFlow extends SearcherFlowSocket {
 			log.error("SearcherResult Exception",e);
 			throw new FNException("SearcherResult Search data from Solr exception!");
 		}finally{
-			REALEASE(FC,false);
+			REALEASE(false,false);
 		} 
 		return res;
 	} 

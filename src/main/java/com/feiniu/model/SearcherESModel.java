@@ -10,12 +10,12 @@ import org.apache.lucene.analysis.Analyzer;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.script.Script;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsAggregationBuilder; 
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Order;
+import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
+import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -24,13 +24,15 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.searcher.flow.ESQueryBuilder;
 import com.feiniu.util.SearchParamUtil;
 
-public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?>,AggregationBuilder>{
+import org.elasticsearch.script.Script;
+
+public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder,AbstractAggregationBuilder>{
 	private QueryBuilder query;
-	private List<SortBuilder<?>> sortinfo;
+	private List<SortBuilder> sortinfo;
 	private int start = 0;
 	private int count = 5;
 	Map<String,List<String[]>> facetSearchParams;
-	List<AggregationBuilder> facetsConfig = new ArrayList<AggregationBuilder>();
+	List<AbstractAggregationBuilder> facetsConfig = new ArrayList<AbstractAggregationBuilder>();
 	private Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>(); 
 	private boolean showQueryInfo = false;
 	private boolean needCorpfuncCnt = false;
@@ -42,7 +44,7 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 	private String facet_ext="";
 	private String requesthandler="";
 	
-	public static SearcherESModel getInstance(SearcherRequest request, InstanceConfig instanceConfig) {
+	public static SearcherESModel getInstance(SearcherRequest request, Analyzer analyzer,InstanceConfig instanceConfig) {
 		SearcherESModel eq = new SearcherESModel(); 
 		eq.setSorts(SearchParamUtil.getSortField(request, instanceConfig));
 		eq.setFacetSearchParams(SearchParamUtil.getFacetParams(request, instanceConfig));
@@ -51,7 +53,7 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 		} 
 		Map<String, QueryBuilder> attrQueryMap = new HashMap<String, QueryBuilder>();
 		BoolQueryBuilder query = ESQueryBuilder.buildBooleanQuery(request,
-				instanceConfig,  attrQueryMap);
+				instanceConfig, analyzer, attrQueryMap);
 		eq.setQuery(query);
 		eq.setAttrQueryMap(attrQueryMap);
 		return eq;
@@ -78,10 +80,10 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 	} 
 	
 	@Override
-	public List<SortBuilder<?>> getSortinfo() {
+	public List<SortBuilder> getSortinfo() {
 		return sortinfo;
 	}
-	public void setSorts(List<SortBuilder<?>> sortinfo) {
+	public void setSorts(List<SortBuilder> sortinfo) {
 		this.sortinfo = sortinfo;
 	}
 	
@@ -113,18 +115,18 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 
 	
 	@Override
-	public List<AggregationBuilder> getFacetsConfig() {
+	public List<AbstractAggregationBuilder> getFacetsConfig() {
 		if (facetSearchParams != null)
 		{ 
 			for(Map.Entry<String,List<String[]>> e : facetSearchParams.entrySet())
 			{	 
 				int i=0;
-				AggregationBuilder  agg = null ;
+				AbstractAggregationBuilder  agg = null ;
 				for(String[] strs:e.getValue()) {
 					if(i==0) {
 						agg = genAgg(strs[0],strs[1],strs[2],true);
 					}else {
-						((AggregationBuilder) agg).subAggregation(genAgg(strs[0],strs[1],strs[2],false));
+						((AggregationBuilder<?>) agg).subAggregation(genAgg(strs[0],strs[1],strs[2],false));
 					}
 					i++; 
 				}  
@@ -254,7 +256,7 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 	 * @param fun
 	 * @return
 	 */
-	private AggregationBuilder genAgg(String fun,String name,String field,boolean type) {
+	private AbstractAggregationBuilder genAgg(String fun,String name,String field,boolean type) {
 		HashMap<String, String> kv = new HashMap<>();
 		if(field.contains("(DEF(")) {
 			kv = getDEF(field);
@@ -272,7 +274,7 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 				} 
 			case "topHits":
 				if(kv.size()>0) {
-					TopHitsAggregationBuilder tb = AggregationBuilders.topHits(fun);
+					TopHitsBuilder tb = AggregationBuilders.topHits(fun);
 					if(kv.containsKey("sort")) {
 						String sortField;
 						SortOrder sod;
@@ -283,29 +285,29 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?
 							sortField = kv.get("sort").substring(0, kv.get("sort").indexOf(GlobalParam.SORT_DESC));
 							sod = SortOrder.DESC;
 						}
-						tb.sort(sortField, sod).from(Integer.valueOf(name));
+						tb.addSort(sortField, sod).setFrom(Integer.valueOf(name));
 					} 
 					if(kv.containsKey("size")) {
-						tb.size(Integer.valueOf(kv.get("size")));
+						tb.setSize(Integer.valueOf(kv.get("size")));
 					}
 					if(kv.containsKey("includes")) {
-						tb.fetchSource(kv.get("includes").split("\\|"), null);
+						tb.setFetchSource(kv.get("includes").split("\\|"), null);
 					}
-					return tb.from(Integer.valueOf(name));
+					return tb.setFrom(Integer.valueOf(name));
 				}else {
-					return AggregationBuilders.topHits(fun).from(Integer.valueOf(name)).size(Integer.valueOf(field));
+					return AggregationBuilders.topHits(fun).setFrom(Integer.valueOf(name)).setSize(Integer.valueOf(field));
 				} 
 		} 
 		if(type) {
 			Map<String, String> ext = getFacetExt();
-			TermsAggregationBuilder tb = AggregationBuilders.terms(name);
+			TermsBuilder tb = AggregationBuilders.terms(name);
 			if(ext.containsKey("size")) {
 				tb.field(field).size(Integer.valueOf(ext.get("size")));
 			} 
 			if(ext.containsKey("order")) {
 				String[] tmp = ext.get("order").split(" ");
 				if(tmp.length==2)
-					tb.order(BucketOrder.aggregation(tmp[0], tmp[1].equals("desc")?false:true));
+					tb.order(Order.aggregation(tmp[0], tmp[1].equals("desc")?false:true));
 			}
 			return tb;
 		}

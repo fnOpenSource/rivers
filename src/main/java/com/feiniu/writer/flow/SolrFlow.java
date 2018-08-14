@@ -33,8 +33,9 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.model.SearcherModel;
+import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
@@ -48,14 +49,14 @@ import com.feiniu.writer.WriterFlowSocket;
  */
 @NotThreadSafe
 public class SolrFlow extends WriterFlowSocket{
-	
-	private CloudSolrClient conn;
+	 
 	private static String linux_spilt= "/";
 	private static String srcDir= "config/template";
 	private static String zkDir = "/configs";
 	private final static int BUFFER_LEN = 1024;
 	private final static int END = -1;
 	private Properties property;
+	protected CloudSolrClient CONNS;
 	private List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>(); 
 	
 	private final static Logger log = LoggerFactory.getLogger("SolrFlow");  
@@ -73,20 +74,7 @@ public class SolrFlow extends WriterFlowSocket{
 		this.property = (Properties)FNIoc.getInstance().getBean("configPathConfig");
 		this.isBatch = GlobalParam.WRITE_BATCH;
 	}
-	
-	@Override
-	public boolean LINK(){
-		synchronized(retainer){
-			if(retainer.get()==0 || this.FC==null){
-				GETSOCKET(false);
-				if(!super.LINK())
-					return false; 
-				this.conn = (CloudSolrClient) this.FC.getConnection(false);
-			}
-			retainer.addAndGet(1); 
-			return true;
-		} 
-	}
+ 
 	 
 	@Override
 	public boolean create(String instantcName, String storeId, Map<String, TransParam> transParams) {
@@ -95,7 +83,7 @@ public class SolrFlow extends WriterFlowSocket{
 		try {
 			log.info("setting index " + name);
 			path = this.property.getProperty("config.path"); 
-			String zkHost = this.conn.getZkHost();
+			String zkHost = getSolrConn().getZkHost();
 			moveFile2ZookeeperDest((path+"/"+srcDir).replace("file:", ""), zkDir+"/"+instantcName, zkHost);
 			getSchemaFile(transParams, instantcName, storeId, zkHost); 
 			CollectionAdminRequest.Create create = new CollectionAdminRequest.Create();
@@ -104,7 +92,7 @@ public class SolrFlow extends WriterFlowSocket{
 			create.setNumShards(3);
 			create.setMaxShardsPerNode(2);
 			create.setReplicationFactor(2);
-			create.process(this.conn, name);
+			create.process(getSolrConn(), name);
 			return true;
 		} catch (Exception e) {
 			log.error("setting core " + name +" failed.",e); 
@@ -119,8 +107,8 @@ public class SolrFlow extends WriterFlowSocket{
 			log.warn("Empty IndexUnit for " + name );
 			return;
 		} 
-		if(this.conn.getDefaultCollection() == null){
-			this.conn.setDefaultCollection(name);
+		if(getSolrConn().getDefaultCollection() == null){
+			getSolrConn().setDefaultCollection(name);
 		}  
 		SolrInputDocument doc = new SolrInputDocument(); 
 		for(Entry<String, Object> r:unit.getData().entrySet()){
@@ -168,8 +156,8 @@ public class SolrFlow extends WriterFlowSocket{
 			} 
 		}  
 		if (!this.isBatch) {
-			this.conn.add(doc);
-			this.conn.commit(); 
+			getSolrConn().add(doc);
+			getSolrConn().commit(); 
 		}else{
 			synchronized (docs) {
 				docs.add(doc); 
@@ -193,7 +181,7 @@ public class SolrFlow extends WriterFlowSocket{
 			log.info("trying to remove core " + name);
 			CollectionAdminRequest.Delete delete = new CollectionAdminRequest.Delete();
 			delete.setCollectionName(name);
-			delete.process(this.conn,name);
+			delete.process(getSolrConn(),name);
 			log.info("solr core " + name + " removed Success!"); 
 		} catch (Exception e) {
 			log.error("remove core " + name + " Exception,",e);
@@ -206,7 +194,7 @@ public class SolrFlow extends WriterFlowSocket{
 		try {
 			log.info("trying to setting Alias " + aliasName + " to collection " + name);		
 			CollectionAdminRequest.CreateAlias createAlias = new CollectionAdminRequest.CreateAlias(); 
-			CollectionAdminResponse response = createAlias.setAliasName(instanceName).setAliasedCollections(name).process(this.conn);
+			CollectionAdminResponse response = createAlias.setAliasName(instanceName).setAliasedCollections(name).process(getSolrConn());
 			if (response.isSuccess()){
 				log.info("alias " + aliasName + " setted to " + name);
 			}
@@ -220,8 +208,8 @@ public class SolrFlow extends WriterFlowSocket{
 		if(this.isBatch){
 			synchronized (docs){
 				try { 
-					this.conn.add(docs);
-					this.conn.commit(true, true, true);
+					getSolrConn().add(docs);
+					getSolrConn().commit(true, true, true);
 				} catch (Exception e) {
 					if (e.getMessage().contains("Collection not found")) {
 						throw new FNException("storeId not found");
@@ -238,7 +226,7 @@ public class SolrFlow extends WriterFlowSocket{
 	public void optimize(String instanceName, String storeId)  { 
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
-			UpdateResponse updateRespons = this.conn.optimize(name, true, true, 1);
+			UpdateResponse updateRespons = getSolrConn().optimize(name, true, true, 1);
 			int status = updateRespons.getStatus();
 			if (status > 0) {
 				log.warn("index " + name + " optimize Failed ");
@@ -250,10 +238,9 @@ public class SolrFlow extends WriterFlowSocket{
 	
 
 	@Override
-	public String getNewStoreId(String instance,boolean isIncrement,String seq, final InstanceConfig instanceConfig) { 
-		String instanceName = Common.getInstanceName(instance, seq,instanceConfig.getPipeParam().getInstanceName());
-		String b = Common.getStoreName(instanceName, "b");
-		String a = Common.getStoreName(instanceName, "a");
+	public String getNewStoreId(String mainName,boolean isIncrement,final InstanceConfig instanceConfig) {  
+		String b = Common.getStoreName(mainName, "b");
+		String a = Common.getStoreName(mainName, "a");
 		String select="";  
 		if(isIncrement){
 			if(this.existsCollection(a)){ 
@@ -262,17 +249,31 @@ public class SolrFlow extends WriterFlowSocket{
 				select = "b"; 
 			}else{
 				select = "a"; 
-				create(instanceName,select, instanceConfig.getTransParams());
-				setAlias(instanceName, select, instanceConfig.getAlias());
+				create(mainName,select, instanceConfig.getTransParams());
+				setAlias(mainName, select, instanceConfig.getAlias());
 			}   
 		}else{
 			select =  "b";
 			if(this.existsCollection(b)){ 
 				select =  "a";
 			}
-			create(instanceName,select, instanceConfig.getTransParams());
+			create(mainName,select, instanceConfig.getTransParams());
 		} 
 		return select;
+	}
+ 
+	public void REALEASE(boolean isMonopoly,boolean releaseConn){
+		if(isMonopoly==false) { 
+			synchronized(retainer){ 
+				if(retainer.decrementAndGet()<=0){
+					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
+					this.CONNS = null;
+					retainer.set(0); 
+				}else{
+					log.info(this.FC+" retainer is "+retainer.get());
+				}
+			} 
+		} 
 	}
  
 	private void getSchemaFile(Map<String,TransParam> paramMap,String instantcName, String storeId,String zkHost) {
@@ -358,7 +359,7 @@ public class SolrFlow extends WriterFlowSocket{
 	private boolean existsCollection(String collection){ 
 		SolrQuery qb = new SolrQuery();
 		try {
-			this.conn.query(collection, qb);
+			getSolrConn().query(collection, qb);
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -471,6 +472,15 @@ public class SolrFlow extends WriterFlowSocket{
 			} catch (Exception e) {
 				log.error("zk close Exception,",e); 
 			}
+		} 
+	}
+	 
+	
+	private CloudSolrClient getSolrConn() { 
+		synchronized (this) {
+			if(this.CONNS==null)
+				this.CONNS = (CloudSolrClient) GETSOCKET().getConnection(false);
+			return this.CONNS;
 		} 
 	}
 }

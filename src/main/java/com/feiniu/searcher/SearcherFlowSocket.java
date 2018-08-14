@@ -1,11 +1,12 @@
 package com.feiniu.searcher;
 
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 
-import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.DATA_TYPE;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
@@ -20,6 +21,7 @@ public class SearcherFlowSocket implements Flow{
 	protected HashMap<String, Object> connectParams;
 	protected String poolName;
 	protected FnConnection<?> FC;
+	protected AtomicInteger retainer = new AtomicInteger(0);
 	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
@@ -42,26 +44,44 @@ public class SearcherFlowSocket implements Flow{
 	}
 	
 	@Override
-	public FnConnection<?> GETSOCKET(boolean canSharePipe) {  
-		this.FC = FnConnectionPool.getConn(this.connectParams,
-				this.poolName,canSharePipe);
+	public FnConnection<?> PREPARE(boolean isMonopoly,boolean canSharePipe) {  
+		if(isMonopoly) {
+			synchronized (this) {
+				if(this.FC==null) 
+					this.FC = FnConnectionPool.getConn(this.connectParams,
+							this.poolName,canSharePipe); 
+			} 
+		}else {
+			synchronized (retainer) { 
+				if(retainer.incrementAndGet()==1 || this.FC==null) {
+					this.FC = FnConnectionPool.getConn(this.connectParams,
+							this.poolName,canSharePipe); 
+					retainer.set(1);;
+				}
+			} 
+		} 
 		return this.FC;
 	}
 	
 	@Override
-	public void REALEASE(FnConnection<?> FC,boolean releaseConn) { 
-		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
+	public void REALEASE(boolean isMonopoly,boolean releaseConn) { 
+		if(isMonopoly==false) { 
+			synchronized(retainer){ 
+				if(retainer.decrementAndGet()<=0){
+					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
+					retainer.set(0);
+				}
+			} 
+		}
+	} 
+ 
+	@Override
+	public FnConnection<?> GETSOCKET() { 
+		return this.FC;
 	}
 
 	@Override
-	public boolean MONOPOLY() {
-		if(this.FC==null) 
-			return false;
-		return true;
-	}
-
-	@Override
-	public boolean LINK() { 
+	public boolean ISLINK() { 
 		if(this.FC==null) 
 			return false;
 		return true;

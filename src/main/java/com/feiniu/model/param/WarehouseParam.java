@@ -1,7 +1,6 @@
 package com.feiniu.model.param;
 
 import java.util.HashMap;
-import java.util.List;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 
@@ -12,7 +11,7 @@ import com.feiniu.config.GlobalParam.DATA_TYPE;
  */
 public interface WarehouseParam {
 	
-	public List<String> getSeq();
+	public String[] getSeq();
 	
 	public void setSeq(String seqs);
 	

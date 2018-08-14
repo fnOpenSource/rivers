@@ -65,7 +65,7 @@ public class Searcher {
 		SearcherModel<?, ?, ?> searcherModel = null;
 		switch (this.searcher.getType()) {
 		case ES:
-			searcherModel = SearcherESModel.getInstance(rq, instanceConfig);
+			searcherModel = SearcherESModel.getInstance(rq, analyzer,instanceConfig);
 			SearchParamUtil.normalParam(rq, searcherModel,instanceConfig);
 			break;
 		case SOLR:
@@ -77,11 +77,14 @@ public class Searcher {
 			return response; 
 		}  
 		try {
-			response.setError_info(rq.getErrors());
-			response.setResult(this.searcher.Search(searcherModel, instanceName,handler));
+			if(rq.hasErrors()) {
+				response.setError_info(rq.getErrors());
+			}else {
+				response.setResult(this.searcher.Search(searcherModel, instanceName,handler));
+			} 
 		} catch (Exception e) {
 			response.setError_info("search parameter may be error!");
-			log.error("FNResponse error,", e);
+			log.error(rq.getPipe()+" FNResponse Exception,", e);
 		}
 		return response;
 	}  

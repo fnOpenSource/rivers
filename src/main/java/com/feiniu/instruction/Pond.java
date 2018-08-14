@@ -3,7 +3,7 @@ package com.feiniu.instruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.model.SearcherModel;
+import com.feiniu.config.GlobalParam;
 
 public class Pond extends Instruction {
 
@@ -11,21 +11,22 @@ public class Pond extends Instruction {
 
 	/**
 	 * @param args
-	 *            parameter order is: String storeName,String storeId
+	 *            parameter order is: String mainName,String storeId
 	 */
 	public static boolean createStorePosition(Context context, Object[] args) {
 		if (!isValid(2, args)) {
 			log.error("Pond createStorePosition parameter not match!");
 			return false;
 		}
-		if (context.getWriter().LINK()) {
+		context.getWriter().PREPARE(false, false);
+		if (context.getWriter().ISLINK()) {
 			try { 
-				String storeName = (String) args[0];
-				String storeId = (String) args[1];
-				context.getWriter().create(storeName, storeId, context.getInstanceConfig().getTransParams());
+				String mainName = (String) args[0]; 
+				String storeId = (String) args[1]; 
+				context.getWriter().create(mainName, storeId, context.getInstanceConfig().getTransParams());
 				return true;
 			} finally {
-				context.getWriter().REALEASE(false);
+				context.getWriter().REALEASE(false,false);
 			}
 		}
 		return false;
@@ -42,69 +43,82 @@ public class Pond extends Instruction {
 			log.error("deleteByQuery parameter not match!");
 			return;
 		}
-		if (context.getWriter().LINK()) {
+		context.getWriter().PREPARE(false, false);
+		if (context.getWriter().ISLINK()) {
 			try {
-				SearcherModel<?, ?, ?> query = (SearcherModel<?, ?, ?>) args[0];
-				String instance = (String) args[1];
-				String storeId = (String) args[2];
-				context.getWriter().delete(query, instance, storeId);
+				 
 			} catch (Exception e) {
 				log.error("DeleteByQuery Exception", e);
 				freeConn = true;
 			} finally {
-				context.getWriter().REALEASE(freeConn);
+				context.getWriter().REALEASE(false,freeConn);
 			}
 		}
 	}
 
 	/**
 	 * @param args
-	 *            parameter order is: String instance, String storeId
+	 *            parameter order is: String mainName, String storeId
 	 */
 	public static void optimizeInstance(Context context, Object[] args) {
 		if (!isValid(2, args)) {
 			log.error("optimizeInstance parameter not match!");
 			return;
 		}
-		if (context.getWriter().LINK()) {
+		context.getWriter().PREPARE(false, false);
+		if (context.getWriter().ISLINK()) {
 			try {
-				String instance = (String) args[0];
+				String mainName = (String) args[0]; 
 				String storeId = (String) args[1];
-				context.getWriter().optimize(instance, storeId);
+				context.getWriter().optimize(mainName, storeId);
 			} finally {
-				context.getWriter().REALEASE(false);
+				context.getWriter().REALEASE(false,false);
 			}
 		}
 	}
 
 	/**
 	 * @param args
-	 *            parameter order is: String instance, String storeId
+	 *            parameter order is: String mainName, String storeId
 	 */
 	public static boolean switchInstance(Context context, Object[] args) {
 		if (!isValid(2, args)) {
 			log.error("optimizeInstance parameter not match!");
 			return false;
 		}
-		String removeId = "";
-		String instance = (String) args[0];
-		String storeId = (String) args[1];
-		if (context.getWriter().LINK()) {
+		String removeId = ""; 
+		String mainName = (String) args[0]; 
+		String storeId = (String) args[1]; 
+		int waittime=0;
+		while ((GlobalParam.FLOW_STATUS.get(mainName,"").get() & 2) > 0) {
+			try {
+				waittime++;
+				Thread.sleep(2000);
+				if (waittime > 10) {
+					GlobalParam.FLOW_STATUS.get(mainName,"").set(4);
+					Thread.sleep(10000);
+				}
+			} catch (InterruptedException e) {
+				log.error("currentThreadState InterruptedException", e);
+			}
+		} 
+		context.getWriter().PREPARE(false, false);
+		if (context.getWriter().ISLINK()) {
 			try {
 				if (storeId.equals("a")) {
-					context.getWriter().optimize(instance, "a");
+					context.getWriter().optimize(mainName, "a");
 					removeId = "b";
 				} else {
-					context.getWriter().optimize(instance, "b");
+					context.getWriter().optimize(mainName, "b");
 					removeId = "a";
 				}
-				context.getWriter().removeInstance(instance, removeId);
-				context.getWriter().setAlias(instance, storeId, context.getInstanceConfig().getAlias());
+				context.getWriter().removeInstance(mainName, removeId);
+				context.getWriter().setAlias(mainName, storeId, context.getInstanceConfig().getAlias());
 				return true;
 			} catch (Exception e) {
 				log.error("switchInstance Exception", e);
 			} finally {
-				context.getWriter().REALEASE(true);
+				context.getWriter().REALEASE(false,true);
 				context.getWriter().freeConnPool();
 			}
 		}
@@ -113,23 +127,22 @@ public class Pond extends Instruction {
 
 	/**
 	 * @param args
-	 *            parameter order is: String instanceName, boolean isIncrement,
-	 *            String dbseq
+	 *            parameter order is: String mainName, boolean isIncrement 
 	 */
 	public static String getNewStoreId(Context context, Object[] args) {
 		String taskId = null;
-		if (!isValid(3, args)) {
-			log.error("optimizeInstance parameter not match!");
+		if (!isValid(2, args)) {
+			log.error("getNewStoreId parameter not match!");
 			return null;
 		}
-		String instance = (String) args[0];
-		boolean isIncrement = (boolean) args[1];
-		String dbseq = (String) args[2];
-		if (context.getWriter().LINK()) {
+		String mainName = (String) args[0];
+		boolean isIncrement = (boolean) args[1]; 
+		context.getWriter().PREPARE(false, false);
+		if (context.getWriter().ISLINK()) {
 			try {
-				taskId = context.getWriter().getNewStoreId(instance, isIncrement, dbseq, context.getInstanceConfig());
+				taskId = context.getWriter().getNewStoreId(mainName, isIncrement, context.getInstanceConfig());
 			} finally {
-				context.getWriter().REALEASE(false);
+				context.getWriter().REALEASE(false,false);
 			}
 		}
 		return taskId;

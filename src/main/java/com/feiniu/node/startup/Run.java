@@ -2,7 +2,6 @@ package com.feiniu.node.startup;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,19 +9,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value; 
+import org.springframework.beans.factory.annotation.Value;
+import org.wltea.analyzer.cfg.Configuration;
+import org.wltea.analyzer.dic.Dictionary;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
-import com.feiniu.node.SocketCenter;
 import com.feiniu.node.NodeMonitor;
+import com.feiniu.node.SocketCenter;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.FlowTask;
 import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
-import com.feiniu.util.FNIoc; 
+import com.feiniu.util.FNIoc;
+import com.feiniu.util.IKAnalyzer5;
 import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
 
@@ -59,7 +61,8 @@ public final class Run {
 	NodeMonitor nodeMonitor;
 	
 	public static void main(String[] args) throws URISyntaxException{	
-		Run run = (Run)FNIoc.getInstance().getBean("FNStart"); 
+		Run run = (Run)FNIoc.getInstance().getBean("FNStart");
+		Dictionary.initial(new Configuration(run.configPath));
 		run.start();
 	}
 	
@@ -68,11 +71,13 @@ public final class Run {
 		GlobalParam.mailSender = mailSender;
 		GlobalParam.tasks = new HashMap<String, FlowTask>();
 		GlobalParam.SOCKET_CENTER = SocketCenter;
+		GlobalParam.TASKMANAGER = TaskManager;
 		GlobalParam.VERSION = version;
 		GlobalParam.nodeMonitor = nodeMonitor;
 		environmentCheck();
 		init();   
-		if((GlobalParam.SERVICE_LEVEL&1)>0){ 
+		if((GlobalParam.SERVICE_LEVEL&1)>0){
+			GlobalParam.SEARCH_ANALYZER = IKAnalyzer5.getInstance(true);
 			SearcherService.start();
 		} 
 		if((GlobalParam.SERVICE_LEVEL&2)>0)
@@ -116,10 +121,7 @@ public final class Run {
 	
 	private void initParams(InstanceConfig instanceConfig){ 
 		String instance = instanceConfig.getName(); 
-		List<String> seqs = Common.getSeqs(instanceConfig); 
-		if (seqs.size() == 0) {
-			seqs.add(GlobalParam.DEFAULT_RESOURCE_SEQ);
-		} 
+		String[] seqs = Common.getSeqs(instanceConfig,true);
 		for (String seq : seqs) {
 			GlobalParam.FLOW_STATUS.set(instance,seq, new AtomicInteger(1));
 			GlobalParam.LAST_UPDATE_TIME.set(instance,seq, "0");

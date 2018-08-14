@@ -62,7 +62,7 @@ public final class SocketCenter {
 	 */
 	public TransDataFlow getTransDataFlow(String instance, String seq, boolean needClear, String tag) {
 		synchronized (transDataFlowMap) {
-			String tags = Common.getResourceTag(instance, seq,tag);
+			String tags = Common.getResourceTag(instance, seq,tag,false);
 			if (!transDataFlowMap.containsKey(tags) || needClear) { 
 				TransDataFlow transDataFlow  = TransDataFlow.getInstance(getReaderSocket(instance, seq,tag), getWriterSocket(instance, seq,tag),
 						GlobalParam.nodeConfig.getInstanceConfigs().get(instance));
@@ -74,7 +74,14 @@ public final class SocketCenter {
 
 	public ReaderFlowSocket<?> getReaderSocket(String instance, String seq,String tag) {
 		synchronized (readerSocketMap) {
-			String tags = Common.getResourceTag(instance, seq,tag);
+			boolean ignoreSeqUseAlias = false;
+			if(GlobalParam.nodeConfig.getInstanceConfigs().get(instance)!=null)
+				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().isReaderPoolShareAlias();
+			String tagInstance = instance;
+			if(ignoreSeqUseAlias)
+				tagInstance = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getAlias();
+			String tags = Common.getResourceTag(tagInstance, seq,tag,ignoreSeqUseAlias);
+			
 			if (!readerSocketMap.containsKey(tags)) {  
 				WarehouseParam param = getWHP(
 						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getDataFrom());
@@ -88,7 +95,14 @@ public final class SocketCenter {
 
 	public WriterFlowSocket getWriterSocket(String instance, String seq,String tag) {
 		synchronized (writerSocketMap) {
-			String tags = Common.getResourceTag(instance, seq,tag);
+			boolean ignoreSeqUseAlias = false;
+			if(GlobalParam.nodeConfig.getInstanceConfigs().get(instance)!=null)
+				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().isWriterPoolShareAlias();
+			String tagInstance = instance;
+			if(ignoreSeqUseAlias)
+				tagInstance = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getAlias();
+			String tags = Common.getResourceTag(tagInstance, seq,tag,ignoreSeqUseAlias);
+			
 			if (!writerSocketMap.containsKey(tags)) {
 				WarehouseParam param = getWHP(
 						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTo());
@@ -102,7 +116,14 @@ public final class SocketCenter {
 
 	private SearcherFlowSocket getSearcherSocket(String instance, String seq,String tag) {
 		synchronized (searcherSocketMap) {
-			String tags = Common.getResourceTag(instance, seq,tag);
+			boolean ignoreSeqUseAlias = false;
+			if(GlobalParam.nodeConfig.getInstanceConfigs().get(instance)!=null)
+				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().isSearcherShareAlias();
+			String tagInstance = instance;
+			if(ignoreSeqUseAlias)
+				tagInstance = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getAlias();
+			String tags = Common.getResourceTag(tagInstance, seq,tag,ignoreSeqUseAlias);
+			
 			if (!searcherSocketMap.containsKey(tags)) {
 				WarehouseParam param = getWHP(
 						GlobalParam.nodeConfig.getSearchConfigs().get(instance).getPipeParam().getSearcher());

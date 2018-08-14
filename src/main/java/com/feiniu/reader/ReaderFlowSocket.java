@@ -5,6 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
@@ -27,6 +31,10 @@ public class ReaderFlowSocket<T> implements Flow{
 	
 	protected FnConnection<?> FC;
 	
+	protected AtomicInteger retainer = new AtomicInteger(0);
+	 
+	private final static Logger log = LoggerFactory.getLogger(ReaderFlowSocket.class);
+	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
@@ -34,28 +42,50 @@ public class ReaderFlowSocket<T> implements Flow{
 	}
 
 	@Override
-	public FnConnection<?> GETSOCKET(boolean canSharePipe) {
-		this.FC = FnConnectionPool.getConn(this.connectParams,
-				this.poolName,canSharePipe);
+	public FnConnection<?> PREPARE(boolean isMonopoly,boolean canSharePipe) {  
+		if(isMonopoly) {
+			synchronized (this) {
+				if(this.FC==null) 
+					this.FC = FnConnectionPool.getConn(this.connectParams,
+							this.poolName,canSharePipe); 
+			} 
+		}else {
+			synchronized (retainer) { 
+				if(retainer.incrementAndGet()==1 || this.FC==null) {
+					this.FC = FnConnectionPool.getConn(this.connectParams,
+							this.poolName,canSharePipe); 
+					retainer.set(1);;
+				}
+			} 
+		} 
+		return this.FC;
+	}
+	
+	@Override
+	public void REALEASE(boolean isMonopoly,boolean releaseConn) { 
+		if(isMonopoly==false) { 
+			synchronized(retainer){ 
+				if(retainer.decrementAndGet()<=0){
+					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
+					retainer.set(0);
+				}else{
+					log.info(this.FC+" retainer is "+retainer.get());
+				}
+			} 
+		} 
+	} 
+	
+	@Override
+	public FnConnection<?> GETSOCKET() {
 		return this.FC;
 	}
 
 	@Override
-	public boolean LINK(){
+	public boolean ISLINK() { 
 		if(this.FC==null) 
 			return false;
 		return true;
-	} 
-	
-	@Override
-	public boolean MONOPOLY() {
-		return false;  
-	} 
-	
-	@Override
-	public void REALEASE(FnConnection<?> FC,boolean releaseConn) {
-		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
-	}
+	}   
 
 	public T getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		return null;

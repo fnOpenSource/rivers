@@ -74,6 +74,7 @@ public class SearcherService{
 		String path = base_request.getPathInfo();
 		String pipe = path.substring(1); 
 		rq.setPipe(pipe);  
+		@SuppressWarnings("unchecked")
 		Iterator<Map.Entry<String,String>> iter = base_request.getParameterMap().entrySet().iterator();
 		while (iter.hasNext()) { 
 			Map.Entry<String,String> entry = iter.next();

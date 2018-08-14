@@ -15,9 +15,8 @@ public class InstructionTask {
 		return tk;
 	}
 
-	public void startInstructions() {
-		ArrayList<InstructionTree> Instructions = GlobalParam.nodeConfig.getInstructions().get(this.codeID).getCode();
-		 
+	public void runInstructions() {
+		ArrayList<InstructionTree> Instructions = GlobalParam.nodeConfig.getInstructions().get(this.codeID).getCode(); 
 		for(InstructionTree Instruction:Instructions ) {
 			Instruction.depthRun(Instruction.getRoot());
 		}

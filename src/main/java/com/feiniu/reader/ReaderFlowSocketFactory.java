@@ -40,8 +40,7 @@ public class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket<?>>{
  
 	private static ReaderFlowSocket<?> sqlChannel(final WarehouseSqlParam params, String seq,String handler){ 
 		HashMap<String, Object> connectParams = params.getConnectParams(seq); 
-		ReaderFlowSocket<?> reader = null;
-		
+		ReaderFlowSocket<?> reader = null; 
 		if(handler!=null) {
 			try {
 				Class<?> clz = Class.forName("com.feiniu.reader.handler."+handler);

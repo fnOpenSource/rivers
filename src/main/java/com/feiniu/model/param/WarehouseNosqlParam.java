@@ -1,13 +1,8 @@
 package com.feiniu.model.param;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
- 
-
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
-import com.feiniu.util.Common;
 
 public class WarehouseNosqlParam implements WarehouseParam{
 	
@@ -17,7 +12,7 @@ public class WarehouseNosqlParam implements WarehouseParam{
 	private String ip;
 	private String defaultValue;
 	private String handler;
-	private List<String> seqs = new ArrayList<String>();
+	private String[] seqs = {};
 	
 	public DATA_TYPE getType() {
 		return type;
@@ -66,12 +61,12 @@ public class WarehouseNosqlParam implements WarehouseParam{
 		this.alias = alias;
 	}
 	@Override
-	public List<String> getSeq() {
+	public String[] getSeq() {
 		return this.seqs;
 	}
 	@Override
 	public void setSeq(String seqs) {
-		this.seqs = Common.String2List(seqs, ",");
+		this.seqs = seqs.split(",");
 	}
 
 	@Override

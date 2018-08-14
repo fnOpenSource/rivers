@@ -14,11 +14,11 @@ public interface Flow {
 	
 	public void INIT(HashMap<String, Object> connectParams); 
 	
-	public FnConnection<?> GETSOCKET(boolean canSharePipe);
+	public FnConnection<?> PREPARE(boolean isMonopoly,boolean canSharePipe);
 	
-	public boolean LINK(); 
+	public FnConnection<?> GETSOCKET();
+	
+	public boolean ISLINK();  
 
-	public boolean MONOPOLY();
-
-	public void REALEASE(FnConnection<?> FC,boolean releaseConn); 
+	public void REALEASE(boolean isMonopoly,boolean releaseConn); 
 }

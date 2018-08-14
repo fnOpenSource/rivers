@@ -1,5 +1,7 @@
 package com.feiniu.util;
 
+import java.io.Reader;
+import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -11,6 +13,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -18,9 +23,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.instruction.flow.TransDataFlow;
+import com.feiniu.model.InstructionTree;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.node.CPU;
 
@@ -85,9 +91,29 @@ public class Common {
 		return o;
 	}
 
-	public static List<String> getKeywords(String queryStr) {
+	public static List<String> getKeywords(String queryStr, Analyzer analyzer) {
 		List<String> ret = new ArrayList<String>();
-		return ret;
+		if (analyzer == null) {
+			ret.add(queryStr);
+			return ret;
+		}
+
+		try {
+			Reader reader = new StringReader(queryStr);
+			TokenStream tokenStream = analyzer.tokenStream("default", reader);
+			tokenStream.addAttribute(CharTermAttribute.class);
+
+			tokenStream.reset();
+			while (tokenStream.incrementToken()) {
+				String text = tokenStream.getAttribute(CharTermAttribute.class).toString();
+				ret.add(text);
+			}
+			tokenStream.end();
+			tokenStream.close();
+			return ret;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public static String long2DateFormat(long t) {
@@ -208,32 +234,29 @@ public class Common {
 
 	}
 
-	/**
+	/** 
 	 * @param seq
-	 * 			  for get uniform resource but not store name
-	 * @param seq
-	 *            for series data source sequence
+	 *            for data source sequence tag
 	 * @param instanceName
-	 *            data source main tag name
-	 * @param fixName instance name is fixed will not auto generate instance name and ab change will limit
+	 *            data source main tag name 
 	 * @return String
 	 */
-	public static String getInstanceName(String instanceName, String seq,String fixName) {
-		if(fixName!=null)
-			return fixName;
+	public static String getInstanceName(String instanceName, String seq) {
 		if (seq != null && seq.length()>0) {
 			return instanceName + seq;
 		} else {
-			return instanceName + GlobalParam.DEFAULT_RESOURCE_SEQ;
+			return instanceName;
 		} 
 	}
 	
-	public static String getResourceTag(String instance,String seq,String tag) {
-		if (seq != null && seq.length()>0) {
-			return instance + seq+tag;
+	public static String getResourceTag(String instance,String seq,String tag,boolean ignoreSeq) {
+		StringBuffer tags = new StringBuffer();
+		if (!ignoreSeq && seq != null && seq.length()>0) {
+			tags.append(instance).append(seq);
 		} else {
-			return instance + GlobalParam.DEFAULT_RESOURCE_SEQ+tag;
+			tags.append(instance).append(GlobalParam.DEFAULT_RESOURCE_SEQ);
 		} 
+		return tags.append(tag).toString();
 	}
 	
 	public static String getFullStartInfo(String instanceName, String seq) {
@@ -247,6 +270,28 @@ public class Common {
 			}
 		}
 		return info;
+	} 
+	
+	/**
+	 * for Master/slave job get and set LastUpdateTime
+	 * @param instanceName
+	 * @param seq
+	 * @param storeId  Master store id
+	 */
+	public static void setAndGetLastUpdateTime(String instanceName, String seq,String storeId) {
+		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+		byte[] b = ZKUtil.getData(path,true);
+		if (b != null && b.length > 0) {
+			String str = new String(b);
+			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR); 
+			if (strs.length > 1) {
+				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, strs[1]);
+				if (!strs[0].equals(storeId)) {
+					storeId = strs[0];
+					saveTaskInfo(instanceName, seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
+				}  
+			}
+		}
 	}
 
 	/**
@@ -261,7 +306,7 @@ public class Common {
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static String getStoreId(String instanceName, String seq, TransDataFlow writer, boolean isIncrement,
+	public static String getStoreId(String instanceName, String seq, TransDataFlow transDataFlow, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) {
 			String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
@@ -282,14 +327,14 @@ public class Common {
 				}
 			}
 			if (storeId.length() == 0 || reCompute) {
-				storeId = (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId",false, instanceName, true, seq); 
+				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getInstanceName(instanceName, seq), true); 
 				if (storeId == null)
 					storeId = "a";
 				saveTaskInfo(instanceName, seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 			return storeId;
 		} else {
-			return  (String) CPU.RUN(writer.getID(), "Pond", "getNewStoreId",true, instanceName, false, seq);
+			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getInstanceName(instanceName, seq), false);
 		}
 	}
 	
@@ -318,11 +363,11 @@ public class Common {
 	/**
 	 * get read data source seq flags
 	 * @param instanceName
-	 * @param instanceConfig
+	 * @param fillDefault if empty fill with system default blank seq
 	 * @return
 	 */
-	public static List<String> getSeqs(InstanceConfig instanceConfig){
-		List<String> seqs = new ArrayList<>();
+	public static String[] getSeqs(InstanceConfig instanceConfig,boolean fillDefault){
+		String[] seqs = {};
 		WarehouseParam whParam;
 		if(GlobalParam.nodeConfig.getNoSqlParamMap().get(instanceConfig.getPipeParam().getDataFrom())!=null){
 			whParam = GlobalParam.nodeConfig.getNoSqlParamMap().get(
@@ -334,6 +379,10 @@ public class Common {
 		if (null != whParam) {
 			seqs = whParam.getSeq();
 		}  
+		if (fillDefault && seqs.length == 0) {
+			seqs = new String[1];
+			seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;
+		} 
 		return seqs;
 	} 
 	
@@ -364,16 +413,46 @@ public class Common {
 		} 
 		switch (types) {
 		case "complete":
-			str.append(" docs:" + total	+ " " + " useTime: " + useTimeFormat + "}");
+			str.append(" docs:" + total);
+			str.append(" position:" + update);
+			str.append(" useTime:" + useTimeFormat + "}");
 			break;
 		case "start": 
-			str.append(" lastUpdate:" + update);
+			str.append(" position:" + update);
 			break;
 		default:
 			str.append(" docs:" + total+ (maxId.equals("0") ? "" : " MaxId:" + maxId)
-			+ " lastUpdate:" + update + " useTime:"	+ useTimeFormat);
+			+ " position:" + update + " useTime:"	+ useTimeFormat);
 			break;
 		} 
 		return str.append(moreinfo).toString();
+	}
+ 
+	public static ArrayList<InstructionTree> compileCodes(String code,String contextId){
+		ArrayList<InstructionTree> res = new ArrayList<>();
+		for(String line:code.trim().split("\\n")) {  
+			InstructionTree instructionTree=null; 
+			InstructionTree.Node tmp=null;
+			if(line.indexOf("//")>-1)
+				line=line.substring(0, line.indexOf("//"));
+			for(String str:line.trim().split("->")) {  
+				if(instructionTree==null) {
+					instructionTree = new InstructionTree(str,contextId);
+					tmp = instructionTree.getRoot();
+				}else { 
+					String[] params = str.trim().split(",");
+					for(int i=0;i<params.length;i++) {
+						if(i==params.length-1) {
+							tmp = instructionTree.addNode(params[i], tmp);
+						}else {
+							instructionTree.addNode(params[i], tmp);
+						}
+					}
+					 
+				} 
+			} 
+			res.add(instructionTree);
+		}
+		return res;
 	}
 }

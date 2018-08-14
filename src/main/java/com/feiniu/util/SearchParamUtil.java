@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.script.Script;
-import org.elasticsearch.search.sort.ScriptSortBuilder.ScriptSortType;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -24,19 +23,25 @@ public class SearchParamUtil {
 	public static void normalParam(SearcherRequest request, SearcherModel<?, ?, ?> fq,InstanceConfig instanceConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
 				instanceConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
+		int start = 0;
+		int count = 1;
 		if (o != null) {
-			int start = (int) o;
+			start = (int) o;
 			if (start >= 0)
 				fq.setStart(start);
 		}
 		o = request.get(KEY_PARAM.count.toString(),
 				instanceConfig.getSearchParam(KEY_PARAM.count.toString()),"java.lang.Integer");
 		if (o != null) {
-			int count = (int) o;
-			if (count >= 1 && count <= 2000) {
+			count = (int) o;
+			if (count >= 1 && count <= GlobalParam.SEARCH_MAX_PAGE) {
 				fq.setCount(count);
 			}
 		}
+		if((start+count)>GlobalParam.SEARCH_MAX_WINDOW) {
+			request.addError("start+count<="+GlobalParam.SEARCH_MAX_WINDOW);
+		}
+		
 		if (request.getParams().containsKey(GlobalParam.PARAM_SHOWQUERY))
 			fq.setShowQueryInfo(true);
 		if (request.getParams().containsKey(GlobalParam.PARAM_FL))
@@ -47,9 +52,9 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder<?>> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
+	public static List<SortBuilder> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
 		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
-		List<SortBuilder<?>> sortList = new ArrayList<SortBuilder<?>>();
+		List<SortBuilder> sortList = new ArrayList<SortBuilder>();
 		boolean useScore = false;
 		if (sortstrs != null && sortstrs.length() > 0) { 
 			boolean reverse = false;
@@ -77,12 +82,18 @@ public class SearchParamUtil {
 					useScore = true;
 					break;
 				case GlobalParam.PARAM_FIELD_RANDOM:
-					sortList.add(SortBuilders.scriptSort(new Script("random()"), ScriptSortType.NUMBER)); 
+					sortList.add(SortBuilders.scriptSort(
+							new Script("random()"), "number"));
 					break; 
-
 				default:
 					TransParam checked; 
 					SearcherParam sp;
+					if(instanceConfig.getTransParam(fieldname)!=null && instanceConfig.getTransParam(fieldname).getIndextype().equals("geo_point")) {
+						String _tmp = request.getParam(fieldname);
+						String[] _geo = _tmp.split(":");
+						sortList.add(SortBuilders.geoDistanceSort(fieldname).point(Double.parseDouble(_geo[0]), Double.parseDouble(_geo[0])).order(reverse ? SortOrder.DESC : SortOrder.ASC));
+						break;
+					}
 					if ((checked = instanceConfig.getTransParam(fieldname)) != null) { 
 						sortList.add(SortBuilders.fieldSort(checked.getAlias()).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));

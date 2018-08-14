@@ -61,12 +61,14 @@ public class NodeConfig {
 		} 
 		parsePondFile(GlobalParam.CONFIG_PATH + "/" +  this.pondFile);
 		parseInstructionsFile(GlobalParam.CONFIG_PATH + "/" +  this.instructionsFile); 
+		if(instances.trim().length()<1)
+			return;
 		for(String inst : instances.split(",")){
 			String[] strs = inst.split(":");
 			if (strs.length <= 0)
 				continue;
 			int indexType=0;
-			String name = strs[0];
+			String name = strs[0].trim();
 			if(strs.length==2){
 				indexType = Integer.parseInt(strs[1]); 
 			}

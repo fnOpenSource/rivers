@@ -14,8 +14,8 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 
 /**
@@ -33,50 +33,57 @@ public class WriterFlowSocket implements Flow{
 	protected volatile String poolName;  
 	protected FnConnection<?> FC;
 	protected AtomicInteger retainer = new AtomicInteger(0);
-	private final static Logger log = LoggerFactory.getLogger(WriterFlowSocket.class);
+	private final static Logger log = LoggerFactory.getLogger(WriterFlowSocket.class); 
 	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.isBatch = GlobalParam.WRITE_BATCH;
-		retainer.set(0);
+		this.isBatch = GlobalParam.WRITE_BATCH; 
 	}
-
+ 
 	@Override
-	public FnConnection<?> GETSOCKET(boolean canSharePipe) {  
-		this.FC = FnConnectionPool.getConn(this.connectParams,
-				this.poolName,canSharePipe);
+	public FnConnection<?> PREPARE(boolean isMonopoly,boolean canSharePipe) {   
+		if(isMonopoly) {
+			synchronized (this) {
+				if(this.FC==null) 
+					this.FC = FnConnectionPool.getConn(this.connectParams,
+							this.poolName,canSharePipe); 
+			} 
+		}else {
+			synchronized (retainer) { 
+				if(retainer.incrementAndGet()==1 || this.FC==null) {
+					this.FC = FnConnectionPool.getConn(this.connectParams,
+							this.poolName,canSharePipe); 
+					retainer.set(1);;
+				}
+			} 
+		} 
 		return this.FC;
 	}
 	
 	@Override
-	public void REALEASE(FnConnection<?> FC,boolean releaseConn) { 
-		FnConnectionPool.freeConn(FC, this.poolName,releaseConn);
+	public FnConnection<?> GETSOCKET() { 
+		return this.FC;
 	}
-	
+
 	@Override
-	public boolean MONOPOLY() {
+	public boolean ISLINK() {  
 		if(this.FC==null) 
 			return false;
 		return true;
 	} 
 	
-	@Override
-	public boolean LINK(){
-		if(this.FC==null) 
-			return false;
-		return true;
-	}
-	
-	public void REALEASE(boolean releaseConn){
-		synchronized(retainer){
-			retainer.addAndGet(-1);
-			if(retainer.get()==0){
-				REALEASE(this.FC,releaseConn);   
-			}else{
-				log.info(this.FC+" retainer is "+retainer.get());
-			}
+	public void REALEASE(boolean isMonopoly,boolean releaseConn){
+		if(isMonopoly==false) { 
+			synchronized(retainer){ 
+				if(retainer.decrementAndGet()<=0){
+					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
+					retainer.set(0); 
+				}else{
+					log.info(this.FC+" retainer is "+retainer.get());
+				}
+			} 
 		} 
 	}
 	
@@ -84,29 +91,29 @@ public class WriterFlowSocket implements Flow{
 		FnConnectionPool.release(this.poolName);
 	}
 	
-	public boolean create(String instantcName, String batchId, Map<String,TransParam> transParams) {
+	public boolean create(String instance, String batchId, Map<String,TransParam> transParams) {
 		return false;
 	}
 	
-	public String getNewStoreId(String instanceName,boolean isIncrement,String dbseq, InstanceConfig instanceConfig) {
+	public String getNewStoreId(String mainName,boolean isIncrement,InstanceConfig instanceConfig) {
 		return null;
 	}
 
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams,String instantcName, String batchId,boolean isUpdate) throws Exception {
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams,String instance, String batchId,boolean isUpdate) throws Exception {
 	}
 
 	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
 	}
   
-	public void removeInstance(String instanceName, String batchId) {
+	public void removeInstance(String instance, String batchId) {
 	}
 	
-	public void setAlias(String instanceName, String batchId, String aliasName) {
+	public void setAlias(String instance, String batchId, String aliasName) {
 	}
 
 	public void flush() throws Exception {
 	}
 
-	public void optimize(String instantcName, String batchId) {
+	public void optimize(String instance, String storeId) {
 	}  
 }

@@ -20,6 +20,12 @@ public class SearcherRequest {
 		return new SearcherRequest();
 	} 
 	
+	public boolean hasErrors() {
+		if(errors.size()>0)
+			return true;
+		return false;
+	}
+	
 	public String getErrors(){
 		String err="";
 		for(String s:errors){

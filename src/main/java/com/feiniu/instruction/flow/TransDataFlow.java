@@ -47,7 +47,7 @@ public final class TransDataFlow extends Instruction{
 			if(instanceConfig.getPipeParam().getDataFromhandler()!=null){
 				this.readHandler = (Handler) Class.forName(instanceConfig.getPipeParam().getDataFromhandler()).newInstance();
 			} 
-			if(instanceConfig.getPipeParam().getSqlParam().getHandler()!=null) {
+			if(instanceConfig.getPipeParam().getSqlParam()!=null && instanceConfig.getPipeParam().getSqlParam().getHandler()!=null) {
 				this.scanHandler = (Handler) Class.forName(instanceConfig.getPipeParam().getSqlParam().getHandler()).newInstance();
 			}
 		}catch(Exception e){
@@ -56,11 +56,11 @@ public final class TransDataFlow extends Instruction{
 	}   
 	
 	public String run(String instanceName, String storeId, String lastTime,
-			String DataSeq, boolean isFullIndex) throws FNException{
+			String DataSeq, boolean isFull,boolean masterControl) throws FNException{
 		if(getInstanceConfig().getPipeParam().getNoSqlParam()!=null){
-			return doNosqlWrite(instanceName, storeId, lastTime, isFullIndex);
+			return doNosqlWrite(instanceName, storeId, lastTime, DataSeq,isFull,masterControl);
 		}else{
-			return doSqlWrite(instanceName, storeId, lastTime, DataSeq, isFullIndex);
+			return doSqlWrite(instanceName, storeId, lastTime, DataSeq, isFull,masterControl);
 		}
 	}  
 	
@@ -117,13 +117,8 @@ public final class TransDataFlow extends Instruction{
 		long start = Common.getNow();
 		int num = 0; 
 		if (DSReader.status()) {
-			boolean _connect;
-			if(monopoly) {
-				_connect = getWriter().MONOPOLY();
-			}else {
-				_connect = getWriter().LINK();
-			} 
-			if(!_connect) {
+			getWriter().PREPARE(monopoly, false); 
+			if(!getWriter().ISLINK()) {
 				rstate.setStatus(false);
 				return rstate;
 			}
@@ -149,8 +144,7 @@ public final class TransDataFlow extends Instruction{
 				}
 			}finally{
 				getWriter().flush();
-				if(!monopoly) 
-					getWriter().REALEASE(freeConn);
+				getWriter().REALEASE(monopoly,freeConn); 
 			}  
 		}else {
 			rstate.setStatus(false);
@@ -171,15 +165,10 @@ public final class TransDataFlow extends Instruction{
 		 */
 		@SuppressWarnings("unchecked")
 		private String doNosqlWrite(String instanceName, String storeId, String lastTime,
-				boolean isFullIndex)  throws FNException{  
+				String DataSeq,boolean isFullIndex,boolean masterControl)  throws FNException{  
 			String desc = "increment";
-			String indexName = Common.getInstanceName(instanceName,"",getInstanceConfig().getPipeParam().getInstanceName()); 
-			
-			try {
-				if (isFullIndex) {
-					CPU.RUN(getID(), "Pond", "createStorePosition",true,indexName, storeId); 
-					desc = "full";
-				} 
+			String destName = Common.getInstanceName(instanceName,DataSeq);
+			try { 
 				NOSQLParam noSqlParam = getInstanceConfig().getPipeParam().getNoSqlParam();
 				
 				if(lastTime==null || lastTime.equals(""))
@@ -191,7 +180,7 @@ public final class TransDataFlow extends Instruction{
 				param.put(GlobalParam._incrementField, noSqlParam.getIncrementField());  
 				List<String> pageList = getReader().getPageSplit(param); 
 				if (pageList.size() > 0) {
-					log.info(Common.formatLog("start " + desc, indexName, storeId, "", "",
+					log.info(Common.formatLog("start " + desc, destName, storeId, "", "",
 							"", lastTime, 0, "start", ",totalpage:"
 									+ pageList.size()));
 					int processPos = 0;
@@ -209,14 +198,14 @@ public final class TransDataFlow extends Instruction{
 						pageParams.put(GlobalParam._start_time, lastTime);
 						pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 						 
-						rstate = writeDataSet(desc,indexName, storeId, "",
+						rstate = writeDataSet(desc,destName, storeId, "",
 								(HashMap<String, Object>) getReader().getJobPage(pageParams,getInstanceConfig().getTransParams(),this.readHandler),
-								",complete:" + processPos + "/" + pageList.size(),false,false);
+								",process:" + processPos + "/" + pageList.size(),false,false);
 						
 						total += rstate.getCount();
 						startId = endId;
 					}
-					log.info(Common.formatLog("complete " + desc, indexName, storeId, "",
+					log.info(Common.formatLog("complete " + desc, destName, storeId, "",
 							String.valueOf(total), "", lastTime,
 							Common.getNow() - start, "complete", ""));
 				}
@@ -237,12 +226,12 @@ public final class TransDataFlow extends Instruction{
 		 * @return String last update value
 		 */
 		private String doSqlWrite(String instanceName, String storeId, String lastTime,
-				String DataSeq, boolean isFullIndex) throws FNException{
+				String DataSeq, boolean isFull,boolean masterControl) throws FNException{
 			String desc;
 			boolean isUpdate = getInstanceConfig().getPipeParam().getWriteType().equals("increment")?true:false;
-			String destName = Common.getInstanceName(instanceName,DataSeq,getInstanceConfig().getPipeParam().getInstanceName()); 
-			if (isFullIndex) {
-				CPU.RUN(getID(), "Pond", "createStorePosition",true,destName, storeId); 
+			String destName = Common.getInstanceName(instanceName,DataSeq); 
+			String writeTo = masterControl?getInstanceConfig().getPipeParam().getInstanceName():destName;
+			if (isFull) { 
 				desc = JOB_TYPE.FULL.name();
 			}else {
 				desc = JOB_TYPE.INCREMENT.name();
@@ -299,7 +288,7 @@ public final class TransDataFlow extends Instruction{
 					HashMap<String, String> sqlParams;
 					GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq, "start count page...");
 					if (pageList.size() > 0) {
-						log.info(Common.formatLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
+						log.info(Common.formatLog("Start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
 								",totalpage:" + pageList.size()));
 						int processPos = 0;
 						for (String page : pageList) {
@@ -323,9 +312,9 @@ public final class TransDataFlow extends Instruction{
 										newLastUpdateTime, Common.getNow() - start, "complete", ""));
 								break;
 							} else {
-								rState = writeDataSet(desc, destName, storeId, tseq,
+								rState = writeDataSet(desc, writeTo, storeId, tseq,
 										getSqlPageData(sql, incrementField, keyColumn),
-										",complete:" + processPos + "/" + pageList.size(), isUpdate,false); 
+										",process:" + processPos + "/" + pageList.size(), isUpdate,false); 
 								if(rState.isStatus()==false)
 									break;
 								total += rState.getCount();
@@ -336,31 +325,32 @@ public final class TransDataFlow extends Instruction{
 									|| rState.getReaderScanStamp().compareTo(newLastUpdateTimes[i]) > 0) {
 								newLastUpdateTimes[i] = String.valueOf(rState.getReaderScanStamp());
 							}
-							if (!isFullIndex) {
+							if (!isFull) {
 								GlobalParam.LAST_UPDATE_TIME.set(instanceName,DataSeq, getTimeString(newLastUpdateTimes));
 								Common.saveTaskInfo(instanceName, DataSeq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 							}
 						}
-						log.info(Common.formatLog("complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
+						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq, String.valueOf(total), maxId,
 								newLastUpdateTime, Common.getNow() - start, "complete", ""));
 						if (getInstanceConfig().getPipeParam().getNextJob() != null
 								&& getInstanceConfig().getPipeParam().getNextJob().length > 0) {
 							ReportStatus.report(instanceName, desc);
 						}
 					} else {
-						log.info(Common.formatLog("start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
-								" no data job finished!"));
+						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
+								" no data!"));
 					}
 				} while (param.get(GlobalParam._end_time).length()>0 && this.scanHandler.needLoop(param));
 					 
 				} catch (Exception e) { 
-					if (isFullIndex) {
+					if (isFull && !masterControl) {
 						for(int t=0;t<5;t++) {
-							if(getWriter().LINK()) {
+							getWriter().PREPARE(false, false);
+							if(getWriter().ISLINK()) {
 								try{
 									getWriter().removeInstance(destName, storeId);
 								}finally{
-									getWriter().REALEASE(false);
+									getWriter().REALEASE(false,false);
 								} 
 								break;
 							}
@@ -378,27 +368,34 @@ public final class TransDataFlow extends Instruction{
 					}
 				}  
 			} 
+			
 			GlobalParam.FLOW_INFOS.get(instanceName,desc).clear();
-			if (isFullIndex){
-				int waittime=0;
-				while ((GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).get() & 2) > 0) {
-					try {
-						waittime++;
-						Thread.sleep(2000);
-						if (waittime > 300) {
-							GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).set(4);
-							Thread.sleep(10000);
+			
+			if (isFull){
+				if(masterControl) {
+					String _dest = getInstanceConfig().getPipeParam().getInstanceName();
+					synchronized(GlobalParam.FLOW_INFOS.get(_dest,GlobalParam.FLOWINFO.MASTER.name())) { 
+						String remainJobs = GlobalParam.FLOW_INFOS.get(_dest,GlobalParam.FLOWINFO.MASTER.name()).get(GlobalParam.FLOWINFO.FULL_JOBS.name());
+						remainJobs = remainJobs.replace(destName, "").trim();  
+						GlobalParam.FLOW_INFOS.get(_dest,GlobalParam.FLOWINFO.MASTER.name()).put(GlobalParam.FLOWINFO.FULL_JOBS.name(), remainJobs);
+						if(remainJobs.length()==0) {
+							String _storeId = GlobalParam.FLOW_INFOS
+									.get(_dest,
+											GlobalParam.FLOWINFO.MASTER.name())
+									.get(GlobalParam.FLOWINFO.FULL_STOREID.name()); 
+							TransDataFlow ts = GlobalParam.SOCKET_CENTER.getTransDataFlow(_dest, null,false,GlobalParam.DEFAULT_RESOURCE_TAG);
+							CPU.RUN(ts.getID(), "Pond", "switchInstance",true, _dest, _storeId);
 						}
-					} catch (InterruptedException e) {
-						log.error("currentThreadState InterruptedException", e);
 					}
-				} 
-				CPU.RUN(getID(), "Pond", "switchInstance",true, destName, storeId);  
+				}else {
+					CPU.RUN(getID(), "Pond", "switchInstance",true, Common.getInstanceName(instanceName,DataSeq), storeId);   
+				}
 			} 
 			
 			return getTimeString(newLastUpdateTimes);
 		} 
-	
+		
+ 
 	/** 
 	 * @param sql
 	 * @param incrementField get auto incrementField to store

@@ -3,10 +3,13 @@ package com.feiniu.config;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.lucene.analysis.Analyzer;
+
 import com.feiniu.model.RiverState;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.task.FlowTask;
+import com.feiniu.task.TaskManager;
 import com.feiniu.util.email.FNEmailSender;
 /**
  * global node data store position  
@@ -21,13 +24,15 @@ public class GlobalParam {
 	/**node core writer status,0 stop 1 normal 2running 4break running thread */
 	public volatile static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
 	/**FLOW_INFOS current flow runing state information*/
-	public static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState< HashMap<String,String>>();
+	public volatile static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState<HashMap<String,String>>();
 	
-	public static RiverState<String> LAST_UPDATE_TIME = new RiverState<String>();
+	public volatile static RiverState<String> LAST_UPDATE_TIME = new RiverState<String>();
 	
 	public static boolean WRITE_BATCH = false;
+	/**#1 searcher service  2 writer service 4 http reader service 8 instruction service*/
+	public static int SERVICE_LEVEL;
 	
-	public static int SERVICE_LEVEL; 
+	public static Analyzer SEARCH_ANALYZER; 
 	
 	public static String CONFIG_PATH;
 	
@@ -35,11 +40,11 @@ public class GlobalParam {
 	
 	public static SocketCenter SOCKET_CENTER;
 	
+	public static TaskManager TASKMANAGER;
+	
 	public static NodeMonitor nodeMonitor; 
 	
-	public static FNEmailSender mailSender;
-	
-	public static int port = 9800;
+	public static FNEmailSender mailSender; 
 	
 	public static int POOL_SIZE = 6;
 	/** CONNECT_EXPIRED is milliseconds time */
@@ -48,6 +53,10 @@ public class GlobalParam {
 	public static NodeConfig nodeConfig;
 	
 	public static HashMap<String, FlowTask> tasks; 
+	
+	public static int SEARCH_MAX_WINDOW=20000;
+	
+	public static int SEARCH_MAX_PAGE=2000;
 	
 	public static enum KEY_PARAM {
 		start, count, sort, facet, detail, facet_count,group,fl
@@ -69,6 +78,10 @@ public class GlobalParam {
 	 
 	public static enum JOB_TYPE {
 		FULL,INCREMENT
+	}
+	
+	public static enum FLOWINFO{
+		MASTER,FULL_STATE,FULL_STOREID,INCRE_STOREID,FULL_JOBS
 	}
 	
 	public final static String JOB_STATE_SPERATOR = ":"; 

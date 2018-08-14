@@ -10,16 +10,20 @@ public class PipeParam {
 	private NOSQLParam noSqlParam;
 	private String writeTo;
 	private String writeTohandler;
+	private boolean writerPoolShareAlias = true;
 	private String searcher;
 	private String searcherHandler;
+	private boolean searcherShareAlias = true;
 	private String dataFrom;
 	private String dataFromHandler;
+	private boolean readerPoolShareAlias = false;
 	private String deltaCron;
 	private String fullCron;
-	private String optimizeCron;
-	private String splitCron;
+	private String optimizeCron; 
 	private String instanceName;
 	private String[] nextJob;
+	/** default is slave pipe,if is master will only manage pipe with no detail transfer job! */
+	private boolean isMaster = false;
 	/**data write into type,full complete data,increment part of data*/
 	private String writeType="full";
 	
@@ -76,11 +80,7 @@ public class PipeParam {
 	}
 	public void setOptimizeCron(String optimizeCron) {
 		this.optimizeCron = optimizeCron;
-	} 
- 
-	public String getSplitCron() {
-		return splitCron;
-	} 
+	}  
 	
 	public String getSearcher() {
 		if(this.searcher==null){
@@ -97,11 +97,36 @@ public class PipeParam {
 		this.instanceName = v;
 	}
 	
-	public void setKeyValue(String k,String v){
+	public boolean isWriterPoolShareAlias() {
+		return writerPoolShareAlias;
+	} 
+	
+	public boolean isReaderPoolShareAlias() {
+		return readerPoolShareAlias;
+	} 
+
+	public boolean isSearcherShareAlias() {
+		return searcherShareAlias;
+	}
+
+	public boolean isMaster() {
+		return isMaster;
+	} 
+	
+	public void setKeyValue(String k,String v){ 
 		switch (k.toLowerCase()) {
 		case "writeto":
 			this.writeTo = v;
-			break; 
+			break;
+		case "writerPoolShareAlias":
+			this.writerPoolShareAlias = Boolean.valueOf(v);
+			break;
+		case "readerPoolShareAlias":
+			this.readerPoolShareAlias = Boolean.valueOf(v);
+			break;
+		case "searcherShareAlias":
+			this.searcherShareAlias = Boolean.valueOf(v);
+			break;
 		case "datafrom":
 			this.dataFrom = v;
 			break;
@@ -113,10 +138,7 @@ public class PipeParam {
 			break;
 		case "optimizecron":
 			this.optimizeCron = v;
-			break;
-		case "splitcron":
-			this.splitCron = v;
-			break;
+			break; 
 		case "searcher":
 			this.searcher = v;
 			break;
@@ -133,7 +155,12 @@ public class PipeParam {
 			this.instanceName = v;
 			break;
 		case "nextjob":
-			this.nextJob = v.split(","); 
+			this.nextJob = v.replace(",", " ").trim().split(" "); 
+			break;
+		case "ismaster":
+			if(v.length()>0 && v.toLowerCase().equals("true"))
+				this.isMaster = true;
+			break;
 		case "writetype":
 			if(v.length()>0 && (v.equals("full") || v.equals("increment")))
 				this.writeType = v;

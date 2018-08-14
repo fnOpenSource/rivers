@@ -29,12 +29,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		o.INIT(connectParams);
 		return o;
 	} 
-	
-	private Connection GETLINK() {
-		if(this.FC==null) 
-			return null; 
-		return (Connection) FC.getConnection(false);
-	}
+ 
 
 	@Override
 	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
@@ -46,11 +41,10 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 		} 
 		isLocked.set(true); 
 		this.jobPage.clear(); 
-		GETSOCKET(false);
-		Connection conn;
-		if((conn = GETLINK())==null)
+		PREPARE(false,false); 
+		if(!ISLINK())
 			return this.jobPage; 
-		
+		Connection conn = (Connection) GETSOCKET().getConnection(false);
 		boolean releaseConn = false;
 		this.jobPage.put(GlobalParam.READER_STATUS,true);
 	 
@@ -76,7 +70,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			this.jobPage.put(GlobalParam.READER_STATUS,false);
 			log.error("getJobPage Exception so free connection,details ", e);
 		}finally{
-			REALEASE(FC,releaseConn);
+			REALEASE(false,releaseConn);
 		} 
 		return this.jobPage;
 	}
@@ -110,10 +104,10 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
 		 
 		List<String> page = new ArrayList<String>();
-		GETSOCKET(false);
-		Connection conn;
-		if((conn = GETLINK())==null)
+		PREPARE(false,false); 
+		if(!ISLINK())
 			return page;
+		Connection conn = (Connection) GETSOCKET().getConnection(false);
 		PreparedStatement statement = null;
 		ResultSet rs  = null;
 		boolean releaseConn = false;
@@ -158,7 +152,7 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			REALEASE(FC,releaseConn);
+			REALEASE(false,releaseConn);
 		}  
 		return page;
 	} 

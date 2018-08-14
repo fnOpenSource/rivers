@@ -9,17 +9,16 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ESConnection extends FnConnectionSocket implements FnConnection<ESConnector> {
 
-	private TransportClient conn;
+	private Client conn;
 	private BulkProcessor bulkProcessor;
 	private ESConnector ESC = new ESConnector();
 
@@ -41,14 +40,14 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	public boolean connect() {
 		if (this.connectParams.get("ip") != null) {
 			if (this.conn == null) {
-				Settings settings = Settings.builder()
-						.put("cluster.name", String.valueOf(this.connectParams.get("name")))
-						.put("client.transport.sniff", true).build(); 
-				this.conn = new PreBuiltTransportClient(settings);
+				Settings settings = Settings.builder().put("cluster.name", this.connectParams.get("name"))
+						.put("client.transport.sniff", true).build();
+				this.conn = TransportClient.builder().settings(settings).build();
 				String Ips = (String) this.connectParams.get("ip");
 				for (String ip : Ips.split(",")) {
 					try {
-						this.conn.addTransportAddress(new TransportAddress(InetAddress.getByName(ip), 9300));
+						((TransportClient) this.conn)
+								.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ip), 9300));
 					} catch (Exception e) {
 						log.error("connect Exception", e);
 					}
@@ -84,7 +83,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	@Override
 	public boolean free() {
 		try {
-			this.conn.close();
+			this.conn.close(); 
 			freeBP();
 			this.ESC = null;
 			this.conn = null;
@@ -95,7 +94,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 		}
 		return true;
 	}
-
+	
 	private void freeBP() {
 		if (this.bulkProcessor != null) {
 			this.bulkProcessor.close();
@@ -115,7 +114,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 					if (response.hasFailures()) {
 						log.error("BulkProcessor error," + response.buildFailureMessage());
 						ESC.setRunState(false);
-					} else {
+					}else {
 						ESC.setRunState(true);
 					}
 				}
@@ -123,10 +122,9 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 				@Override
 				public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
 					if (failure != null) {
-						log.warn("BulkProcessor fail,", failure);
+						failure.printStackTrace();
 					}
 				}
-
 			}).setBulkActions(BULK_BUFFER).setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
 					.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
 					.setConcurrentRequests(BULK_CONCURRENT).build();
