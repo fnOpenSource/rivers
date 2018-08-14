@@ -102,7 +102,8 @@ public class Pond extends Instruction {
 				log.error("currentThreadState InterruptedException", e);
 			}
 		} 
-		context.getWriter().PREPARE(false, false);
+		GlobalParam.FLOW_STATUS.get(mainName,"").set(0);
+		context.getWriter().PREPARE(false, false); 
 		if (context.getWriter().ISLINK()) {
 			try {
 				if (storeId.equals("a")) {
@@ -118,6 +119,7 @@ public class Pond extends Instruction {
 			} catch (Exception e) {
 				log.error("switchInstance Exception", e);
 			} finally {
+				GlobalParam.FLOW_STATUS.get(mainName,"").set(1);
 				context.getWriter().REALEASE(false,true);
 				context.getWriter().freeConnPool();
 			}
