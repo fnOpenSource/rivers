@@ -21,7 +21,7 @@ public class GlobalParam {
 	public static String run_environment;
 	
 	public static String VERSION;
-	/**node core writer status,0 stop 1 normal 2running 4break running thread */
+	/**node core writer status; 0 stop, 1 ready, 2 running, 4 Termination */
 	public volatile static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
 	/**FLOW_INFOS current flow runing state information*/
 	public volatile static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState<HashMap<String,String>>();

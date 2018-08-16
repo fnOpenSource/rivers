@@ -113,8 +113,8 @@ public class HttpReaderService {
 								monopoly = true;
 							
 							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
-							if (transDataFlow == null) {
-								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
+							if (transDataFlow == null || !transDataFlow.getInstanceConfig().getAlias().equals(dataTo)) {
+								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance not exits!\"}");
 								break;
 							}
 							String storeid;
