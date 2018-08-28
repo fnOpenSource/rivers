@@ -65,7 +65,7 @@ public final class NodeMonitor {
 	@Resource(name = "globalConfigBean")
 	private Properties globalConfigBean;
 
-	@Value("#{configPathConfig['config.path']}")
+	@Value("#{riverPathConfig['config.path']}")
 	private String configPath;
 
 	private String response;
@@ -256,13 +256,11 @@ public final class NodeMonitor {
 		if (GlobalParam.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance"))) {
 			String instance = rq.getParameter("instance");
 			StringBuffer sb = new StringBuffer();
-			InstanceConfig config = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
-			boolean writer = false;
+			InstanceConfig config = GlobalParam.nodeConfig.getInstanceConfigs().get(instance); 
 			if (GlobalParam.nodeConfig.getNoSqlParamMap().get(config.getPipeParam().getDataFrom()) != null) {
 				String poolname = GlobalParam.nodeConfig.getNoSqlParamMap()
 						.get(config.getPipeParam().getDataFrom()).getPoolName(null);
-				sb.append(",[DataFrom Pool Status] " + FnConnectionPool.getStatus(poolname));
-				writer = true;
+				sb.append(",[DataFrom Pool Status] " + FnConnectionPool.getStatus(poolname)); 
 			} else if (GlobalParam.nodeConfig.getSqlParamMap().get(config.getPipeParam().getDataFrom()) != null) {
 				WarehouseSqlParam ws = GlobalParam.nodeConfig.getSqlParamMap()
 						.get(config.getPipeParam().getDataFrom());
@@ -277,8 +275,7 @@ public final class NodeMonitor {
 					poolname = GlobalParam.nodeConfig.getSqlParamMap().get(config.getPipeParam().getDataFrom())
 							.getPoolName(null);
 					sb.append(",[Reader Pool Status] " + FnConnectionPool.getStatus(poolname));
-				} 
-				writer = true;
+				}  
 			}
 			
 			if (GlobalParam.nodeConfig.getNoSqlParamMap().get(config.getPipeParam().getWriteTo()) != null) {
@@ -295,7 +292,7 @@ public final class NodeMonitor {
 			if((GlobalParam.SERVICE_LEVEL&1)>0) {
 				String searcher = config.getPipeParam().getSearcher();
 				String searcher_info;
-				if(config.getPipeParam().getWriteTo().equals(searcher)) {
+				if(config.getPipeParam().getWriteTo()!=null && config.getPipeParam().getWriteTo().equals(searcher)) {
 					searcher_info =",[Searcher Pool (Share With Writer) Status] "; 
 				}else {
 					searcher_info = ",[Searcher Pool Status] ";
@@ -311,7 +308,7 @@ public final class NodeMonitor {
 			}
 			
 
-			if (writer) {
+			if (config.isIndexer()) {
 				WarehouseSqlParam wsp = GlobalParam.nodeConfig.getSqlParamMap()
 						.get(config.getPipeParam().getDataFrom());
 				if (wsp.getSeq().length > 0) {

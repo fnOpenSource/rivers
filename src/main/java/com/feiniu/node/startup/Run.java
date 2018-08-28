@@ -45,7 +45,7 @@ public final class Run {
 	@Autowired
 	private SocketCenter SocketCenter;
 	
-	@Value("#{configPathConfig['config.path']}")
+	@Value("#{riverPathConfig['config.path']}")
 	private String configPath;
 	
 	@Resource(name="globalConfigBean")
@@ -94,14 +94,12 @@ public final class Run {
 		GlobalParam.nodeConfig = nodeConfig;
 		GlobalParam.SERVICE_LEVEL = Integer.parseInt(globalConfigBean.get("service_level").toString()); 
 		
-		if((GlobalParam.SERVICE_LEVEL&6)>0) {
-			Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
-			for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) { 
-				InstanceConfig instanceConfig = entry.getValue(); 
-				if(instanceConfig.checkStatus())
-						initParams(instanceConfig); 
-			}
-		} 
+		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+		for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) { 
+			InstanceConfig instanceConfig = entry.getValue(); 
+			if(instanceConfig.checkStatus())
+					initParams(instanceConfig); 
+		}
 	}
 	
 	private void environmentCheck() {

@@ -17,7 +17,7 @@
 	    http://www.springframework.org/schema/mvc
         http://www.springframework.org/schema/mvc/spring-mvc.xsd"> 
 	<context:component-scan base-package="com.feiniu" />
-	<util:properties id="configPathConfig" location="classpath:config/configPath.properties"></util:properties>
+	<util:properties id="riverPathConfig" location="classpath:config/configPath.properties"></util:properties>
 	<util:properties id="chechksrvConfig" location="classpath:config/checksrv.properties"></util:properties>
  
 	<bean id="log4jInitialization" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
@@ -25,7 +25,7 @@
 	   <property name="targetMethod" value="initLogging" />
 	   <property name="arguments">
 	      <list>
-	         <value>#{configPathConfig['config.path']}/config/log4j.properties
+	         <value>#{riverPathConfig['config.path']}/config/log4j.properties
 	         </value>
 	      </list>
 	   </property>
@@ -35,7 +35,7 @@
 		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
 		<property name="locations">
 			<list>
-				<value>#{configPathConfig['config.path']}/config/config.properties
+				<value>#{riverPathConfig['config.path']}/config/config.properties
 				</value>
 			</list>
 		</property>

@@ -64,6 +64,7 @@ public class SolrFlow extends SearcherFlowSocket {
 	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler) throws FNException{
 		SearcherResult res = new SearcherResult();
 		PREPARE(false, true);
+		boolean releaseConn = false;
 		if(!ISLINK())
 			return res;
 		try {
@@ -94,10 +95,10 @@ public class SolrFlow extends SearcherFlowSocket {
 				handler.Handle(res,response,fq);
 			}
 		}catch(Exception e){
-			log.error("SearcherResult Exception",e);
-			throw new FNException("SearcherResult Search data from Solr exception!");
+			releaseConn = true; 
+			throw e;
 		}finally{
-			REALEASE(false,false);
+			REALEASE(false,releaseConn);
 		} 
 		return res;
 	} 

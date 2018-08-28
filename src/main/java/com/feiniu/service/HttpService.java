@@ -19,7 +19,7 @@ public class HttpService implements FNService {
 
 	private HashMap<String, Object> serviceParams;
 
-	private Server server = new Server();
+	private Server server;
 	
 	private final static Logger log = LoggerFactory
 			.getLogger(HttpService.class);
@@ -33,6 +33,7 @@ public class HttpService implements FNService {
 	@Override
 	public void init(HashMap<String, Object> params) {
 		this.serviceParams = params;
+		server = new Server();
 		QueuedThreadPool threadPool = new QueuedThreadPool();
 		threadPool.setMaxThreads(Integer.valueOf((String) serviceParams
 				.get("thread_pool")));

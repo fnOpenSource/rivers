@@ -300,9 +300,9 @@ public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder,A
 		} 
 		if(type) {
 			Map<String, String> ext = getFacetExt();
-			TermsBuilder tb = AggregationBuilders.terms(name);
+			TermsBuilder tb = AggregationBuilders.terms(name).field(field);
 			if(ext.containsKey("size")) {
-				tb.field(field).size(Integer.valueOf(ext.get("size")));
+				tb.size(Integer.valueOf(ext.get("size")));
 			} 
 			if(ext.containsKey("order")) {
 				String[] tmp = ext.get("order").split(" ");

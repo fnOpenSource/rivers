@@ -71,7 +71,7 @@ public class SolrFlow extends WriterFlowSocket{
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams; 
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.property = (Properties)FNIoc.getInstance().getBean("configPathConfig");
+		this.property = (Properties)FNIoc.getInstance().getBean("riverPathConfig");
 		this.isBatch = GlobalParam.WRITE_BATCH;
 	}
  

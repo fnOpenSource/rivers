@@ -16,15 +16,14 @@
 		http://www.springframework.org/schema/aop/spring-aop.xsd
 		http://www.springframework.org/schema/hadoop
 		http://www.springframework.org/schema/hadoop/spring-hadoop-2.0.xsd"> 
-
-	<util:properties id="configPathConfig" location="classpath:config/configPath.properties"></util:properties>		
-  	<util:properties id="mailConfig" location="#{configPathConfig['config.path']}/config/mailConfig.properties" />
+ 
+   	<util:properties id="mailConfig" location="#{riverPathConfig['config.path']}/config/mailConfig.properties" />
   	 
     <bean id="mailConfigBean" class="org.springframework.beans.factory.config.PropertiesFactoryBean">  
         <property name="ignoreResourceNotFound" value="true" />
         <property name="locations">  
             <list>  
-                <value>#{configPathConfig['config.path']}/config/mailConfig.properties</value>  
+                <value>#{riverPathConfig['config.path']}/config/mailConfig.properties</value>  
             </list>  
         </property>
     </bean> 

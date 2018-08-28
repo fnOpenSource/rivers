@@ -40,6 +40,7 @@ public class ESFlow extends SearcherFlowSocket {
 	public SearcherResult Search(SearcherModel<?, ?, ?> fq, String instance,Handler handler)
 			throws FNException {
 		PREPARE(false, true);
+		boolean releaseConn = false;
 		SearcherResult res = new SearcherResult();
 		if(!ISLINK())
 			return res;
@@ -73,9 +74,10 @@ public class ESFlow extends SearcherFlowSocket {
 				handler.Handle(res,response,fq,instanceConfig,returnFields);
 			} 
 		}catch(Exception e){ 
+			releaseConn = true;
 			throw e;
 		}finally{
-			REALEASE(false,false); 
+			REALEASE(false,releaseConn); 
 		} 
 		return res;
 	} 

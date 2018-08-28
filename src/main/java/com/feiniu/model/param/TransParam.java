@@ -18,6 +18,7 @@ public class TransParam {
 	private Handler handler;
 	private boolean router=false;
 	private String paramtype;
+	private String index_options;
 
 	public boolean isValid(String value) { 
 		return true;
@@ -131,5 +132,12 @@ public class TransParam {
 	public void setRouter(String router) {
 		this.router = router.toLowerCase().equals("true")?true:false;
 	}
-	
+
+	public String getIndex_options() {
+		return index_options;
+	}
+
+	public void setIndex_options(String index_options) {
+		this.index_options = index_options;
+	} 
 }

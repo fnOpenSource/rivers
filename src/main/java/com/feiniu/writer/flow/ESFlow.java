@@ -336,7 +336,7 @@ public class ESFlow extends WriterFlowSocket {
 							Map<String, Boolean> enabledMap = new HashMap<String, Boolean>();
 							enabledMap.put("enabled", false);
 							map.put("norms", enabledMap);
-							map.put("index_options", "docs");
+							map.put("index_options", p.getIndex_options()!=null?p.getIndex_options():"docs");
 						}
 					}
 				} else {
