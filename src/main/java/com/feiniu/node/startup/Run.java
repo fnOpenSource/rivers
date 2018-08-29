@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.wltea.analyzer.cfg.Configuration;
 import org.wltea.analyzer.dic.Dictionary;
 
+import com.alibaba.fastjson.JSON;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
@@ -91,6 +92,7 @@ public final class Run {
 	 
 	private void init(){ 
 		nodeConfig.init();
+		ZKUtil.setData(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP+"/configs", JSON.toJSONString(globalConfigBean));
 		GlobalParam.nodeConfig = nodeConfig;
 		GlobalParam.SERVICE_LEVEL = Integer.parseInt(globalConfigBean.get("service_level").toString()); 
 		
@@ -110,7 +112,15 @@ public final class Run {
 					path+="/"+str;
 					ZKUtil.createPath(path, true);
 				} 
-				ZKUtil.createPath(path+"/RIVER_LOCKS", true);
+			}
+			if(ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH+"/RIVER_NODES", false)==null) { 
+				ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/RIVER_NODES", true);
+			}
+			if(ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP, false)==null) { 
+				ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP, true);
+			}
+			if(ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP+"/configs", false)==null) { 
+				ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP+"/configs", true);
 			}
 		} catch (Exception e) { 
 			Common.LOG.error("environmentCheck Exception",e);

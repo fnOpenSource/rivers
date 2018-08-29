@@ -1,7 +1,5 @@
 package com.feiniu.correspond;
 
-import java.net.InetAddress;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +17,7 @@ public class ReportStatus {
 	 
 	
 	public static void start() {
-		try { 
-			GlobalParam.IP = InetAddress.getLocalHost().getHostAddress(); 
+		try {  
 			ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/hosts/"+GlobalParam.IP, true);
 			ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/hosts/"+GlobalParam.IP+"/instances", true); 
 			log.info("Report Status to Zookeeper Success!");

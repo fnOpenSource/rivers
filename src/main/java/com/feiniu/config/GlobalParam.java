@@ -1,5 +1,6 @@
 package com.feiniu.config;
 
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,6 +11,7 @@ import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.task.FlowTask;
 import com.feiniu.task.TaskManager;
+import com.feiniu.util.Common;
 import com.feiniu.util.email.FNEmailSender;
 /**
  * global node data store position  
@@ -36,7 +38,7 @@ public class GlobalParam {
 	
 	public static String CONFIG_PATH;
 	
-	public static String IP=null;
+	public static String IP;
 	
 	public static SocketCenter SOCKET_CENTER;
 	
@@ -54,51 +56,37 @@ public class GlobalParam {
 	
 	public static HashMap<String, FlowTask> tasks; 
 	
-	public static int SEARCH_MAX_WINDOW=20000;
-	
-	public static int SEARCH_MAX_PAGE=2000;
-	
+	 
+	 
+	//writer parameters
 	public static enum KEY_PARAM {
 		start, count, sort, facet, detail, facet_count,group,fl
-	} 
-	
+	}  
 	public static enum DATA_TYPE{
 		MYSQL, ORACLE, HIVE, ES, SOLR, HBASE,ZOOKEEPER,UNKNOWN,H2
 	} 
-	 
-	public static enum QUERY_TYPE {  
-		BOOLEAN_QUERY, DISJUNCTION_QUERY 
-	}   
-	
-	public final static String DEFAULT_RESOURCE_TAG = "_DEFAULT";
-	
-	public final static String DEFAULT_FIELD = "SYSTEM_UPDATE_TIME";
-	
-	public final static String DEFAULT_RESOURCE_SEQ = "";
-	 
+	public final static String DEFAULT_RESOURCE_TAG = "_DEFAULT"; 
+	public final static String DEFAULT_FIELD = "SYSTEM_UPDATE_TIME"; 
+	public final static String DEFAULT_RESOURCE_SEQ = ""; 
 	public static enum JOB_TYPE {
 		FULL,INCREMENT
-	}
-	
+	} 
 	public static enum FLOWINFO{
 		MASTER,FULL_STATE,FULL_STOREID,INCRE_STOREID,FULL_JOBS
-	}
-	
+	} 
 	public final static String JOB_STATE_SPERATOR = ":"; 
-	
-	public final static String JOB_INCREMENTINFO_PATH = "batch"; 
-	
+	public final static String JOB_INCREMENTINFO_PATH = "batch";  
 	public final static String JOB_FULLINFO_PATH = "full_info"; 
 	
+	//searcher parameters
+	public static int SEARCH_MAX_WINDOW=20000; 
+	public static int SEARCH_MAX_PAGE=2000;
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
-	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f;
-		 
+	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f; 
 	public final static int FACET_DEFAULT_COUNT = 200;
-	public final static int FACET_DEAULT_SHOW_COUNT = 3; 
-
+	public final static int FACET_DEAULT_SHOW_COUNT = 3;  
 	public final static String SORT_ASC = "_asc";
-	public final static String SORT_DESC = "_desc";
- 
+	public final static String SORT_DESC = "_desc"; 
 	public final static String PARAM_FL = "fl";
 	public final static String PARAM_FQ = "fq";
 	public final static String PARAM_FUZZY = "fuzzy";
@@ -117,7 +105,12 @@ public class GlobalParam {
 	public final static String PARAM_SORT = "sort"; 
 	public final static String NOT_SUFFIX = "_not";
 	public final static String PARAM_REQUEST_HANDLER = "request_handler";
-	 
+	
+	public static enum QUERY_TYPE {  
+		BOOLEAN_QUERY, DISJUNCTION_QUERY 
+	}    
+
+	//reader parameters
 	public static final String _start = "#{start}";
 	public static final String _end = "#{end}"; 
 	public static final String _seq = "#{seq}"; 
@@ -126,10 +119,18 @@ public class GlobalParam {
 	public static final String _column = "#{column}";
 	public static final String _incrementField = "#{update_time}"; 
 	public static final String _start_time =  "#{start_time}"; 
-	public static final String _end_time =  "#{end_time}"; 
-	
+	public static final String _end_time =  "#{end_time}";  
 	public static final String READER_KEY = "keyColumn";
 	public static final String READER_SCAN_KEY = "IncrementColumn";
 	public static final String READER_LAST_STAMP = "lastUpdateTime";
 	public static final String READER_STATUS = "_reader_status"; 
+	
+	
+	static {
+		try {
+			IP = InetAddress.getLocalHost().getHostAddress();
+		}catch (Exception e) {
+			Common.LOG.error("getHostAddress Exception ",e);
+		} 
+	}
 }
