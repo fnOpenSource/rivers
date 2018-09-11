@@ -29,27 +29,7 @@
 	         </value>
 	      </list>
 	   </property>
-	</bean>
-	
-	<bean id="globalConfigBean"
-		class="org.springframework.beans.factory.config.PropertiesFactoryBean">
-		<property name="locations">
-			<list>
-				<value>#{riverPathConfig['config.path']}/config/config.properties
-				</value>
-			</list>
-		</property>
-	</bean>
-
-	<bean id="NodeConfig" class="com.feiniu.config.NodeConfig">
-		<constructor-arg value="#{globalConfigBean['zkConfigPath']}" />
-		<constructor-arg value="#{globalConfigBean['instances']}" />
-		<constructor-arg value="#{globalConfigBean['write_batch']}" />
-		<constructor-arg value="#{globalConfigBean['pool_size']}" />
-		<constructor-arg value="#{globalConfigBean['pond']}" /> 
-		<constructor-arg value="#{globalConfigBean['instructions']}" /> 
-		<constructor-arg value="#{globalConfigBean['zkhost']}" />
-	</bean>
+	</bean>  
 
 	<bean id="SocketCenter" class="com.feiniu.node.SocketCenter"/>
 
@@ -62,6 +42,10 @@
 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
 	<bean id="taskJobCenter" class="com.feiniu.task.schedule.TaskJobCenter"/>
 	<bean id="healthChecker" class="com.feiniu.util.HealthChecker"/> 
-	<bean id="FNStart" class="com.feiniu.node.startup.Run"/>
+	<bean id="RIVERS" class="com.feiniu.node.startup.Run"/>
 	<bean id="FNMonitor" class="com.feiniu.service.FNMonitor" init-method="start"/>
+	<bean id="FNStart" class="com.feiniu.node.startup.Run">
+		<constructor-arg type="String" index="0" value="#{riverPathConfig['config.path']}/config/config.properties"/>
+		<constructor-arg type="String" index="1" value="#{riverPathConfig['config.path']}"/> 
+	</bean>
 </beans>

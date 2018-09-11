@@ -18,8 +18,8 @@ public class ReportStatus {
 	
 	public static void start() {
 		try {  
-			ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/hosts/"+GlobalParam.IP, true);
-			ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/hosts/"+GlobalParam.IP+"/instances", true); 
+			ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP, true);
+			ZKUtil.createPath(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+GlobalParam.IP+"/instances", true); 
 			log.info("Report Status to Zookeeper Success!");
 		} catch (Exception e) {
 			log.error("ReportStatus start Exception",e);

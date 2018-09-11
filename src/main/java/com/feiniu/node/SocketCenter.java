@@ -34,9 +34,9 @@ public final class SocketCenter {
 	private Map<String, ReaderFlowSocket<?>> readerSocketMap = new ConcurrentHashMap<String, ReaderFlowSocket<?>>();
 	private Map<String, SearcherFlowSocket> searcherSocketMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
  
-	public Searcher getSearcher(String instance, String seq,String tag) {
+	public Searcher getSearcher(String instance, String seq,String tag,boolean reload) {
 		synchronized (searcherMap) {
-			if (!searcherMap.containsKey(instance)) {
+			if (reload || !searcherMap.containsKey(instance)) {
 				if (!GlobalParam.nodeConfig.getSearchConfigs().containsKey(instance))
 					return null;
 				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getSearchConfigs().get(instance);

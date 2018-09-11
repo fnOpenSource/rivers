@@ -30,6 +30,6 @@ public class MD5Util {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(SaltMd5("getInstanceSeqs"));
+		System.out.println(SaltMd5("b2b_station"));
 	}
 }

@@ -13,7 +13,6 @@ import org.mortbay.jetty.HttpConnection;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
@@ -33,28 +32,16 @@ import com.feiniu.util.Common;
 public class SearcherService{
 	 
 	@Autowired
-	private SocketCenter SocketCenter;   
+	private SocketCenter SocketCenter;    
  
-	@Value("#{globalConfigBean['http_service_thread_pool']}")
-	private String http_service_thread_pool;
-
-	@Value("#{globalConfigBean['http_service_port']}")
-	private String http_service_port;
-
-	@Value("#{globalConfigBean['http_service_max_idle_time']}")
-	private String http_service_max_idle_time;
-
-	@Value("#{globalConfigBean['http_service_confident_port']}")
-	private String http_service_confident_port;
-	
 	private FNService FS;
 	 
 	public boolean start() {
 		HashMap<String, Object> serviceParams = new HashMap<String, Object>();
-		serviceParams.put("confident_port", http_service_confident_port);
-		serviceParams.put("max_idle_time", http_service_max_idle_time);
-		serviceParams.put("port", http_service_port);
-		serviceParams.put("thread_pool", http_service_thread_pool);
+		serviceParams.put("confident_port", GlobalParam.StartConfig.get("http_service_confident_port"));
+		serviceParams.put("max_idle_time", GlobalParam.StartConfig.get("http_service_max_idle_time"));
+		serviceParams.put("port", GlobalParam.StartConfig.get("http_service_port"));
+		serviceParams.put("thread_pool", GlobalParam.StartConfig.get("http_service_thread_pool"));
 		serviceParams.put("httpHandle", new httpHandle());
 		FS=HttpService.getInstance(serviceParams);		
 		FS.start();
@@ -91,7 +78,7 @@ public class SearcherService{
 		String pipe = request.getPipe(); 
 		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getSearchConfigs();
 		if (configMap.containsKey(pipe)) { 
-			Searcher searcher = SocketCenter.getSearcher(pipe,"","");
+			Searcher searcher = SocketCenter.getSearcher(pipe,"","",false);
 			response = searcher.startSearch(request);
 		} 
 		long endTime = System.currentTimeMillis();

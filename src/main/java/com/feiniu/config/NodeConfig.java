@@ -34,25 +34,20 @@ public class NodeConfig {
 	private Map<String,InstructionParam> instructions = new HashMap<String, InstructionParam>();
 	private String pondFile = null; 
 	private String instructionsFile = null; 
-
-	/**
-	 * load config from zk
-	 * @param cfgPath
-	 * @param instances
-	 * @param commonParam
-	 * @param noSqlFileName
-	 * @param sqlFileName
-	 * @param zkHost
-	 */
-	public NodeConfig(String cfgPath, String instances, String write_batch,String pool_size, String pondFile,
-			String instructionsFile,String zkHost) {
-		    ZKUtil.setZkHost(zkHost);
-		    GlobalParam.CONFIG_PATH = cfgPath;
-		    this.pondFile = pondFile;
-		    this.instructionsFile = instructionsFile;
-		    GlobalParam.POOL_SIZE = Integer.parseInt(pool_size);
-		    GlobalParam.WRITE_BATCH = write_batch.equals("false")?false:true;
-			loadConfig(instances,true);
+	
+/**
+ * 
+ * @param instances
+ * @param pondFile
+ * @param instructionsFile
+ * @return
+ */
+	public static NodeConfig getInstance(String instances, String pondFile,String instructionsFile) { 
+		    NodeConfig o = new NodeConfig(); 
+		    o.pondFile = pondFile;
+		    o.instructionsFile = instructionsFile; 
+			o.loadConfig(instances,true);
+			return o;
 	}
 	
 	public void loadConfig(String instances,boolean reset){

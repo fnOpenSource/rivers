@@ -9,9 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-
-import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -60,10 +57,7 @@ public final class NodeMonitor {
 	private SearcherService SearcherService;
 
 	@Autowired
-	private HttpReaderService HttpReaderService;
-
-	@Resource(name = "globalConfigBean")
-	private Properties globalConfigBean;
+	private HttpReaderService HttpReaderService; 
 
 	@Value("#{riverPathConfig['config.path']}")
 	private String configPath;
@@ -129,7 +123,7 @@ public final class NodeMonitor {
 	}
 
 	public void getNodeConfig(Request rq) {
-		setResponse(1, globalConfigBean);
+		setResponse(1, GlobalParam.StartConfig);
 	}
 
 	/**
@@ -139,14 +133,14 @@ public final class NodeMonitor {
 	public void setNodeConfig(Request rq) {
 		if (rq.getParameter("k") != null && rq.getParameter("v") != null && rq.getParameter("type") != null) {
 			if (rq.getParameter("type").equals("set")) {
-				globalConfigBean.setProperty(rq.getParameter("k"), rq.getParameter("v"));
+				GlobalParam.StartConfig.setProperty(rq.getParameter("k"), rq.getParameter("v"));
 			} else {
-				globalConfigBean.remove(rq.getParameter("k"));
+				GlobalParam.StartConfig.remove(rq.getParameter("k"));
 			}
 			OutputStream os = null;
 			try {
 				os = new FileOutputStream(configPath.replace("file:", "") + "/config/config.properties");
-				globalConfigBean.store(os, "Auto Save Config with no format,BeCarefull!");
+				GlobalParam.StartConfig.store(os, "Auto Save Config with no format,BeCarefull!");
 				setResponse(1, "Config set success!");
 			} catch (Exception e) {
 				setResponse(0, "Config save Exception " + e.getMessage());
@@ -157,7 +151,7 @@ public final class NodeMonitor {
 	}
 
 	public void stopHttpReaderServiceService(Request rq) {
-		int service_level = Integer.parseInt(globalConfigBean.get("service_level").toString());
+		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 		if ((service_level & 4) > 0) {
 			service_level -= 4;
 		}
@@ -169,7 +163,7 @@ public final class NodeMonitor {
 	}
 
 	public void startHttpReaderServiceService(Request rq) {
-		int service_level = Integer.parseInt(globalConfigBean.get("service_level").toString());
+		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 		if ((service_level & 4) == 0) {
 			service_level += 4;
 			HttpReaderService.start();
@@ -178,7 +172,7 @@ public final class NodeMonitor {
 	}
 
 	public void stopSearcherService(Request rq) {
-		int service_level = Integer.parseInt(globalConfigBean.get("service_level").toString());
+		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 		if ((service_level & 1) > 0) {
 			service_level -= 1;
 		}
@@ -190,7 +184,7 @@ public final class NodeMonitor {
 	}
 
 	public void startSearcherService(Request rq) {
-		int service_level = Integer.parseInt(globalConfigBean.get("service_level").toString());
+		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 		if ((service_level & 1) == 0) {
 			service_level += 1;
 			SearcherService.start();
@@ -199,7 +193,7 @@ public final class NodeMonitor {
 	}
 
 	public void getStatus(Request rq) {
-		int service_level = Integer.parseInt(globalConfigBean.get("service_level").toString());
+		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 		HashMap<String, Object> dt = new HashMap<String, Object>();
 		dt.put("WRITE_BATCH", GlobalParam.WRITE_BATCH);
 		dt.put("SERVICE_LEVEL", service_level);
@@ -482,9 +476,10 @@ public final class NodeMonitor {
 			} else {
 				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance"),JOB_TYPE.FULL.name());
 				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance"),JOB_TYPE.INCREMENT.name());
-				this.freeInstanceConnectPool(rq.getParameter("instance"));
-				GlobalParam.nodeConfig.getSearchConfigs().remove(
-						GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias());
+				freeInstanceConnectPool(rq.getParameter("instance"));
+				String alias = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
+				GlobalParam.nodeConfig.getSearchConfigs().remove(alias);
+				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "",true);
 				GlobalParam.nodeConfig.loadConfig(configString, false);
 			}
 			startIndex(configString);

@@ -14,7 +14,6 @@ import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.flow.TransDataFlow;
@@ -41,29 +40,17 @@ import net.sf.json.JSONObject;
  * @version 1.0
  */
 public class HttpReaderService {
-
-	@Value("#{globalConfigBean['http_reader_thread_pool']}")
-	private String http_reader_thread_pool;
-
-	@Value("#{globalConfigBean['http_reader_port']}")
-	private String http_reader_port;
-
-	@Value("#{globalConfigBean['http_reader_max_idle_time']}")
-	private String http_reader_max_idle_time;
-
-	@Value("#{globalConfigBean['http_reader_confident_port']}")
-	private String http_reader_confident_port;
-
+ 
 	private final static Logger log = LoggerFactory.getLogger(HttpReaderService.class);  
 
 	private FNService FS;
 
 	public boolean start() {
 		HashMap<String, Object> serviceParams = new HashMap<String, Object>();
-		serviceParams.put("confident_port", http_reader_confident_port);
-		serviceParams.put("max_idle_time", http_reader_max_idle_time);
-		serviceParams.put("port", http_reader_port);
-		serviceParams.put("thread_pool", http_reader_thread_pool);
+		serviceParams.put("confident_port", GlobalParam.StartConfig.get("http_reader_confident_port"));
+		serviceParams.put("max_idle_time", GlobalParam.StartConfig.get("http_reader_max_idle_time"));
+		serviceParams.put("port", GlobalParam.StartConfig.get("http_reader_port"));
+		serviceParams.put("thread_pool", GlobalParam.StartConfig.get("http_reader_thread_pool"));
 		serviceParams.put("httpHandle", new httpHandle());
 		FS = HttpService.getInstance(serviceParams);
 		FS.start();

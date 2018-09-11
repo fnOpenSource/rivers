@@ -2,6 +2,7 @@ package com.feiniu.config;
 
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -9,6 +10,7 @@ import org.apache.lucene.analysis.Analyzer;
 import com.feiniu.model.RiverState;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
+import com.feiniu.node.startup.Run;
 import com.feiniu.task.FlowTask;
 import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
@@ -56,7 +58,14 @@ public class GlobalParam {
 	
 	public static HashMap<String, FlowTask> tasks; 
 	
-	 
+	public static Properties StartConfig;
+	
+	public static Run RunBean;
+	
+	/**master,slave,backup*/
+	public static enum NODE_TYPE{
+		master,slave,backup
+	};
 	 
 	//writer parameters
 	public static enum KEY_PARAM {
@@ -79,8 +88,8 @@ public class GlobalParam {
 	public final static String JOB_FULLINFO_PATH = "full_info"; 
 	
 	//searcher parameters
-	public static int SEARCH_MAX_WINDOW=20000; 
-	public static int SEARCH_MAX_PAGE=2000;
+	public final static int SEARCH_MAX_WINDOW=20000; 
+	public final static int SEARCH_MAX_PAGE=2000;
 	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
 	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f; 
 	public final static int FACET_DEFAULT_COUNT = 200;
