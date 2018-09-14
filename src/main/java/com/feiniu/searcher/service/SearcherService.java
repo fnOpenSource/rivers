@@ -99,20 +99,20 @@ public class SearcherService{
 
 			response.setContentType("application/json;charset=utf8");
 			response.setStatus(HttpServletResponse.SC_OK);
-
+			response.setHeader("PowerBy", "rivers"); 
 			rq.setHandled(true);
 			SearcherRequest _request = parseRequest((Object) rq);
 
 			if (GlobalParam.nodeConfig.getSearchConfigs().containsKey(
 					_request.getPipe())) {
-				SearcherState _response = null;
+				SearcherState searcherRes = null;
 				try {
-					_response = process(_request);
+					searcherRes = process(_request);
 				} catch (Exception e) {
 					Common.LOG.error("httpHandle error,",e);
 				}
-				if (_response != null)
-					response.getWriter().println(_response.toJson());
+				if (searcherRes != null)
+					response.getWriter().println(searcherRes.toJson());
 			} else {
 				response.getWriter().println("The Alias is Not Exists OR Not Start Up!");
 			}

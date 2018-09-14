@@ -1,7 +1,5 @@
 package com.feiniu.node;
 
-import java.util.List;
-
 import org.apache.commons.net.telnet.TelnetClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,24 +7,27 @@ import org.springframework.stereotype.Component;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.node.startup.Run;
 import com.feiniu.util.Common;
-import com.feiniu.util.ZKUtil;
 
 @Component
 public class RecoverMonitor {
 	@Autowired
 	private Run RIVERS;
 	
+	private String takeIp;
+	
 	public void start() {
+		Common.LOG.info("Start Recover Monitor Service!");
 		while(true) {
 			try {
-				List<String> childrenList = ZKUtil.getZk().getChildren(GlobalParam.CONFIG_PATH+"/RIVER_NODES", true);
+				String[] monitor_ips = GlobalParam.StartConfig.getProperty("monitor_ip").split(",");
 				TelnetClient client = new TelnetClient(); 
 				client.setDefaultTimeout(2000); 
-				for(String ip:childrenList) {
+				for(String ip:monitor_ips) {
 					try { 
 						client.connect(ip, 8617); 
 					} catch (Exception e) {
-						takeOverNode(ip);
+						this.takeIp = ip;
+						takeOverNode();
 						return;
 					}
 				}
@@ -37,31 +38,35 @@ public class RecoverMonitor {
 		} 
 	} 
 	
-	private void returnNode(String ip) {
+	private void returnNode() {
 		TelnetClient client = new TelnetClient(); 
 		client.setDefaultTimeout(2000); 
 		while(true) {
 			try {
 				try { 
-					client.connect(ip, 8617); 
-					Common.LOG.info(GlobalParam.IP+"has return Node "+ip);
-					Common.restartNode();
+					client.connect(this.takeIp, 8617); 
+					Common.LOG.info("start restart and return Node "+this.takeIp);
+					Common.runShell(GlobalParam.StartConfig.getProperty("restart_shell"));
+					return;
 				} catch (Exception e) { 
-					Thread.sleep(5000);
-					continue;
+					Thread.sleep(5000); 
 				} 
 			}catch (Exception e) {
-				continue;
+				Common.LOG.error("returnNode Exception",e);
 			}  
 		}
 	}
 	
-	private void takeOverNode(String ip) {
-		returnNode(ip);
-		RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+ip+"/configs",true); 
+	private void takeOverNode() { 
+		RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+this.takeIp+"/configs",true); 
 		RIVERS.init();
 		RIVERS.startService();
-		Common.LOG.info(GlobalParam.IP+" has take Over Node "+ip);
+		Common.LOG.info(GlobalParam.IP+" has take Over Node "+this.takeIp);
+		new Thread() {
+			public void run() {
+				returnNode();
+			}
+		}.run();
 	} 
 
 }

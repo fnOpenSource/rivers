@@ -469,7 +469,13 @@ public final class NodeMonitor {
 		if (rq.getParameter("instance").length() > 1) {
 			controlThreadState(rq.getParameter("instance"), 0);
 			int type = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getIndexType();
-			String configString = type > 0 ? rq.getParameter("instance") + ":" + type : rq.getParameter("instance");
+			String configString = rq.getParameter("instance");
+			if(type>0) {
+				configString = rq.getParameter("instance") + ":" + type;
+			}else {
+				if(!GlobalParam.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance")))
+					setResponse(0, rq.getParameter("instance") + " not exists!");
+			}
 			if (rq.getParameter("reset") != null && rq.getParameter("reset").equals("true")
 					&& rq.getParameter("instance").length() > 2) {
 				GlobalParam.nodeConfig.loadConfig(configString, true);
@@ -481,7 +487,7 @@ public final class NodeMonitor {
 				GlobalParam.nodeConfig.getSearchConfigs().remove(alias);
 				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "",true);
 				GlobalParam.nodeConfig.loadConfig(configString, false);
-			}
+			}  
 			startIndex(configString);
 			controlThreadState(rq.getParameter("instance"), 1);
 			setResponse(1, rq.getParameter("instance") + " reload Config Success!");

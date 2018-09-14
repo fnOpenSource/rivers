@@ -1,6 +1,5 @@
 package com.feiniu.util;
 
-import java.io.DataOutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
@@ -24,8 +23,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.InstructionTree;
 import com.feiniu.model.param.WarehouseParam;
@@ -457,15 +456,18 @@ public class Common {
 		return res;
 	}
 	
-	public static void restartNode() { 
-		try {
-			Process proc = Runtime.getRuntime().exec("su");  
-	        DataOutputStream os = new DataOutputStream(proc.getOutputStream());  
-	        os.writeBytes("sh " + GlobalParam.StartConfig.getProperty("restart_shell") + "\n");    
-	        os.writeBytes("exit\n");  
-	        os.flush();  
+	public static void runShell(String path) { 
+		Process  pc = null;
+		try { 
+			LOG.info("Start Run Script "+path);
+			pc = Runtime.getRuntime().exec(path);
+			pc.waitFor();
 		} catch (Exception e) {
 			LOG.error("restartNode Exception",e);
+		}finally {
+			if(pc != null){
+				pc.destroy();
+            }
 		}
-	}
+	} 
 }

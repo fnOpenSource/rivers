@@ -1,6 +1,5 @@
 package com.feiniu.node.startup;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -14,6 +13,7 @@ import org.wltea.analyzer.cfg.Configuration;
 import org.wltea.analyzer.dic.Dictionary;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.NODE_TYPE;
 import com.feiniu.config.InstanceConfig;
@@ -75,17 +75,15 @@ public final class Run {
 		GlobalParam.SOCKET_CENTER = socketCenter;
 		GlobalParam.TASKMANAGER = taskManager;
 		GlobalParam.VERSION = version;
-		GlobalParam.nodeMonitor = nodeMonitor; 
+		GlobalParam.nodeMonitor = nodeMonitor;  
 		GlobalParam.POOL_SIZE = Integer.parseInt(GlobalParam.StartConfig.getProperty("pool_size"));
 		GlobalParam.WRITE_BATCH = GlobalParam.StartConfig.getProperty("write_batch").equals("false") ? false
 				: true; 
 
-		GlobalParam.nodeConfig = NodeConfig.getInstance(String.valueOf(GlobalParam.StartConfig.get("instances")),
-				String.valueOf(GlobalParam.StartConfig.get("pond")),
-				String.valueOf(GlobalParam.StartConfig.get("instructions")));
-		GlobalParam.nodeConfig.init();
-		ZKUtil.setData(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs",
-				JSON.toJSONString(GlobalParam.StartConfig));
+		GlobalParam.nodeConfig = NodeConfig.getInstance(GlobalParam.StartConfig.getProperty("instances"),
+				GlobalParam.StartConfig.getProperty("pond"),
+				GlobalParam.StartConfig.getProperty("instructions"));
+		GlobalParam.nodeConfig.init(); 
 
 		GlobalParam.SERVICE_LEVEL = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 
@@ -111,13 +109,16 @@ public final class Run {
 	}
 
 	public void loadGlobalConfig(String path,boolean fromZk) {
-		try {
+		try { 
 			GlobalParam.StartConfig = new Properties();
-			if(fromZk) {
-				GlobalParam.StartConfig.load(new ByteArrayInputStream(ZKUtil.getData(path, false)));
+			if(fromZk) { 
+				JSONObject _JO = (JSONObject) JSON.parse(ZKUtil.getData(path, false)); 
+			    for(Map.Entry<String, Object> row : _JO.entrySet()){ 
+			    	 GlobalParam.StartConfig.setProperty(row.getKey(), String.valueOf(row.getValue()));
+			    } 
 			}else { 
 				String replaceStr = System.getProperties().getProperty("os.name").toUpperCase().indexOf("WINDOWS")==-1?"file:":"file:/";
-				try(FileInputStream in = new FileInputStream(path.replace(replaceStr, ""))) {
+				try(FileInputStream in = new FileInputStream(path.replace(replaceStr, ""))) { 
 					GlobalParam.StartConfig.load(in);
 				}catch (Exception e) {
 					Common.LOG.error("load Global Properties file Exception", e);
@@ -133,9 +134,11 @@ public final class Run {
 	private void start() {
 		loadGlobalConfig(this.startConfigPath,false);
 		environmentCheck();
-		if (GlobalParam.StartConfig.get("node_type").equals(NODE_TYPE.backup.name())) {
+		if (GlobalParam.StartConfig.containsKey("node_type") && GlobalParam.StartConfig.get("node_type").equals(NODE_TYPE.backup.name())) {
 			recoverMonitor.start();
 		} else {
+			ZKUtil.setData(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs",
+					JSON.toJSONString(GlobalParam.StartConfig));
 			init();
 			startService();
 		}

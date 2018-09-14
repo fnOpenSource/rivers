@@ -53,9 +53,9 @@ public class NodeConfig {
 	public void loadConfig(String instances,boolean reset){
 		if(reset){
 			this.instanceConfigs = new HashMap<String, InstanceConfig>();
-		} 
-		parsePondFile(GlobalParam.CONFIG_PATH + "/" +  this.pondFile);
-		parseInstructionsFile(GlobalParam.CONFIG_PATH + "/" +  this.instructionsFile); 
+			parsePondFile(GlobalParam.CONFIG_PATH + "/" +  this.pondFile);
+			parseInstructionsFile(GlobalParam.CONFIG_PATH + "/" +  this.instructionsFile); 
+		}  
 		if(instances.trim().length()<1)
 			return;
 		for(String inst : instances.split(",")){

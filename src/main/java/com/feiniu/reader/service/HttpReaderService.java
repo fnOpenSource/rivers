@@ -70,7 +70,7 @@ public class HttpReaderService {
 		public void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) {
 			response.setContentType("application/json;charset=utf8");
 			response.setStatus(HttpServletResponse.SC_OK);
-
+			response.setHeader("PowerBy", "rivers");  
 			Request rq = (request instanceof Request) ? (Request) request
 					: HttpConnection.getCurrentConnection().getRequest();
 

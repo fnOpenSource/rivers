@@ -37,22 +37,23 @@ public class HttpService implements FNService {
 		QueuedThreadPool threadPool = new QueuedThreadPool();
 		threadPool.setMaxThreads(Integer.valueOf((String) serviceParams
 				.get("thread_pool")));
+		threadPool.setMaxIdleTimeMs(30000);
 		server.setThreadPool(threadPool);
+		
+		SelectChannelConnector channelConnector = new SelectChannelConnector();
+		channelConnector.setPort(Integer.valueOf(String.valueOf(this.serviceParams
+				.get("port"))));
+		channelConnector.setMaxIdleTime(Integer.valueOf(String.valueOf(this.serviceParams
+				.get("max_idle_time"))));
+		channelConnector.setConfidentialPort(Integer
+				.valueOf(String.valueOf(this.serviceParams
+						.get("confident_port")))); 
+		server.addConnector(channelConnector);
 
-		SelectChannelConnector select_connector = new SelectChannelConnector();
-		select_connector.setPort(Integer.valueOf((String) this.serviceParams
-				.get("port")));
-		select_connector.setMaxIdleTime(Integer.valueOf((String) this.serviceParams
-				.get("max_idle_time")));
-		select_connector.setConfidentialPort(Integer
-				.valueOf((String) this.serviceParams
-						.get("confident_port")));
-		server.addConnector(select_connector);
-
-		Handler shandle = (Handler) this.serviceParams.get("httpHandle");
-		HandlerCollection handlers = new HandlerCollection();
-		handlers.setHandlers(new Handler[] { shandle });
-		server.setHandler(handlers);
+		Handler handler = (Handler) this.serviceParams.get("httpHandle");
+		HandlerCollection handlerC = new HandlerCollection();
+		handlerC.setHandlers(new Handler[] { handler });
+		server.setHandler(handlerC);
 
 		server.setStopAtShutdown(true);
 		server.setSendServerVersion(true);
