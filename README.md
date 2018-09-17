@@ -12,5 +12,8 @@
 数据交换的任务中常见的需求，比如定时增量全量导入、数据简单转化、数据简单检索需求、分布式数据处理以及小范围的搜索需求等。
 Rivers正是为了解决这些问题而生。 
 
-
+# Rivers版本
+$ version 3.1
+$ Java>=1.8
+$ ES=2.3.3(ES版本若高于此，可自行开发ES连接器进行升级)
 ==>>[详细文档参照wiki](https://github.com/fnOpenSource/rivers/wiki)  
