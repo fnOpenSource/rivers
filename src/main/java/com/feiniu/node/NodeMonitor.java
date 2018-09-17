@@ -485,8 +485,8 @@ public final class NodeMonitor {
 				freeInstanceConnectPool(rq.getParameter("instance"));
 				String alias = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
 				GlobalParam.nodeConfig.getSearchConfigs().remove(alias);
-				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "",true);
 				GlobalParam.nodeConfig.loadConfig(configString, false);
+				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "",true); 
 			}  
 			startIndex(configString);
 			controlThreadState(rq.getParameter("instance"), 1);
@@ -653,7 +653,13 @@ public final class NodeMonitor {
 		if (dataMap == null) {
 			dataMap = GlobalParam.nodeConfig.getSqlParamMap().get(instanceConfig.getPipeParam().getDataFrom());
 		}
-		String[] seqs = dataMap.getSeq(); 
+		String[] seqs; 
+		if(dataMap==null) {
+			seqs = new String[] {}; 
+		}else {
+			seqs = dataMap.getSeq(); 
+		}
+		
 		if (seqs.length == 0) {
 			seqs = new String[1];
 			seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;

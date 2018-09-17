@@ -68,7 +68,7 @@ public final class Run {
 		Dictionary.initial(new Configuration(dictionaryPath));
 	} 
 	
-	public void init() {
+	public void init(boolean initInstance) {
 		GlobalParam.run_environment = String.valueOf(GlobalParam.StartConfig.get("run_environment"));
 		GlobalParam.mailSender = mailSender;
 		GlobalParam.tasks = new HashMap<String, FlowTask>();
@@ -79,20 +79,21 @@ public final class Run {
 		GlobalParam.POOL_SIZE = Integer.parseInt(GlobalParam.StartConfig.getProperty("pool_size"));
 		GlobalParam.WRITE_BATCH = GlobalParam.StartConfig.getProperty("write_batch").equals("false") ? false
 				: true; 
-
-		GlobalParam.nodeConfig = NodeConfig.getInstance(GlobalParam.StartConfig.getProperty("instances"),
-				GlobalParam.StartConfig.getProperty("pond"),
-				GlobalParam.StartConfig.getProperty("instructions"));
-		GlobalParam.nodeConfig.init(); 
-
 		GlobalParam.SERVICE_LEVEL = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
-
-		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
-		for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
-			InstanceConfig instanceConfig = entry.getValue();
-			if (instanceConfig.checkStatus())
-				initParams(instanceConfig);
-		}
+		if(initInstance) {
+			ZKUtil.setData(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs",
+					JSON.toJSONString(GlobalParam.StartConfig)); 
+			GlobalParam.nodeConfig = NodeConfig.getInstance(GlobalParam.StartConfig.getProperty("instances"),
+					GlobalParam.StartConfig.getProperty("pond"),
+					GlobalParam.StartConfig.getProperty("instructions"));
+			GlobalParam.nodeConfig.init();  
+			Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+			for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
+				InstanceConfig instanceConfig = entry.getValue();
+				if (instanceConfig.checkStatus())
+					initParams(instanceConfig);
+			}
+		} 
 	}
 
 	public void startService() {
@@ -135,13 +136,12 @@ public final class Run {
 		loadGlobalConfig(this.startConfigPath,false);
 		environmentCheck();
 		if (GlobalParam.StartConfig.containsKey("node_type") && GlobalParam.StartConfig.get("node_type").equals(NODE_TYPE.backup.name())) {
-			recoverMonitor.start();
+			init(false);
+			recoverMonitor.start(); 
 		} else {
-			ZKUtil.setData(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs",
-					JSON.toJSONString(GlobalParam.StartConfig));
-			init();
+			init(true); 
 			startService();
-		}
+		} 
 	}
 
 	private void environmentCheck() {

@@ -59,7 +59,7 @@ public class RecoverMonitor {
 	
 	private void takeOverNode() { 
 		RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+this.takeIp+"/configs",true); 
-		RIVERS.init();
+		RIVERS.init(true);
 		RIVERS.startService();
 		Common.LOG.info(GlobalParam.IP+" has take Over Node "+this.takeIp);
 		new Thread() {
@@ -67,6 +67,5 @@ public class RecoverMonitor {
 				returnNode();
 			}
 		}.run();
-	} 
-
+	}  
 }

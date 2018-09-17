@@ -20,5 +20,5 @@ public interface Flow {
 	
 	public boolean ISLINK();  
 
-	public void REALEASE(boolean isMonopoly,boolean releaseConn); 
+	public void REALEASE(boolean isMonopoly,boolean releaseConn);  
 }

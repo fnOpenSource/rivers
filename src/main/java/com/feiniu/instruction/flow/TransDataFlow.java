@@ -148,8 +148,7 @@ public final class TransDataFlow extends Instruction{
 			}  
 		}else {
 			rstate.setStatus(false);
-		}
-		getReader().freeJobPage();
+		} 
 		return rstate;
 	}  
 	
@@ -283,9 +282,14 @@ public final class TransDataFlow extends Instruction{
 						this.scanHandler.Handle("",param); 
 					//control  repeat with time job 
 				do {
-					List<String> pageList = getReader().getPageSplit(param);
 					HashMap<String, String> sqlParams;
 					GlobalParam.FLOW_INFOS.get(instanceName,desc).put(instanceName + tseq, "start count page...");
+					
+					getReader().lock.lock();
+					List<String> pageList = getReader().getPageSplit(param);
+					getReader().lock.unlock(); 
+					if(pageList==null)
+						throw new FNException("read data get page split exception!");
 					if (pageList.size() > 0) {
 						log.info(Common.formatLog("Start " + desc, destName, storeId, tseq, "", maxId, READER_LAST_STAMP, 0, "start",
 								",totalpage:" + pageList.size()));
@@ -311,11 +315,15 @@ public final class TransDataFlow extends Instruction{
 										READER_LAST_STAMP, Common.getNow() - start, "complete", ""));
 								break;
 							} else {
+								getReader().lock.lock();
+								HashMap<String, Object> _pagedata = getSqlPageData(sql, incrementField, keyColumn);
+								getReader().lock.unlock();
 								rState = writeDataSet(desc, writeTo, storeId, tseq,
-										getSqlPageData(sql, incrementField, keyColumn),
+										_pagedata,
 										",process:" + processPos + "/" + pageList.size(), isUpdate,false); 
+								getReader().freeJobPage();
 								if(rState.isStatus()==false)
-									break;
+									throw new FNException("read data exception!");
 								total += rState.getCount();
 								startId = maxId;
 							}

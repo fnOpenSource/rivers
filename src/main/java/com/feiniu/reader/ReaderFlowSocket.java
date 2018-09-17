@@ -4,8 +4,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.concurrent.NotThreadSafe;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +20,7 @@ import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
+@NotThreadSafe
 public class ReaderFlowSocket<T> implements Flow{ 
 	
 	protected HashMap<String, Object> connectParams;
@@ -27,7 +31,7 @@ public class ReaderFlowSocket<T> implements Flow{
 	
 	protected LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>(); 
 	
-	protected AtomicBoolean isLocked = new AtomicBoolean(false); 
+	public final Lock lock = new ReentrantLock();
 	
 	protected FnConnection<?> FC;
 	
@@ -96,7 +100,6 @@ public class ReaderFlowSocket<T> implements Flow{
 	}
 	
 	public void freeJobPage() {
-		this.isLocked.set(false);
 		this.jobPage.clear(); 
 		this.datas.clear();  
 	} 

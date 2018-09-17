@@ -53,15 +53,7 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
  
 	@Override
 	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
-		try {
-			while (isLocked.get()) {
-				Thread.sleep(1000);
-			}
-		} catch (Exception e) {
-			log.error("getJobPage Thread Exception",e);
-			return null;
-		}
-		isLocked.set(true);
+	 
 		PREPARE(false,false);
 		this.jobPage.clear();
 		boolean releaseConn = false;

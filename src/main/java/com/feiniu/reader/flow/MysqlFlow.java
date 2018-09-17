@@ -32,13 +32,6 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
  
 	@Override
 	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
-		try {
-			while (isLocked.get()) {
-				Thread.sleep(1000);
-			}
-		} catch (Exception e) {
-		} 
-		isLocked.set(true); 
 		this.jobPage.clear(); 
 		this.jobPage.put(GlobalParam.READER_STATUS,true);
 		boolean releaseConn = false;
@@ -140,9 +133,11 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			}
 			Collections.reverse(page);  
 		}catch(SQLException e){
+			page = null;
 			log.error("getJobPage SQLException "+sql, e);
 		}catch (Exception e) {
 			releaseConn = true;
+			page = null;
 			log.error("getJobPage Exception so free connection,details ", e);
 		}finally{ 
 			try {
