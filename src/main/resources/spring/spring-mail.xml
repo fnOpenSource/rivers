@@ -17,8 +17,6 @@
 		http://www.springframework.org/schema/hadoop
 		http://www.springframework.org/schema/hadoop/spring-hadoop-2.0.xsd"> 
  
-   	<util:properties id="mailConfig" location="#{riverPathConfig['config.path']}/config/mailConfig.properties" />
-  	 
     <bean id="mailConfigBean" class="org.springframework.beans.factory.config.PropertiesFactoryBean">  
         <property name="ignoreResourceNotFound" value="true" />
         <property name="locations">  
@@ -29,12 +27,12 @@
     </bean> 
   
     <bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">  
-       <property name="host"  value="#{mailConfig['mail.host']}" />  
-       <property name="port" value="#{mailConfig['mail.port']}" /> 
-       <property name="protocol" value="#{mailConfig['mail.protocol']}" />   
-       <property name="username" value="#{mailConfig['mail.username']}" />
-       <property name="password" value="#{mailConfig['mail.password']}" />  
-       <property name="defaultEncoding" value="#{mailConfig['mail.defaultEncoding']}" />
+       <property name="host"  value="#{mailConfigBean['mail.host']}" />  
+       <property name="port" value="#{mailConfigBean['mail.port']}" /> 
+       <property name="protocol" value="#{mailConfigBean['mail.protocol']}" />   
+       <property name="username" value="#{mailConfigBean['mail.username']}" />
+       <property name="password" value="#{mailConfigBean['mail.password']}" />  
+       <property name="defaultEncoding" value="#{mailConfigBean['mail.defaultEncoding']}" />
        <property name="javaMailProperties">
            <props>    
                <prop key="mail.smtp.auth" >false</prop>
@@ -53,28 +51,28 @@
    </bean> 
     
    <bean id="emailModel" class="com.feiniu.util.email.EmailModel">  
-	   <constructor-arg type="String" index="0"  value="#{mailConfig['mail.From']}" />
-	   <constructor-arg type="String" index="1"  value="#{mailConfig['mail.Address']}" />
-	   <constructor-arg type="String" index="2"  value="#{mailConfig['mail.Bcc']}" />
-	   <constructor-arg type="String" index="3"  value="#{mailConfig['mail.Cc']}" />
-	   <constructor-arg type="String" index="4"  value="#{mailConfig['mail.Subject']}" />
-	   <constructor-arg type="String" index="5"  value="#{mailConfig['mail.Content']}" />
+	   <constructor-arg type="String" index="0"  value="#{mailConfigBean['mail.From']}" />
+	   <constructor-arg type="String" index="1"  value="#{mailConfigBean['mail.Address']}" />
+	   <constructor-arg type="String" index="2"  value="#{mailConfigBean['mail.Bcc']}" />
+	   <constructor-arg type="String" index="3"  value="#{mailConfigBean['mail.Cc']}" />
+	   <constructor-arg type="String" index="4"  value="#{mailConfigBean['mail.Subject']}" />
+	   <constructor-arg type="String" index="5"  value="#{mailConfigBean['mail.Content']}" />
    </bean> 
 
    
    <bean id="javaxEmailBean" class="com.feiniu.util.email.EmailConfig">  
-   <constructor-arg type="String" index="0"  value="#{mailConfig['mail.host']}" />
-	   <constructor-arg type="String" index="1"  value="#{mailConfig['mail.From']}" />
-	   <constructor-arg type="String" index="2"  value="#{mailConfig['mail.FromName']}" />
-	   <constructor-arg type="String" index="3"  value="#{mailConfig['mail.Address']}" />
-	   <constructor-arg type="String" index="4"  value="#{mailConfig['mail.Cc']}" />
-	   <constructor-arg type="String" index="5"  value="#{mailConfig['mail.username']}" />
-	   <constructor-arg type="String" index="6"  value="#{mailConfig['mail.password']}" />
-	   <constructor-arg type="String" index="7"  value="#{mailConfig['mail.Subject']}" />
-	   <constructor-arg type="String" index="8"  value="#{mailConfig['mail.Content']}" />
+   <constructor-arg type="String" index="0"  value="#{mailConfigBean['mail.host']}" />
+	   <constructor-arg type="String" index="1"  value="#{mailConfigBean['mail.From']}" />
+	   <constructor-arg type="String" index="2"  value="#{mailConfigBean['mail.FromName']}" />
+	   <constructor-arg type="String" index="3"  value="#{mailConfigBean['mail.Address']}" />
+	   <constructor-arg type="String" index="4"  value="#{mailConfigBean['mail.Cc']}" />
+	   <constructor-arg type="String" index="5"  value="#{mailConfigBean['mail.username']}" />
+	   <constructor-arg type="String" index="6"  value="#{mailConfigBean['mail.password']}" />
+	   <constructor-arg type="String" index="7"  value="#{mailConfigBean['mail.Subject']}" />
+	   <constructor-arg type="String" index="8"  value="#{mailConfigBean['mail.Content']}" />
    </bean> 
    <bean id="mailService" class="com.feiniu.util.email.MailServiceImpl">
-	   <constructor-arg type="boolean" index="0"  value="#{mailConfig['mail.sendModel.syncMode']}" />
-	   <property name="syncMode" value="#{mailConfig['mail.sendModel.syncMode']}"  />
+	   <constructor-arg type="boolean" index="0"  value="#{mailConfigBean['mail.sendModel.syncMode']}" />
+	   <property name="syncMode" value="#{mailConfigBean['mail.sendModel.syncMode']}"  />
    </bean>  
 </beans>
