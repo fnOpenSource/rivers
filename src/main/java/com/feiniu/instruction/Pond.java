@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.STATUS;
+import com.feiniu.util.Common;
 
 public class Pond extends Instruction {
 
@@ -89,20 +91,23 @@ public class Pond extends Instruction {
 		String removeId = ""; 
 		String mainName = (String) args[0]; 
 		String storeId = (String) args[1]; 
-		int waittime=0;
-		while ((GlobalParam.FLOW_STATUS.get(mainName,"").get() & 2) > 0) {
-			try {
-				waittime++;
-				Thread.sleep(2000);
-				if (waittime > 10) {
-					GlobalParam.FLOW_STATUS.get(mainName,"").set(4);
-					Thread.sleep(10000);
+		int waittime=0; 
+		if(Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Running)) {
+			Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination);
+			while (!Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready)) {
+				try {
+					waittime++;
+					Thread.sleep(2000);
+					if (waittime > 10) {
+						
+						Thread.sleep(10000);
+					}
+				} catch (InterruptedException e) {
+					log.error("currentThreadState InterruptedException", e);
 				}
-			} catch (InterruptedException e) {
-				log.error("currentThreadState InterruptedException", e);
-			}
+			}  
 		} 
-		GlobalParam.FLOW_STATUS.get(mainName,"").set(0);
+		Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination); 
 		context.getWriter().PREPARE(false, false); 
 		if (context.getWriter().ISLINK()) {
 			try {
@@ -118,8 +123,8 @@ public class Pond extends Instruction {
 				return true;
 			} catch (Exception e) {
 				log.error("switchInstance Exception", e);
-			} finally {
-				GlobalParam.FLOW_STATUS.get(mainName,"").set(1);
+			} finally { 
+				Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready);
 				context.getWriter().REALEASE(false,true);
 				context.getWriter().freeConnPool();
 			}

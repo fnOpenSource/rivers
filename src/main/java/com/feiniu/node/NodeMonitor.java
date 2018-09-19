@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSON;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
+import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
@@ -360,7 +361,9 @@ public final class NodeMonitor {
 							+ GlobalParam.FLOW_INFOS.get(instance,JOB_TYPE.INCREMENT.name()));
 				}
 				sb.append(",[增量线程状态] ");
-				sb.append(threadStateInfo(instance));
+				sb.append(threadStateInfo(instance,GlobalParam.JOB_TYPE.INCREMENT.name()));
+				sb.append(",[全量线程状态] ");
+				sb.append(threadStateInfo(instance,GlobalParam.JOB_TYPE.FULL.name()));
 			}  
 			setResponse(1, sb.toString());
 		}
@@ -439,7 +442,7 @@ public final class NodeMonitor {
 
 	public void removeInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), 0);
+			controlThreadState(rq.getParameter("instance"), STATUS.Stop);
 			GlobalParam.TASKMANAGER.removeInstance(rq.getParameter("instance"));
 			setResponse(1, "Writer " + rq.getParameter("instance") + " job have removed!");
 		} else {
@@ -449,7 +452,7 @@ public final class NodeMonitor {
 
 	public void stopInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), 0);
+			controlThreadState(rq.getParameter("instance"), STATUS.Stop);
 			setResponse(1, "Writer " + rq.getParameter("instance") + " job have stopped!");
 		} else {
 			setResponse(0, "Writer " + rq.getParameter("instance") + " stop error,index parameter not set!");
@@ -458,7 +461,7 @@ public final class NodeMonitor {
 
 	public void resumeInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), 1);
+			controlThreadState(rq.getParameter("instance"), STATUS.Ready);
 			setResponse(1, "Writer " + rq.getParameter("instance") + " job have resumed!");
 		} else {
 			setResponse(0, "Writer " + rq.getParameter("instance") + " resume error,index parameter not set!");
@@ -467,7 +470,7 @@ public final class NodeMonitor {
 
 	public void reloadConfig(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), 0);
+			controlThreadState(rq.getParameter("instance"), STATUS.Stop);
 			int type = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getIndexType();
 			String configString = rq.getParameter("instance");
 			if(type>0) {
@@ -489,7 +492,7 @@ public final class NodeMonitor {
 				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "",true); 
 			}  
 			startIndex(configString);
-			controlThreadState(rq.getParameter("instance"), 1);
+			controlThreadState(rq.getParameter("instance"), STATUS.Ready);
 			setResponse(1, rq.getParameter("instance") + " reload Config Success!");
 		} else {
 			setResponse(0, rq.getParameter("instance") + " not exists!");
@@ -519,14 +522,14 @@ public final class NodeMonitor {
 					seqs = new String[1];
 					seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;
 				}
-				for (String seq : seqs) { 
-					GlobalParam.LAST_UPDATE_TIME.set(instance,seq,"0");
-					GlobalParam.FLOW_STATUS.get(instance,seq).set(0);
+				controlThreadState(instance, STATUS.Stop);
+				for (String seq : seqs) {  
+					GlobalParam.LAST_UPDATE_TIME.set(instance,seq,"0"); 
 					WarehouseNosqlParam param = GlobalParam.nodeConfig.getNoSqlParamMap()
 							.get(instanceConfig.getPipeParam().getWriteTo());
-					state = state && deleteAction(param, instanceConfig, instance,seq);
-					GlobalParam.FLOW_STATUS.get(instance,seq).set(1);
+					state = state && deleteAction(param, instanceConfig, instance,seq); 
 				}
+				controlThreadState(instance, STATUS.Ready);
 			}
 		}
 		if (state) {
@@ -594,53 +597,52 @@ public final class NodeMonitor {
 	 * @param instance multi-instances seperate with ","
 	 * @param state
 	 */
-	private void controlThreadState(String instance, Integer state) {
+	private void controlThreadState(String instance, STATUS state) {
 		if((GlobalParam.SERVICE_LEVEL&6)==0) {
 			return;
 		}
 		
 		for (String inst : instance.split(",")) {
-			if (state == 0) {
-				Common.LOG.info("Instance " + inst + " waitting to stop..."); 
-			}else {
-				Common.LOG.info("Instance " + inst + " waitting set state "+state+" ..."); 
-			}
+			Common.LOG.info("Instance " + inst + " waitting set state "+state+" ..."); 
 			int waittime = 0; 
 			String[] seqs = getInstanceSeqs(instance);
 			for (String seq : seqs) { 
-				while ((GlobalParam.FLOW_STATUS.get(inst,seq).get() & 2) > 0) {
-					try {
-						waittime++;
-						Thread.sleep(3000);
-						if (waittime > 5) {
-							GlobalParam.FLOW_STATUS.get(inst,seq).set(4);
+				if(Common.checkFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Running)) {
+					Common.setFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination);
+					while (!Common.checkFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready)) {
+						try {
+							waittime++;
+							Thread.sleep(300);
+							if (waittime > 200) {
+								break;
+							}
+						} catch (InterruptedException e) {
+							Common.LOG.error("currentThreadState InterruptedException", e);
 						}
-					} catch (InterruptedException e) {
-						Common.LOG.error("currentThreadState InterruptedException", e);
-					}
-				}
-				GlobalParam.FLOW_STATUS.get(inst,seq).set(state);
-				if (state == 0) {
-					Common.LOG.info("Instance " + inst + " success stop!");
-				}else {
-					Common.LOG.info("Instance " + inst + " success set state "+state);
+					} 
 				} 
+				Common.setFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination); 
+				if(Common.setFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Termination,state)) {
+					Common.LOG.info("Instance " + inst + " success set state "+state); 
+				}else {
+					Common.LOG.info("Instance " + inst + " fail set state "+state);
+				}				
 			}
 		}
 	}
 	
-	private String threadStateInfo(String instance) {
+	private String threadStateInfo(String instance,String tag) {
 		String[] seqs = getInstanceSeqs(instance);
 		StringBuffer sb = new StringBuffer();
 		for (String seq : seqs) { 
 			sb.append(seq+":");
-			if(GlobalParam.FLOW_STATUS.get(instance,seq).get()==0)
+			if(Common.checkFlowStatus(instance,seq,tag,STATUS.Stop))
 				sb.append("Stop,");  
-			if((GlobalParam.FLOW_STATUS.get(instance,seq).get()&1)>0)
+			if(Common.checkFlowStatus(instance,seq,tag,STATUS.Ready))
 				sb.append("Ready,"); 
-			if((GlobalParam.FLOW_STATUS.get(instance,seq).get()&2)>0)
+			if(Common.checkFlowStatus(instance,seq,tag,STATUS.Running))
 				sb.append("Running,"); 
-			if((GlobalParam.FLOW_STATUS.get(instance,seq).get()&4)>0)
+			if(Common.checkFlowStatus(instance,seq,tag,STATUS.Termination))
 				sb.append("Termination,");  
 			sb.append(" ;");
 		}

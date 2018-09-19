@@ -171,8 +171,9 @@ public final class Run {
 	private void initParams(InstanceConfig instanceConfig) {
 		String instance = instanceConfig.getName();
 		String[] seqs = Common.getSeqs(instanceConfig, true);
-		for (String seq : seqs) {
-			GlobalParam.FLOW_STATUS.set(instance, seq, new AtomicInteger(1));
+		for (String seq : seqs) { 
+			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.FULL.name(), new AtomicInteger(1));
+			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1));
 			GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
 		}
 	}

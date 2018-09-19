@@ -4,12 +4,11 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.model.param.InstructionParam;
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
@@ -20,9 +19,8 @@ import com.feiniu.util.Common;
  * @author chengwen
  * @version 1.0 
  */
-public class TaskManager{
-	private final static Logger log = LoggerFactory
-			.getLogger(TaskManager.class); 
+public class TaskManager{ 
+	
 	@Autowired
 	private TaskJobCenter taskJobCenter; 
 	
@@ -62,11 +60,18 @@ public class TaskManager{
 			for (String seq : seqs) {
 				if (seq == null)
 					continue;
-				if ((GlobalParam.FLOW_STATUS.get(instanceName, seq).get() & 1) > 0)
-					state = jobAction(Common.getInstanceName(instanceName, seq), type, "run") && state;
+				
+				if(GlobalParam.JOB_TYPE.FULL.name().equals(type.toUpperCase())) {
+					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Ready))
+						state = jobAction(Common.getInstanceName(instanceName, seq), GlobalParam.JOB_TYPE.FULL.name(), "run") && state;
+				}else {
+					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready))
+						state = jobAction(Common.getInstanceName(instanceName, seq), GlobalParam.JOB_TYPE.INCREMENT.name(), "run") && state;
+				}
+				
 			}
 		} catch (Exception e) {
-			log.error("runInstanceNow "+instanceName+" Exception", e);
+			Common.LOG.error("runInstanceNow "+instanceName+" Exception", e);
 			return false;
 		}
 
@@ -93,7 +98,7 @@ public class TaskManager{
 					state = removeFlowScheduleJob(Common.getInstanceName(instanceName, seq),instanceConfig) && state;
 				}
 			}catch(Exception e){
-				log.error("remove Instance "+instanceName+" Exception", e);
+				Common.LOG.error("remove Instance "+instanceName+" Exception", e);
 				return false;
 			} 
 		}
@@ -119,7 +124,7 @@ public class TaskManager{
 						instanceConfig,needClear);
 			}
 		} catch (Exception e) {
-			log.error("Start Instance "+instanceName+" Exception", e);
+			Common.LOG.error("Start Instance "+instanceName+" Exception", e);
 		}
 	}
 
@@ -141,9 +146,9 @@ public class TaskManager{
 			break;
 		}
 		if(state){
-			log.info("[Job " + actype + "] Success " + jobname);
+			Common.LOG.info("Success " + actype + " Job " + jobname);
 		}else{
-			log.info("[Job " + actype + "] Failed! " + jobname);
+			Common.LOG.info("Fail " + actype + " Job " + jobname);
 		} 
 		return state;
 	} 
@@ -160,25 +165,25 @@ public class TaskManager{
 	private boolean removeFlowScheduleJob(String instance,InstanceConfig instanceConfig)throws SchedulerException {
 		boolean state = true;
 		if (instanceConfig.getPipeParam().getFullCron() != null) { 
-			state= jobAction(instance, "full", "remove") && state;
+			state= jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove") && state;
 		}
 		if(instanceConfig.getPipeParam().getFullCron() == null || instanceConfig.getPipeParam().getOptimizeCron()!=null){
-			state = jobAction(instance, "optimize", "remove") && state;
+			state = jobAction(instance, GlobalParam.JOB_TYPE.OPTIMIZE.name(), "remove") && state;
 		}
 		if(instanceConfig.getPipeParam().getDeltaCron() != null){
-			state = jobAction(instance, "increment", "remove") && state;
+			state = jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove") && state;
 		}
 		return state;
 	}
 	
 	private void createInstructionScheduleJob(InstructionParam param, InstructionTask task) {
 		JobModel _sj = new JobModel(
-				getJobName(param.getId(), "instruction"), param.getCron(),
+				getJobName(param.getId(), GlobalParam.JOB_TYPE.INSTRUCTION.name()), param.getCron(),
 				"com.feiniu.task.InstructionTask", "runInstructions", task); 
 		try {
 			taskJobCenter.addJob(_sj); 
 		}catch (Exception e) {
-			log.error("create Instruction Job "+param.getId()+" Exception", e);
+			Common.LOG.error("create Instruction Job "+param.getId()+" Exception", e);
 		} 
 	}
 
@@ -194,23 +199,23 @@ public class TaskManager{
 		
 		if (instanceConfig.getPipeParam().getFullCron() != null) { 
 			if(needclear)
-				jobAction(instance, "full", "remove"); 
+				jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove"); 
 			JobModel _sj = new JobModel(
-					getJobName(instance, "full"), instanceConfig.getPipeParam().getFullCron(),
+					getJobName(instance, GlobalParam.JOB_TYPE.FULL.name()), instanceConfig.getPipeParam().getFullCron(),
 					"com.feiniu.task.FlowTask", fullFun, task); 
 			taskJobCenter.addJob(_sj); 
 		}else if(instanceConfig.getPipeParam().getDataFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) { 
 			if(needclear)
-				jobAction(instance, "full", "remove");
+				jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove");
 			JobModel _sj = new JobModel(
-					getJobName(instance, "full"), not_run_cron,
+					getJobName(instance,GlobalParam.JOB_TYPE.FULL.name()), not_run_cron,
 					"com.feiniu.task.FlowTask", fullFun, task); 
 			taskJobCenter.addJob(_sj); 
 		}  
 		
 		if (instanceConfig.getPipeParam().getDeltaCron() != null) { 
 			if(needclear)
-				jobAction(instance, "increment", "remove");
+				jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove");
 			
 			String cron = instanceConfig.getPipeParam().getDeltaCron();
 			if(this.cron_exists.contains(cron)){
@@ -225,15 +230,15 @@ public class TaskManager{
 				this.cron_exists.add(cron);
 			}
 			JobModel _sj = new JobModel(
-					getJobName(instance, "increment"),
+					getJobName(instance, GlobalParam.JOB_TYPE.INCREMENT.name()),
 					instanceConfig.getPipeParam().getDeltaCron(), "com.feiniu.task.FlowTask",
 					incrementFun, task); 
 			taskJobCenter.addJob(_sj);
 		}else if(instanceConfig.getPipeParam().getDataFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) {
 			if(needclear)
-				jobAction(instance, "increment", "remove");
+				jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove");
 			JobModel _sj = new JobModel(
-					getJobName(instance, "increment"),
+					getJobName(instance,GlobalParam.JOB_TYPE.INCREMENT.name()),
 					not_run_cron, "com.feiniu.task.FlowTask",
 					incrementFun, task); 
 			taskJobCenter.addJob(_sj);
@@ -241,7 +246,7 @@ public class TaskManager{
 		
 		if(instanceConfig.getPipeParam().getFullCron() == null || instanceConfig.getPipeParam().getOptimizeCron()!=null){
 			if(needclear)
-				jobAction(instance, "optimize", "remove");
+				jobAction(instance,GlobalParam.JOB_TYPE.OPTIMIZE.name(), "remove");
 		
 			String cron = instanceConfig.getPipeParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):instanceConfig.getPipeParam().getOptimizeCron();
 			instanceConfig.getPipeParam().setOptimizeCron(cron);
@@ -253,20 +258,12 @@ public class TaskManager{
 	
 	private void createOptimizeJob(String indexName, FlowTask batch,String cron) throws SchedulerException{
 		JobModel _sj = new JobModel(
-				getJobName(indexName, "optimize"),cron,
+				getJobName(indexName, GlobalParam.JOB_TYPE.OPTIMIZE.name()),cron,
 				"com.feiniu.manager.Task", "optimizeInstance", batch); 
 		taskJobCenter.addJob(_sj); 
 	}
 
-	private String getJobName(String indexName, String type) {
-		if (type.equals("full")) {
-			return indexName + "_FullJob";
-		} else if (type.equals("increment")) {
-			return indexName + "_IncrementJob";
-		}else if(type.equals("instruction")){
-			return indexName + "_InstructionJob";
-		}else{
-			return indexName + "_OptimizeJob";
-		}
+	private String getJobName(String instance, String type) { 
+		return instance+"_"+type;
 	}  
 }

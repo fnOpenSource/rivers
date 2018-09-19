@@ -25,9 +25,19 @@ public class GlobalParam {
 	public static String run_environment;
 	
 	public static String VERSION;
-	/**node core writer status; 0 stop, 1 ready, 2 running, 4 Termination */
+	
+	public static enum STATUS {  
+		Blank(0),Ready(1),Running(2),Termination(4),Stop(8);
+		private int v;
+		private STATUS(int val) {   
+		    this.v = val;  
+		}
+		public int getVal() {  
+	        return v;  
+	    } 
+	} 
 	public volatile static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
-	/**FLOW_INFOS current flow runing state information*/
+	/**FLOW_INFOS store current flow running state information*/
 	public volatile static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState<HashMap<String,String>>();
 	
 	public volatile static RiverState<String> LAST_UPDATE_TIME = new RiverState<String>();
@@ -78,7 +88,7 @@ public class GlobalParam {
 	public final static String DEFAULT_FIELD = "SYSTEM_UPDATE_TIME"; 
 	public final static String DEFAULT_RESOURCE_SEQ = ""; 
 	public static enum JOB_TYPE {
-		FULL,INCREMENT
+		FULL,INCREMENT,OPTIMIZE,INSTRUCTION
 	} 
 	public static enum FLOWINFO{
 		MASTER,FULL_STATE,FULL_STOREID,INCRE_STOREID,FULL_JOBS

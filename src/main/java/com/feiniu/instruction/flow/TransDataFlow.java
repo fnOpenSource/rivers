@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
+import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.correspond.ReportStatus;
 import com.feiniu.instruction.Instruction;
@@ -310,10 +311,8 @@ public final class TransDataFlow extends Instruction{
 							sqlParams.put(GlobalParam._incrementField, incrementField);
 							String sql = buildSql(originalSql, sqlParams);
 
-							if ((GlobalParam.FLOW_STATUS.get(instanceName,DataSeq).get() & 4) > 0) {
-								log.info(Common.formatLog("kill " + desc, instanceName, storeId, tseq, String.valueOf(total), maxId,
-										READER_LAST_STAMP, Common.getNow() - start, "complete", ""));
-								break;
+							if (Common.checkFlowStatus(instanceName,DataSeq,desc,STATUS.Termination)) { 
+								throw new FNException(instanceName + " " +desc+ " job has been Terminated!");
 							} else {
 								getReader().lock.lock();
 								HashMap<String, Object> _pagedata = getSqlPageData(sql, incrementField, keyColumn);

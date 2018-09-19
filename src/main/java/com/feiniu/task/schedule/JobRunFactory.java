@@ -2,7 +2,6 @@ package com.feiniu.task.schedule;
 
 import java.lang.reflect.Method;
 
-import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -14,8 +13,7 @@ import com.feiniu.util.Common;
  * job run factory Disallow Concurrent run the same job
  * @author chengwen
  * @version 1.0 
- */
-@DisallowConcurrentExecution  
+ */  
 public class JobRunFactory implements Job {  
 	
     @Override  

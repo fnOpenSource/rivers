@@ -24,6 +24,7 @@ import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
+import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.InstructionTree;
@@ -470,4 +471,32 @@ public class Common {
             }
 		}
 	} 
+	
+	/**
+	 * 
+	 * @param instance
+	 * @param seq
+	 * @param type tag for flow status,with job_type
+	 * @param needState equal 0 no need check
+	 * @param plusState
+	 * @param removeState
+	 * @return boolean,lock status
+	 */
+	public static boolean setFlowStatus(String instance,String seq,String type,STATUS needState, STATUS setState) {
+		synchronized (GlobalParam.FLOW_STATUS.get(instance, seq, type)) {
+			if (needState.equals(STATUS.Blank) || (GlobalParam.FLOW_STATUS.get(instance, seq, type).get() == needState.getVal())) {
+				GlobalParam.FLOW_STATUS.get(instance, seq, type).set(setState.getVal()); 
+				return true;
+			} else {
+				LOG.info(instance + " " + type + " not in state "+needState.name()+"!");
+				return false;
+			}
+		}
+	}  
+	
+	public static boolean checkFlowStatus(String instance,String seq,String type,STATUS state) {
+		if((GlobalParam.FLOW_STATUS.get(instance, seq, type).get() & state.getVal())>0)
+			return true; 
+		return false;
+	}
 }

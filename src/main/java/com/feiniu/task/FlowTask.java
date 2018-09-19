@@ -1,12 +1,12 @@
 package com.feiniu.task;
 
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.node.CPU;
@@ -28,10 +28,6 @@ public class FlowTask {
 	 * seq for scan series datas
 	 */
 	private String seq = "";
-	/**
-	 * runState,1 increment running 2 full running;
-	 */
-	private AtomicInteger runState = new AtomicInteger(0);
 
 	private final static Logger log = LoggerFactory.getLogger(FlowTask.class);
 
@@ -55,19 +51,16 @@ public class FlowTask {
 	 * if no full job will auto open optimize job
 	 */
 	public void optimizeInstance() {
-		GlobalParam.FLOW_STATUS.get(instanceName, seq).set(0);
 		String storeName = Common.getInstanceName(instanceName, seq);
 		CPU.RUN(transDataFlow.getID(), "Pond", "optimizeInstance", true, storeName,
 				Common.getStoreId(instanceName, seq, transDataFlow, true, false));
-		GlobalParam.FLOW_STATUS.get(instanceName, seq).set(1);
 	}
 
 	/**
 	 * slave instance full job
 	 */
 	public void runFull() {
-		if ((this.runState.get() & 2) == 0) {
-			this.runState.getAndAdd(2);
+		if (Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Ready,STATUS.Running)) {
 			try {
 				String keepCurrentUpdateTime = GlobalParam.LAST_UPDATE_TIME.get(instanceName, seq);
 				String storeId;
@@ -84,22 +77,17 @@ public class FlowTask {
 				transDataFlow.run(instanceName, storeId, Common.getFullStartInfo(instanceName, seq), seq, true,
 						masterControl);
 				GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, keepCurrentUpdateTime);
-				GlobalParam.FLOW_STATUS.get(instanceName, seq).set(4);
 				Common.saveTaskInfo(instanceName, seq, storeId, GlobalParam.JOB_INCREMENTINFO_PATH);
 			} catch (Exception e) {
 				log.error(instanceName + " Full Exception", e);
 			} finally {
-				this.runState.getAndAdd(-2);
-				GlobalParam.FLOW_STATUS.get(instanceName, seq).set(1);
+				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Blank,STATUS.Ready);
 			}
-		} else {
-			log.info(instanceName + " full job is running, ignore this time job!");
 		}
 	}
 
 	public void runMasterFull() {
-		if ((this.runState.get() & 2) == 0) {
-			this.runState.getAndAdd(2);
+		if (Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Ready,STATUS.Running)) {
 			try {
 				String storeId = Common.getStoreId(instanceName, seq, transDataFlow, false, false);
 				if (!GlobalParam.FLOW_INFOS.containsKey(instanceName, GlobalParam.FLOWINFO.MASTER.name())) {
@@ -119,114 +107,89 @@ public class FlowTask {
 				for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
 					GlobalParam.TASKMANAGER.runInstanceNow(slave, "full");
 				}
-				GlobalParam.FLOW_STATUS.get(instanceName, seq).set(4);
 			} catch (Exception e) {
 				log.error(instanceName + " Full Exception", e);
 			} finally {
-				this.runState.getAndAdd(-2);
-				GlobalParam.FLOW_STATUS.get(instanceName, seq).set(1);
+				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Blank,STATUS.Ready);
 			}
-		} else {
-			log.info(instanceName + " full job is running, ignore this time job!");
 		}
-	}
-	
-	private static String getNextJobs(String[] nextJobs) {
-		StringBuffer sf = new StringBuffer();
-		for(String job:nextJobs) {
-			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(job);
-			if (instanceConfig.isIndexer() != false) {
-				String[] _seqs = Common.getSeqs(instanceConfig,true);   
-				for (String seq : _seqs) {
-					if (seq == null)
-						continue;
-					sf.append(Common.getInstanceName(job,seq)+" ");
-				}
-			}  
-		}
-		return sf.toString();
 	}
 
 	public void runMasterIncrement() {
-		synchronized (this.runState) {
-			if ((this.runState.get() & 1) == 0) {
-				if ((GlobalParam.FLOW_STATUS.get(instanceName, seq).get() & 1) > 0) {
-					this.runState.getAndAdd(1);
-					GlobalParam.FLOW_STATUS.get(instanceName, seq).set(3);
-					String storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, recompute);
-					if (!GlobalParam.FLOW_INFOS.containsKey(instanceName, GlobalParam.FLOWINFO.MASTER.name())) {
-						GlobalParam.FLOW_INFOS.set(instanceName, GlobalParam.FLOWINFO.MASTER.name(),
-								new HashMap<String, String>());
-					}
-					GlobalParam.FLOW_INFOS.get(instanceName, GlobalParam.FLOWINFO.MASTER.name())
-							.put(GlobalParam.FLOWINFO.INCRE_STOREID.name(), storeId);
-					try {
-						for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
-							GlobalParam.TASKMANAGER.runInstanceNow(slave, "increment");
-						}
-					}finally {
-						GlobalParam.FLOW_STATUS.get(instanceName, seq).set(1);
-						recompute = false;
-						this.runState.getAndAdd(-1);
-					} 
-				} else {
-					log.info(instanceName + " job have been stopped!startIncrement JOB failed!");
-				}
-			} else {
-				log.info(instanceName + " increment job is running, ignore this time job!");
+		if (Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready,STATUS.Running)) {
+			String storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, recompute);
+			if (!GlobalParam.FLOW_INFOS.containsKey(instanceName, GlobalParam.FLOWINFO.MASTER.name())) {
+				GlobalParam.FLOW_INFOS.set(instanceName, GlobalParam.FLOWINFO.MASTER.name(),
+						new HashMap<String, String>());
 			}
+			GlobalParam.FLOW_INFOS.get(instanceName, GlobalParam.FLOWINFO.MASTER.name())
+					.put(GlobalParam.FLOWINFO.INCRE_STOREID.name(), storeId);
+			try {
+				for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
+					GlobalParam.TASKMANAGER.runInstanceNow(slave, "increment");
+				}
+			} finally {
+				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready);  
+				recompute = false;
+			}
+		} else {
+			log.info(instanceName + " flow have been closed!startIncrement flow failed!");
 		}
-	} 
+	}
 
 	/**
 	 * slave instance increment job
 	 */
-	public void runIncrement() {
-		synchronized (this.runState) {
-			if ((this.runState.get() & 1) == 0) {
-				if ((GlobalParam.FLOW_STATUS.get(instanceName, seq).get() & 1) > 0) {
-					this.runState.getAndAdd(1);
-					GlobalParam.FLOW_STATUS.get(instanceName, seq).set(3);
-					String storeId;
-					if (masterControl) {
-						storeId = GlobalParam.FLOW_INFOS
-								.get(transDataFlow.getInstanceConfig().getPipeParam().getInstanceName(),
-										GlobalParam.FLOWINFO.MASTER.name())
-								.get(GlobalParam.FLOWINFO.INCRE_STOREID.name());
-						Common.setAndGetLastUpdateTime(instanceName, seq,storeId);
-					} else {
-						storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, recompute);
-					}
+	public void runIncrement() {  
+		if (Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready,STATUS.Running)) {
+			String storeId;
+			if (masterControl) {
+				storeId = GlobalParam.FLOW_INFOS.get(transDataFlow.getInstanceConfig().getPipeParam().getInstanceName(),
+						GlobalParam.FLOWINFO.MASTER.name()).get(GlobalParam.FLOWINFO.INCRE_STOREID.name());
+				Common.setAndGetLastUpdateTime(instanceName, seq, storeId);
+			} else {
+				storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, recompute);
+			}
 
-					String lastUpdateTime;
+			String lastUpdateTime;
+			try {
+				lastUpdateTime = transDataFlow.run(instanceName, storeId,
+						GlobalParam.LAST_UPDATE_TIME.get(instanceName, seq), seq, false, masterControl);
+				GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, lastUpdateTime);
+			} catch (Exception e) {
+				if (!masterControl && e.getMessage().equals("storeId not found")) {
+					storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, true);
 					try {
 						lastUpdateTime = transDataFlow.run(instanceName, storeId,
 								GlobalParam.LAST_UPDATE_TIME.get(instanceName, seq), seq, false, masterControl);
 						GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, lastUpdateTime);
-					} catch (Exception e) {
-						if (!masterControl && e.getMessage().equals("storeId not found")) {
-							storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, true);
-							try {
-								lastUpdateTime = transDataFlow.run(instanceName, storeId,
-										GlobalParam.LAST_UPDATE_TIME.get(instanceName, seq), seq, false, masterControl);
-								GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, lastUpdateTime);
-							} catch (Exception ex) {
-								log.error(instanceName + " Increment Exception", ex);
-							}
-						}
-						log.error(instanceName + " startIncrementJob Exception", e);
-					} finally {
-						recompute = false;
-						GlobalParam.FLOW_STATUS.get(instanceName, seq).set(1);
-						this.runState.getAndAdd(-1);
+					} catch (Exception ex) {
+						log.error(instanceName + " Increment Exception", ex);
 					}
-				} else {
-					log.info(instanceName + " job have been stopped!startIncrement JOB failed!");
 				}
-			} else {
-				log.info(instanceName + " increment job is running, ignore this time job!");
+				log.error(instanceName + " startIncrementJob Exception", e);
+			} finally {
+				recompute = false;
+				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready); 
 			}
+		} else {
+			log.info(instanceName + " flow have been closed!startIncrement flow failed!");
 		}
 	}
 
+	private static String getNextJobs(String[] nextJobs) {
+		StringBuffer sf = new StringBuffer();
+		for (String job : nextJobs) {
+			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(job);
+			if (instanceConfig.isIndexer() != false) {
+				String[] _seqs = Common.getSeqs(instanceConfig, true);
+				for (String seq : _seqs) {
+					if (seq == null)
+						continue;
+					sf.append(Common.getInstanceName(job, seq) + " ");
+				}
+			}
+		}
+		return sf.toString();
+	} 
 }
