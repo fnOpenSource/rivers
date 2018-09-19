@@ -26,7 +26,7 @@ public class TaskJobCenter{
 
 	public boolean addJob(JobModel job) throws SchedulerException {
 		if (job == null){
-			Common.LOG.error("add null Job!");
+			Common.LOG.error("Job is null nothing to add!");
 			return false;
 		} 
 
@@ -34,16 +34,14 @@ public class TaskJobCenter{
 		CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
 
 		if (trigger == null) {
-			Common.LOG.info("add Schedule Job " + job.getJobName());			
+			Common.LOG.info("Add Schedule Job " + job.getJobName());			
 			JobDetail jobDetail = JobBuilder.newJob(JobRunFactory.class).withIdentity(job.getJobName()).build();
-			jobDetail.getJobDataMap().put("scheduleJob", job);
-			Common.LOG.info(job.getJobName() + " DisallowedConcurrentExection " +  jobDetail.isConcurrentExectionDisallowed());
-
+			jobDetail.getJobDataMap().put("scheduleJob", job); 
 			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
 			trigger = TriggerBuilder.newTrigger().withIdentity(job.getJobName(),job.getJobName()).withSchedule(scheduleBuilder).build();
 			scheduler.scheduleJob(jobDetail, trigger);
 		} else {
-			Common.LOG.info("modify Schedule Job " + job.getJobName());
+			Common.LOG.info("Modify Schedule Job " + job.getJobName());
 			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
 			trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(scheduleBuilder).build();
 			scheduler.rescheduleJob(triggerKey, trigger);
@@ -56,7 +54,7 @@ public class TaskJobCenter{
 		try { 
 			scheduler.pauseJob(jobKey);
 		} catch (Exception e) {
-			Common.LOG.error("SchedulerException stop Job",e);
+			Common.LOG.error("Stop Job Exception",e);
 			return false;
 		} 	 
 		return true;
