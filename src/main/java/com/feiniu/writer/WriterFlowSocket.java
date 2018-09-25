@@ -15,7 +15,6 @@ import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 
 /**
@@ -102,7 +101,7 @@ public class WriterFlowSocket implements Flow{
 	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams,String instance, String batchId,boolean isUpdate) throws Exception {
 	}
 
-	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void delete(String instance, String storeId,String keyColumn,String keyVal) throws Exception {
 	}
   
 	public void removeInstance(String instance, String batchId) {

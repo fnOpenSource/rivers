@@ -135,7 +135,9 @@ public final class Run {
 	private void start() {
 		loadGlobalConfig(this.startConfigPath,false);
 		environmentCheck();
-		if (GlobalParam.StartConfig.containsKey("node_type") && GlobalParam.StartConfig.get("node_type").equals(NODE_TYPE.backup.name())) {
+		if(!GlobalParam.StartConfig.containsKey("node_type"))
+			GlobalParam.StartConfig.setProperty("node_type", NODE_TYPE.slave.name());
+		if (GlobalParam.StartConfig.get("node_type").equals(NODE_TYPE.backup.name())) {
 			init(false);
 			recoverMonitor.start(); 
 		} else {

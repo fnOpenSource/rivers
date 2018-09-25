@@ -36,19 +36,22 @@ public class Pond extends Instruction {
 
 	/**
 	 * @param args
-	 *            parameter order is: SearcherModel<?, ?, ?> query,String instance,
-	 *            String storeId
+	 *            parameter order is: String instance,String storeId,String keyColumn,
+	 *            String keyVal
 	 */
-	public static void deleteByQuery(Context context, Object[] args) {
+	public static void deleteByKey(Context context, Object[] args) {
 		boolean freeConn = false;
 		if (!isValid(3, args)) {
-			log.error("deleteByQuery parameter not match!");
+			log.error("deleteByKey parameter not match!");
 			return;
 		}
 		context.getWriter().PREPARE(false, false);
 		if (context.getWriter().ISLINK()) {
-			try {
-				 
+			try {  
+				String storeId = String.valueOf(args[0]);
+				String keyColumn = String.valueOf(args[1]); 
+				String keyVal = String.valueOf(args[2]);
+				context.getWriter().delete(context.getInstanceConfig().getName(),storeId,keyColumn,keyVal);
 			} catch (Exception e) {
 				log.error("DeleteByQuery Exception", e);
 				freeConn = true;

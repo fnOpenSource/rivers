@@ -196,6 +196,7 @@ public final class NodeMonitor {
 	public void getStatus(Request rq) {
 		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
 		HashMap<String, Object> dt = new HashMap<String, Object>();
+		dt.put("NODE_TYPE", GlobalParam.StartConfig.getProperty("node_type"));
 		dt.put("WRITE_BATCH", GlobalParam.WRITE_BATCH);
 		dt.put("SERVICE_LEVEL", service_level);
 		dt.put("STATUS", "running");
@@ -442,7 +443,7 @@ public final class NodeMonitor {
 
 	public void removeInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), STATUS.Stop);
+			controlThreadState(rq.getParameter("instance"), STATUS.Stop,true);
 			GlobalParam.TASKMANAGER.removeInstance(rq.getParameter("instance"));
 			setResponse(1, "Writer " + rq.getParameter("instance") + " job have removed!");
 		} else {
@@ -452,7 +453,11 @@ public final class NodeMonitor {
 
 	public void stopInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), STATUS.Stop);
+			if(rq.getParameter("type").toUpperCase().equals(GlobalParam.JOB_TYPE.FULL.name())) {
+				controlThreadState(rq.getParameter("instance"), STATUS.Stop,false);
+			}else {
+				controlThreadState(rq.getParameter("instance"), STATUS.Stop,true);
+			} 
 			setResponse(1, "Writer " + rq.getParameter("instance") + " job have stopped!");
 		} else {
 			setResponse(0, "Writer " + rq.getParameter("instance") + " stop error,index parameter not set!");
@@ -461,7 +466,11 @@ public final class NodeMonitor {
 
 	public void resumeInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), STATUS.Ready);
+			if(rq.getParameter("type").toUpperCase().equals(GlobalParam.JOB_TYPE.FULL.name())) {
+				controlThreadState(rq.getParameter("instance"), STATUS.Ready,false);
+			}else {
+				controlThreadState(rq.getParameter("instance"), STATUS.Ready,true);
+			} 
 			setResponse(1, "Writer " + rq.getParameter("instance") + " job have resumed!");
 		} else {
 			setResponse(0, "Writer " + rq.getParameter("instance") + " resume error,index parameter not set!");
@@ -470,7 +479,7 @@ public final class NodeMonitor {
 
 	public void reloadConfig(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			controlThreadState(rq.getParameter("instance"), STATUS.Stop);
+			controlThreadState(rq.getParameter("instance"), STATUS.Stop,true);
 			int type = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getIndexType();
 			String configString = rq.getParameter("instance");
 			if(type>0) {
@@ -492,7 +501,7 @@ public final class NodeMonitor {
 				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "",true); 
 			}  
 			startIndex(configString);
-			controlThreadState(rq.getParameter("instance"), STATUS.Ready);
+			controlThreadState(rq.getParameter("instance"), STATUS.Ready,true);
 			setResponse(1, rq.getParameter("instance") + " reload Config Success!");
 		} else {
 			setResponse(0, rq.getParameter("instance") + " not exists!");
@@ -522,14 +531,14 @@ public final class NodeMonitor {
 					seqs = new String[1];
 					seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;
 				}
-				controlThreadState(instance, STATUS.Stop);
+				controlThreadState(instance, STATUS.Stop,true);
 				for (String seq : seqs) {  
 					GlobalParam.LAST_UPDATE_TIME.set(instance,seq,"0"); 
 					WarehouseNosqlParam param = GlobalParam.nodeConfig.getNoSqlParamMap()
 							.get(instanceConfig.getPipeParam().getWriteTo());
 					state = state && deleteAction(param, instanceConfig, instance,seq); 
 				}
-				controlThreadState(instance, STATUS.Ready);
+				controlThreadState(instance, STATUS.Ready,true);
 			}
 		}
 		if (state) {
@@ -592,24 +601,28 @@ public final class NodeMonitor {
 	}
 
 	/**
-	 * control current run thread,prevent error data write
+	 * control current run thread, prevent error data write
 	 * 
 	 * @param instance multi-instances seperate with ","
 	 * @param state
+	 * @param isIncrement control thread type
 	 */
-	private void controlThreadState(String instance, STATUS state) {
+	private void controlThreadState(String instance, STATUS state,boolean isIncrement) {
 		if((GlobalParam.SERVICE_LEVEL&6)==0) {
 			return;
 		}
+		String controlType = GlobalParam.JOB_TYPE.FULL.name();
+		if(isIncrement)
+			controlType = GlobalParam.JOB_TYPE.INCREMENT.name();
 		
 		for (String inst : instance.split(",")) {
 			Common.LOG.info("Instance " + inst + " waitting set state "+state+" ..."); 
 			int waittime = 0; 
 			String[] seqs = getInstanceSeqs(instance);
 			for (String seq : seqs) { 
-				if(Common.checkFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Running)) {
-					Common.setFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination);
-					while (!Common.checkFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready)) {
+				if(Common.checkFlowStatus(inst,seq,controlType,STATUS.Running)) {
+					Common.setFlowStatus(inst,seq,controlType, STATUS.Blank, STATUS.Termination);
+					while (!Common.checkFlowStatus(inst,seq,controlType,STATUS.Ready)) {
 						try {
 							waittime++;
 							Thread.sleep(300);
@@ -621,8 +634,8 @@ public final class NodeMonitor {
 						}
 					} 
 				} 
-				Common.setFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination); 
-				if(Common.setFlowStatus(inst,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Termination,state)) {
+				Common.setFlowStatus(inst,seq,controlType, STATUS.Blank, STATUS.Termination); 
+				if(Common.setFlowStatus(inst,seq,controlType,STATUS.Termination,state)) {
 					Common.LOG.info("Instance " + inst + " success set state "+state); 
 				}else {
 					Common.LOG.info("Instance " + inst + " fail set state "+state);

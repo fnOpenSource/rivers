@@ -35,7 +35,6 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
@@ -166,7 +165,7 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	 
 	@Override
-	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {  
+	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws Exception {  
 	 
 	} 
 

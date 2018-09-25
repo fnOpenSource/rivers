@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.writer.WriterFlowSocket;
 
@@ -93,7 +92,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
+	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws Exception {
 		
 	}
 

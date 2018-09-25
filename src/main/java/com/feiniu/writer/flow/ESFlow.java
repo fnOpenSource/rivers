@@ -32,7 +32,6 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.SearcherModel;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
@@ -132,8 +131,10 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void delete(SearcherModel<?, ?, ?> query, String instance, String storeId) throws Exception {
-		 
+	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws Exception {
+		String name = Common.getStoreName(instance, storeId);
+		String type = instance;
+		getESC().getClient().prepareDelete(name, type, keyVal);
 	}
 
 	@Override
