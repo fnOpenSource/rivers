@@ -197,25 +197,25 @@ public final class FnConnectionPool {
 			} 
 		}
 		private FnConnection<?> getConnection() { 
-			synchronized(this) {
-				if (!freeConnections.isEmpty()) {
-					FnConnection<?> conn = null;
+			synchronized(this) { 
+				FnConnection<?> conn = null;
+				if (!freeConnections.isEmpty()) { 
 					conn = freeConnections.poll();
 					while(conn.status() == false && !freeConnections.isEmpty()){
 						conn.free();
 						conn = freeConnections.poll();
-					}
-					if(conn.status()){
+					} 
+					if(conn.status() == true){
 						activeNum.incrementAndGet(); 
 						return conn;
 					}
 				} 
-				if (activeNum.get() < maxConn) { 
-					activeNum.incrementAndGet(); 
-					return newConnection();
-				} 
-				return null;
+				if (activeNum.get() < maxConn && (conn = newConnection())!=null) {  
+					activeNum.incrementAndGet();  
+					return conn;
+				}  
 			} 
+			return null;
 		}
 		
 		
