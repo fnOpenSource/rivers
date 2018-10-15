@@ -1,34 +1,35 @@
 package com.feiniu.reader.util;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit; 
+
 /**
- * pass data set in argument,writer will auto get each line
+ *  * pass data set in argument,writer will auto get each line
  * @author chengwen
- * @version 1.0
+ * @version 2.0
+ * @date 2018-10-12 14:32
  */
 public class DataSetReader{  
 	private String IncrementColumn;
 	private String keyColumn;
 	private String READER_LAST_STAMP = "";
-	private String maxId = "";
+	private String dataBoundary;
 	private LinkedList<PipeDataUnit> datas;
 	private boolean status = true;
-
-	@SuppressWarnings("unchecked") 
-	public void init(HashMap<String, Object> rs) {
-		if (rs.size() > 2) {
-			this.keyColumn =  String.valueOf(rs.get(GlobalParam.READER_KEY));
-			this.IncrementColumn = String.valueOf(rs.get(GlobalParam.READER_SCAN_KEY));
-			this.maxId = String.valueOf(rs.get("maxId"));
-			if(rs.containsKey(GlobalParam.READER_LAST_STAMP))
-				this.READER_LAST_STAMP = String.valueOf(rs.get(GlobalParam.READER_LAST_STAMP));
-			if(rs.containsKey(GlobalParam.READER_STATUS))
-				this.status = (boolean) rs.get(GlobalParam.READER_STATUS);
-			this.datas = (LinkedList<PipeDataUnit>) rs.get("datas");
+ 
+	public void init(DataPage DP) {
+		if (DP.size() > 2) {
+			this.keyColumn =  String.valueOf(DP.get(GlobalParam.READER_KEY));
+			this.IncrementColumn = String.valueOf(DP.get(GlobalParam.READER_SCAN_KEY));
+			this.dataBoundary = DP.getDataBoundary();
+			if(DP.containsKey(GlobalParam.READER_LAST_STAMP))
+				this.READER_LAST_STAMP = String.valueOf(DP.get(GlobalParam.READER_LAST_STAMP));
+			if(DP.containsKey(GlobalParam.READER_STATUS))
+				this.status = (boolean) DP.get(GlobalParam.READER_STATUS);
+			this.datas = (LinkedList<PipeDataUnit>) DP.getData();
 		}
 	}
  
@@ -42,28 +43,25 @@ public class DataSetReader{
  
 	public boolean nextLine() {
 		if (datas.isEmpty()) {
-			this.keyColumn=null;
-			this.IncrementColumn=null;
-			this.datas.clear();
 			return false; 
 		}
 		return true;
 	}
  
 	public void close() {
-		READER_LAST_STAMP = "";
-		maxId = "";
-		status = true;
-		keyColumn = null;
-		IncrementColumn = null;
+		this.READER_LAST_STAMP = "";
+		this.dataBoundary = null;
+		this.status = true;
+		this.keyColumn = null;
+		this.IncrementColumn = null;
 	}
  
 	public String getScanStamp() {
 		return READER_LAST_STAMP;
 	}
   
-	public String getMaxId() {
-		return maxId;
+	public String getDataBoundary() {
+		return dataBoundary;
 	}
  
 	public String getkeyColumn() { 

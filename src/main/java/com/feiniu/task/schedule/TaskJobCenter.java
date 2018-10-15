@@ -11,6 +11,7 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.feiniu.config.GlobalParam;
 import com.feiniu.util.Common;
 
 /**
@@ -36,13 +37,13 @@ public class TaskJobCenter{
 		if (trigger == null) {
 			Common.LOG.info("Add Schedule Job " + job.getJobName());			
 			JobDetail jobDetail = JobBuilder.newJob(JobRunFactory.class).withIdentity(job.getJobName()).build();
-			jobDetail.getJobDataMap().put("scheduleJob", job); 
-			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
+			jobDetail.getJobDataMap().put(GlobalParam.FLOW_TAG._DEFAULT.name(), job); 
+			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCron());
 			trigger = TriggerBuilder.newTrigger().withIdentity(job.getJobName(),job.getJobName()).withSchedule(scheduleBuilder).build();
 			scheduler.scheduleJob(jobDetail, trigger);
 		} else {
 			Common.LOG.info("Modify Schedule Job " + job.getJobName());
-			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCronExpression());
+			CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(job.getCron());
 			trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(scheduleBuilder).build();
 			scheduler.rescheduleJob(triggerKey, trigger);
 		}

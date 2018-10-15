@@ -14,6 +14,10 @@ import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherResult;
 import com.feiniu.searcher.handler.Handler;
 
+/** 
+ * @author chengwen
+ * @version 1.0 
+ */
 public class SearcherFlowSocket implements Flow{
 	
 	protected Analyzer analyzer;

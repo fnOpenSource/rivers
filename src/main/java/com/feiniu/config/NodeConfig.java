@@ -2,7 +2,6 @@ package com.feiniu.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +13,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.feiniu.config.GlobalParam.RESOURCE_TYPE;
 import com.feiniu.model.param.InstructionParam;
 import com.feiniu.model.param.WarehouseNosqlParam;
 import com.feiniu.model.param.WarehouseSqlParam;
@@ -23,7 +23,8 @@ import com.feiniu.util.ZKUtil;
 /**
  * node configs center,manage flows config and sql/nosql dataflows configs
  * @author chengwen
- * @version 1.0 
+ * @version 1.2
+ * @date 2018-10-11 14:50
  */
 public class NodeConfig { 
 	
@@ -77,6 +78,57 @@ public class NodeConfig {
 			this.searchConfigMap.put(nconfig.getAlias(), nconfig);
 			this.instanceConfigs.put(name, nconfig);  
 		}	  
+	}
+	
+	public Map<String, InstructionParam> getInstructions(){
+		return this.instructions;
+	}
+	
+	public Map<String, InstanceConfig> getInstanceConfigs(){
+		return this.instanceConfigs;
+	}
+	
+	public Map<String, InstanceConfig> getSearchConfigs(){
+		return this.searchConfigMap;
+	}
+	
+    public Map<String, WarehouseSqlParam> getSqlParamMap() {
+		return this.SqlParamMap;
+	}
+    
+	public Map<String, WarehouseNosqlParam> getNoSqlParamMap() {
+		return this.NoSqlParamMap;
+	}
+
+	public void init(){
+		for(Map.Entry<String, InstanceConfig> e : this.instanceConfigs.entrySet()){  
+			this.searchConfigMap.put(e.getValue().getAlias(), e.getValue());
+		}
+	}
+	
+	public void reload() {
+		for(Map.Entry<String, InstanceConfig> e : this.instanceConfigs.entrySet()){
+			e.getValue().reload();
+		}
+	} 
+	
+	public void addSource(RESOURCE_TYPE type,Object o) { 
+		switch (type) {
+		case SQL:
+			WarehouseSqlParam e1 = (WarehouseSqlParam) o;
+			SqlParamMap.put(e1.getAlias(), e1);
+			break;
+
+		case NOSQL:
+			WarehouseNosqlParam e2 = (WarehouseNosqlParam) o;
+			NoSqlParamMap.put(e2.getAlias(), e2);
+			break;
+			
+		case INSTRUCTION:
+			InstructionParam e3 = (InstructionParam) o;
+			instructions.put(e3.getId(),e3);
+			break; 
+		}
 	}
 	
 	private void parseInstructionsFile(String src){
@@ -137,61 +189,24 @@ public class NodeConfig {
 				Common.LOG.error("parse (" + src + ") error,",e);
 			}
 		}
-	} 
+	}  
 	
-	private void parseNode(NodeList paramlist, Class<?> c)
-			throws NoSuchMethodException, SecurityException, IllegalAccessException, 
-			IllegalArgumentException,InvocationTargetException, InstantiationException 
+	private void parseNode(NodeList paramlist, Class<?> c) throws Exception 
 	{
 		if (paramlist != null && paramlist.getLength() > 0) {
 			for (int i = 0; i < paramlist.getLength(); i++) {
 				Node param = paramlist.item(i);
 				if (param.getNodeType() == Node.ELEMENT_NODE) {
-					Object o = Common.getNode2Obj(param, c);
+					Object o = Common.getXmlObj(param, c);
 					if (c == WarehouseNosqlParam.class) {
-						WarehouseNosqlParam e = (WarehouseNosqlParam) o;
-						NoSqlParamMap.put(e.getAlias(), e);
+						addSource(RESOURCE_TYPE.NOSQL,o);
 					}else if(c == WarehouseSqlParam.class){
-						WarehouseSqlParam e = (WarehouseSqlParam) o;
-						SqlParamMap.put(e.getAlias(), e);
+						addSource(RESOURCE_TYPE.SQL,o);
 					}else if(c == InstructionParam.class) {
-						InstructionParam e = (InstructionParam) o;
-						instructions.put(e.getId(),e);
+						addSource(RESOURCE_TYPE.INSTRUCTION,o);
 					}
 				}
 			}
-		}
-	}
-	
-	public Map<String, InstructionParam> getInstructions(){
-		return this.instructions;
-	}
-	
-	public Map<String, InstanceConfig> getInstanceConfigs(){
-		return this.instanceConfigs;
-	}
-	
-	public Map<String, InstanceConfig> getSearchConfigs(){
-		return this.searchConfigMap;
-	}
-	
-    public Map<String, WarehouseSqlParam> getSqlParamMap() {
-		return this.SqlParamMap;
-	}
-    
-	public Map<String, WarehouseNosqlParam> getNoSqlParamMap() {
-		return this.NoSqlParamMap;
-	}
-
-	public void init(){
-		for(Map.Entry<String, InstanceConfig> e : this.instanceConfigs.entrySet()){  
-			this.searchConfigMap.put(e.getValue().getAlias(), e.getValue());
-		}
-	}
-	
-	public void reload() {
-		for(Map.Entry<String, InstanceConfig> e : this.instanceConfigs.entrySet()){
-			e.getValue().reload();
 		}
 	} 
 }

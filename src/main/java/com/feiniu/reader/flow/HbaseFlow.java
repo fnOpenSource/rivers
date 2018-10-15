@@ -21,12 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
-public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
+public class HbaseFlow extends ReaderFlowSocket { 
 	 
 	private final static Logger log = LoggerFactory.getLogger(HbaseFlow.class); 
 
@@ -52,14 +53,12 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	}
  
 	@Override
-	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
-	 
+	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) { 
 		PREPARE(false,false);
-		this.jobPage.clear();
 		boolean releaseConn = false;
 		try {
 			if(!ISLINK())
-				return this.jobPage;
+				return this.dataPage;
 			Table table = (Table) GETSOCKET().getConnection(true);
 			Scan scan = new Scan();
 			List<Filter> filters = new ArrayList<Filter>();
@@ -81,22 +80,21 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 					.toString()));
 			ResultScanner resultScanner = table.getScanner(scan);
 			try {   
-				String maxId = null;
-				String updateFieldValue=null;
-				this.datas.clear();
-				this.jobPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
-				this.jobPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY)); 
+				String dataBoundary = null;
+				String updateFieldValue=null; 
+				this.dataPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
+				this.dataPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY)); 
 				for (Result r : resultScanner) { 
 					PipeDataUnit u = PipeDataUnit.getInstance();
 					if(handler==null){
 						for (Cell cell : r.rawCells()) {
 							String k = new String(CellUtil.cloneQualifier(cell));
 							String v = new String(CellUtil.cloneValue(cell), "UTF-8"); 
-							if(k.equals(this.jobPage.get(GlobalParam.READER_KEY))){
+							if(k.equals(this.dataPage.get(GlobalParam.READER_KEY))){
 								u.setKeyColumnVal(v);
-								maxId = v;
+								dataBoundary = v;
 							}
-							if(k.equals(this.jobPage.get(GlobalParam.READER_SCAN_KEY))){
+							if(k.equals(this.dataPage.get(GlobalParam.READER_SCAN_KEY))){
 								updateFieldValue = v;
 							}
 							u.addFieldValue(k, v, transParams);
@@ -104,26 +102,26 @@ public class HbaseFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 					}else{
 						handler.Handle(r,u);
 					} 
-					this.datas.add(u);
+					this.dataUnit.add(u);
 				} 
 				if (updateFieldValue==null){ 
-					this.jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
+					this.dataPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
 				}else{
-					this.jobPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
+					this.dataPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
 				}
-				this.jobPage.put("maxId", maxId);
-				this.jobPage.put("datas", this.datas);
+				this.dataPage.putDataBoundary(dataBoundary);
+				this.dataPage.putData(this.dataUnit);
 			} catch (Exception e) {
-				this.jobPage.put(GlobalParam.READER_LAST_STAMP, -1);
+				this.dataPage.put(GlobalParam.READER_LAST_STAMP, -1);
 				log.error("SqlReader init Exception", e);
 			} 
 		} catch (Exception e) {
 			releaseConn = true;
-			log.error("getJobPage Exception", e);
+			log.error("get dataPage Exception", e);
 		}finally{
 			REALEASE(false,releaseConn);
 		} 
-		return this.jobPage;
+		return this.dataPage;
 	}
 
 	@Override

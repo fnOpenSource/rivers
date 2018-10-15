@@ -16,20 +16,27 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
+import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.2
+ * @date 2018-10-12 14:28
+ */
 @NotThreadSafe
-public class ReaderFlowSocket<T> implements Flow{ 
+public class ReaderFlowSocket implements Flow{ 
 	
 	protected HashMap<String, Object> connectParams;
 
-	protected HashMap<String, Object> jobPage = new HashMap<String, Object>();
+	protected DataPage dataPage = new DataPage();
 	
 	protected String poolName;
 	
-	protected LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>(); 
+	protected LinkedList<PipeDataUnit> dataUnit = new LinkedList<PipeDataUnit>(); 
 	
 	public final Lock lock = new ReentrantLock();
 	
@@ -91,7 +98,7 @@ public class ReaderFlowSocket<T> implements Flow{
 		return true;
 	}   
 
-	public T getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
+	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
 		return null;
 	}
 
@@ -100,7 +107,7 @@ public class ReaderFlowSocket<T> implements Flow{
 	}
 	
 	public void freeJobPage() {
-		this.jobPage.clear(); 
-		this.datas.clear();  
+		this.dataPage.clear(); 
+		this.dataUnit.clear();  
 	} 
 }

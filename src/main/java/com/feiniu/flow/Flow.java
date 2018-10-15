@@ -4,9 +4,7 @@ import java.util.HashMap;
 
 import com.feiniu.connect.FnConnection;
 /**
- * data pipe flow model
- * first INIT and get connect socket (GETSOCKET)
- * build connect (MONOPOLY/LINK) start use,when finished use Dismantling pipe (REALEASE)
+ * data pipe flow model 
  * @author chengwen
  * @version 1.2
  */

@@ -20,9 +20,9 @@ import com.feiniu.writer.WriterSocketFactory;
  * data-flow router reader searcher and writer control center seq only support
  * for reader to read series data source,and create one or more instance in
  * writer single destination.
- * 
  * @author chengwen
- * @version 1.0
+ * @version 1.2
+ * @date 2018-10-11 10:25
  */
 
 public final class SocketCenter {
@@ -31,7 +31,7 @@ public final class SocketCenter {
 	private Map<String, Searcher> searcherMap = new ConcurrentHashMap<String, Searcher>();
 	
 	private Map<String, WriterFlowSocket> writerSocketMap = new ConcurrentHashMap<String, WriterFlowSocket>();
-	private Map<String, ReaderFlowSocket<?>> readerSocketMap = new ConcurrentHashMap<String, ReaderFlowSocket<?>>();
+	private Map<String, ReaderFlowSocket> readerSocketMap = new ConcurrentHashMap<String, ReaderFlowSocket>();
 	private Map<String, SearcherFlowSocket> searcherSocketMap = new ConcurrentHashMap<String, SearcherFlowSocket>(); 
  
 	public Searcher getSearcher(String instance, String seq,String tag,boolean reload) {
@@ -71,8 +71,27 @@ public final class SocketCenter {
 			return transDataFlowMap.get(tags);
 		} 
 	} 
+	
+	public void clearTransDataFlow(String instance, String seq, String tag) {
+		synchronized (this) {
+			String tags = Common.getResourceTag(instance, seq,tag,false);
+			if (transDataFlowMap.containsKey(tags)){ 
+				transDataFlowMap.remove(tags);
+				
+				boolean ignoreSeqUseAlias = false;
+				if(GlobalParam.nodeConfig.getInstanceConfigs().get(instance)!=null)
+					ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().isReaderPoolShareAlias();
+				String tagInstance = instance;
+				if(ignoreSeqUseAlias)
+					tagInstance = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getAlias();
+				tags = Common.getResourceTag(tagInstance, seq,tag,ignoreSeqUseAlias);
+				readerSocketMap.remove(tags);
+				writerSocketMap.remove(tags);
+			} 	
+		}
+	}
 
-	public ReaderFlowSocket<?> getReaderSocket(String instance, String seq,String tag) {
+	public ReaderFlowSocket getReaderSocket(String instance, String seq,String tag) {
 		synchronized (readerSocketMap) {
 			boolean ignoreSeqUseAlias = false;
 			if(GlobalParam.nodeConfig.getInstanceConfigs().get(instance)!=null)

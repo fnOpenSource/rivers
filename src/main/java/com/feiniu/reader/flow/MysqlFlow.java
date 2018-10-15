@@ -15,12 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
-public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {    
+public class MysqlFlow extends ReaderFlowSocket{    
 
 	private final static Logger log = LoggerFactory.getLogger(MysqlFlow.class);  
 
@@ -31,39 +32,37 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	}  
  
 	@Override
-	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
-		this.jobPage.clear(); 
-		this.jobPage.put(GlobalParam.READER_STATUS,true);
+	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {  
 		boolean releaseConn = false;
 		PREPARE(false,false); 
 		if(!ISLINK())
-			return this.jobPage; 
+			return this.dataPage; 
 		Connection conn = (Connection) GETSOCKET().getConnection(false); 
 		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
 			try(ResultSet rs = statement.executeQuery();){				
-				this.jobPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
-				this.jobPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));
+				this.dataPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
+				this.dataPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));
 				if(handler==null){
 					getAllData(rs,transParams); 
 				}else{
 					handler.Handle(this,rs,transParams);
 				} 
 			} catch (Exception e) {
-				this.jobPage.put(GlobalParam.READER_STATUS,false);
+				this.dataPage.put(GlobalParam.READER_STATUS,false);
 				log.error("get data Page Exception", e);
 			} 
 		} catch (SQLException e){
-			this.jobPage.put(GlobalParam.READER_STATUS,false);
-			log.error(param.get("sql") + " getJobPage SQLException", e);
+			this.dataPage.put(GlobalParam.READER_STATUS,false);
+			log.error(param.get("sql") + " get dataPage SQLException", e);
 		} catch (Exception e) { 
 			releaseConn = true;
-			this.jobPage.put(GlobalParam.READER_STATUS,false);
-			log.error("getJobPage Exception so free connection,details ", e);
+			this.dataPage.put(GlobalParam.READER_STATUS,false);
+			log.error("get dataPage Exception so free connection,details ", e);
 		}finally{
 			REALEASE(false,releaseConn);
 		} 
-		return this.jobPage;
+		return this.dataPage;
 	} 
 	
 	@Override
@@ -134,11 +133,11 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			Collections.reverse(page);  
 		}catch(SQLException e){
 			page = null;
-			log.error("getJobPage SQLException "+sql, e);
+			log.error("get dataPage SQLException "+sql, e);
 		}catch (Exception e) {
 			releaseConn = true;
 			page = null;
-			log.error("getJobPage Exception so free connection,details ", e);
+			log.error("get dataPage Exception so free connection,details ", e);
 		}finally{ 
 			try {
 				statement.close();
@@ -152,8 +151,8 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 	} 
 	
 	private void getAllData(ResultSet rs,Map<String, TransParam> transParam) {  
-		this.datas.clear();
-		String maxId = null;
+		this.dataUnit.clear();
+		String dataBoundary = null;
 		String updateFieldValue=null;
 		try {  
 			ResultSetMetaData metaData = rs.getMetaData();
@@ -163,28 +162,28 @@ public class MysqlFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				for (int i = 1; i < columncount + 1; i++) {
 					String v = rs.getString(i);
 					String k = metaData.getColumnLabel(i);
-					if(k.equals(this.jobPage.get(GlobalParam.READER_KEY))){
+					if(k.equals(this.dataPage.get(GlobalParam.READER_KEY))){
 						u.setKeyColumnVal(v);
-						maxId = v;
+						dataBoundary = v;
 					}
-					if(k.equals(this.jobPage.get(GlobalParam.READER_SCAN_KEY))){
+					if(k.equals(this.dataPage.get(GlobalParam.READER_SCAN_KEY))){
 						updateFieldValue = v;
 					}
 					u.addFieldValue(k, v, transParam);
 				}
-				this.datas.add(u);
+				this.dataUnit.add(u);
 			}
 			rs.close();
 		} catch (SQLException e) {
-			this.jobPage.put(GlobalParam.READER_STATUS,false);
-			log.error("getAllData SQLException,", e);
+			this.dataPage.put(GlobalParam.READER_STATUS,false);
+			log.error("get page data SQLException,", e);
 		}
 		if (updateFieldValue==null){ 
-			this.jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
+			this.dataPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
 		}else{
-			this.jobPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
+			this.dataPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
 		}
-		this.jobPage.put("maxId", maxId);
-		this.jobPage.put("datas", this.datas);
+		this.dataPage.putDataBoundary(dataBoundary);
+		this.dataPage.putData(this.dataUnit);
 	} 
 }

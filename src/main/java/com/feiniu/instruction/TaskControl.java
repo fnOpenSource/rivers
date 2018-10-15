@@ -47,7 +47,7 @@ public class TaskControl extends Instruction{
 		for(String seq:seqs) { 
 			String saveInfo=""; 
 			List<String> table_seq = context.getInstanceConfig().getPipeParam().getSqlParam().getSeq();
-			TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(context.getInstanceConfig().getName(), seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
+			TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 			String storeId = Common.getStoreId(context.getInstanceConfig().getName(), seq, transDataFlow, true, false);
 			if(storeId==null)
 				break;

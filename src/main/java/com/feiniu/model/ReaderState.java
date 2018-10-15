@@ -1,18 +1,11 @@
 package com.feiniu.model;
 
-public class ReaderState {
-	
-	private String maxId = "";
+public class ReaderState { 
 	private String ReaderScanStamp = "0";
 	private int count = 0;
 	boolean status = true;
 	
-	public String getMaxId() {
-		return maxId;
-	}
-	public void setMaxId(String maxId) {
-		this.maxId = maxId;
-	}
+ 
 	public String getReaderScanStamp() {
 		return ReaderScanStamp;
 	}

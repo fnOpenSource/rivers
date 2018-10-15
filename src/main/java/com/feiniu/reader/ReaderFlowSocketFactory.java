@@ -18,16 +18,16 @@ import com.feiniu.util.Common;
  * @author chengwen
  * @version 1.0
  */
-public class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket<?>>{
+public class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket>{
 	
 	private static ReaderFlowSocketFactory o = new ReaderFlowSocketFactory();
 	
-	public static ReaderFlowSocket<?> getInstance(Object... args) {
+	public static ReaderFlowSocket getInstance(Object... args) {
 		return o.getSocket(args);
 	}
  
 	@Override
-	public ReaderFlowSocket<?> getSocket(Object... args) {
+	public ReaderFlowSocket getSocket(Object... args) {
 		WarehouseParam param = (WarehouseParam) args[0];
 		String seq = (String) args[1];
 		String handler = (String) args[2];  
@@ -38,14 +38,14 @@ public class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket<?>>{
 		} 
 	} 
  
-	private static ReaderFlowSocket<?> sqlChannel(final WarehouseSqlParam params, String seq,String handler){ 
+	private static ReaderFlowSocket sqlChannel(final WarehouseSqlParam params, String seq,String handler){ 
 		HashMap<String, Object> connectParams = params.getConnectParams(seq); 
-		ReaderFlowSocket<?> reader = null; 
+		ReaderFlowSocket reader = null; 
 		if(handler!=null) {
 			try {
 				Class<?> clz = Class.forName("com.feiniu.reader.handler."+handler);
 				Method m = clz.getMethod("getInstance",HashMap.class);
-				reader = (ReaderFlowSocket<?>) m.invoke(null,connectParams);
+				reader = (ReaderFlowSocket) m.invoke(null,connectParams);
 			}catch (Exception e) {
 				Common.LOG.error("getNoSqlFlow Exception!",e);
 			} 
@@ -66,7 +66,7 @@ public class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket<?>>{
 		return reader;
 	}
 	
-	private static ReaderFlowSocket<?> noSqlChannel(WarehouseNosqlParam wParam, String seq,String handler){
+	private static ReaderFlowSocket noSqlChannel(WarehouseNosqlParam wParam, String seq,String handler){
 		HashMap<String, Object> connectParams = wParam.getConnectParams(seq); 
 		if (wParam.getType() == DATA_TYPE.HBASE){ 
 			return HbaseFlow.getInstance(connectParams);

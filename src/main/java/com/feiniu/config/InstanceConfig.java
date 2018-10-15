@@ -24,10 +24,10 @@ import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
 /**
- * store single index node params
- * 
+ * instance configs loading 
  * @author chengwen
- * @version 1.0 
+ * @version 1.1 
+ * @date 2018-10-11 15:13
  */
 public class InstanceConfig {
 
@@ -190,7 +190,7 @@ public class InstanceConfig {
 						return;
 					}
 					if(doc.getElementsByTagName("pageSql").getLength() > 0) {
-						SQLParam _sq = (SQLParam) Common.getNode2Obj(doc.getElementsByTagName("pageSql").item(0), SQLParam.class);
+						SQLParam _sq = (SQLParam) Common.getXmlObj(doc.getElementsByTagName("pageSql").item(0), SQLParam.class);
 						pipeParam.getSqlParam().setPageSql(_sq.getPageSql());
 					} 
 				}
@@ -223,7 +223,7 @@ public class InstanceConfig {
 			for (int i = 0; i < paramlist.getLength(); i++) {
 				Node param = paramlist.item(i);
 				if (param.getNodeType() == Node.ELEMENT_NODE) {
-					Object o = Common.getNode2Obj(param, c);
+					Object o = Common.getXmlObj(param, c);
 					switch (type) {
 					case "TransParam":
 						TransParam e = (TransParam) o;

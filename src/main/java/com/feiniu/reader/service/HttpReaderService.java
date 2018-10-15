@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.flow.TransDataFlow;
+import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
@@ -99,7 +100,7 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?"_MOP":GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?GlobalParam.FLOW_TAG._MOP.name():GlobalParam.FLOW_TAG._DEFAULT.name());
 							if (transDataFlow == null || !transDataFlow.getInstanceConfig().getAlias().equals(dataTo)) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance not exits!\"}");
 								break;
@@ -123,7 +124,7 @@ public class HttpReaderService {
 								}
 								transDataFlow.writeDataSet("HTTP PUT",
 										writeTo,
-										storeid, "", getJobPage(rq.getParameter("data"), keycolumn, updatecolumn,
+										storeid, "", getPageData(rq.getParameter("data"), keycolumn, updatecolumn,
 												transDataFlow.getInstanceConfig().getTransParams()),
 										"", isUpdate,monopoly);
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
@@ -160,7 +161,7 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG);
+							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
@@ -181,7 +182,7 @@ public class HttpReaderService {
 							SearcherModel<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow transFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.DEFAULT_RESOURCE_TAG); 
+							TransDataFlow transFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name()); 
 							if (transFlow == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
@@ -217,16 +218,15 @@ public class HttpReaderService {
 			}
 		}
 
-		private HashMap<String, Object> getJobPage(Object data, String keycolumn, String updatecolumn,
+		private DataPage getPageData(Object data, String keycolumn, String updatecolumn,
 				Map<String, TransParam> transParams) {
-			HashMap<String, Object> jobPage = new HashMap<String, Object>();
+			DataPage DP = new DataPage();
 			LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>();
-			jobPage.put(GlobalParam.READER_KEY, keycolumn);
-			jobPage.put(GlobalParam.READER_SCAN_KEY, updatecolumn);
-			jobPage.put(GlobalParam.READER_STATUS, true);
-			jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
+			DP.put(GlobalParam.READER_KEY, keycolumn);
+			DP.put(GlobalParam.READER_SCAN_KEY, updatecolumn);
+			DP.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
 			JSONArray jr = JSONArray.fromObject(data);
-			String maxId = null;
+			String dataBoundary = null;
 			String updateFieldValue = null;
 			for (int j = 0; j < jr.size(); j++) {
 				PipeDataUnit u = PipeDataUnit.getInstance();
@@ -234,11 +234,11 @@ public class HttpReaderService {
 				@SuppressWarnings("unchecked")
 				Set<Entry<String, String>> itr = jo.entrySet();
 				for (Entry<String, String> k : itr) {
-					if (k.getKey().equals(jobPage.get(GlobalParam.READER_KEY))) {
+					if (k.getKey().equals(DP.get(GlobalParam.READER_KEY))) {
 						u.setKeyColumnVal(k.getValue());
-						maxId = String.valueOf(k.getValue());
+						dataBoundary = String.valueOf(k.getValue());
 					}
-					if (k.getKey().equals(jobPage.get(GlobalParam.READER_SCAN_KEY))) {
+					if (k.getKey().equals(DP.get(GlobalParam.READER_SCAN_KEY))) {
 						updateFieldValue = String.valueOf(k.getValue());
 					}
 					u.addFieldValue(k.getKey(), k.getValue(), transParams);
@@ -246,13 +246,13 @@ public class HttpReaderService {
 				datas.add(u);
 			}
 			if (updateFieldValue == null) {
-				jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
+				DP.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis());
 			} else {
-				jobPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue);
+				DP.put(GlobalParam.READER_LAST_STAMP, updateFieldValue);
 			}
-			jobPage.put("maxId", maxId);
-			jobPage.put("datas", datas);
-			return jobPage;
+			DP.putDataBoundary(dataBoundary); 
+			DP.putData(datas);
+			return DP;
 		}
 	}
 

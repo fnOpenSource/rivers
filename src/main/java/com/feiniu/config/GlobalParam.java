@@ -8,11 +8,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.analysis.Analyzer;
 
 import com.feiniu.model.RiverState;
+import com.feiniu.node.FlowCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.node.startup.Run;
 import com.feiniu.task.FlowTask;
-import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
 import com.feiniu.util.email.FNEmailSender;
 /**
@@ -54,7 +54,7 @@ public class GlobalParam {
 	
 	public static SocketCenter SOCKET_CENTER;
 	
-	public static TaskManager TASKMANAGER;
+	public static FlowCenter FlOW_CENTER;
 	
 	public static NodeMonitor nodeMonitor; 
 	
@@ -76,6 +76,10 @@ public class GlobalParam {
 	public static enum NODE_TYPE{
 		master,slave,backup
 	};
+	
+	public static enum RESOURCE_TYPE{
+		NOSQL,SQL,INSTRUCTION
+	};
 	 
 	//writer parameters
 	public static enum KEY_PARAM {
@@ -83,8 +87,10 @@ public class GlobalParam {
 	}  
 	public static enum DATA_TYPE{
 		MYSQL, ORACLE, HIVE, ES, SOLR, HBASE,ZOOKEEPER,UNKNOWN,H2
-	} 
-	public final static String DEFAULT_RESOURCE_TAG = "_DEFAULT"; 
+	}  
+	public static enum FLOW_TAG {
+		_DEFAULT,_MOP
+	}
 	public final static String DEFAULT_FIELD = "SYSTEM_UPDATE_TIME"; 
 	public final static String DEFAULT_RESOURCE_SEQ = ""; 
 	public static enum JOB_TYPE {

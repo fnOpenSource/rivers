@@ -4,7 +4,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,6 +11,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -31,6 +31,12 @@ import com.feiniu.model.InstructionTree;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.node.CPU; 
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.2
+ * @date 2018-10-11 11:00
+ */
 public class Common {
 	
 	public static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -58,8 +64,7 @@ public class Common {
 			return false;
 	}
 
-	public static Object getNode2Obj(Node param, Class<?> c) throws IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException {
+	public static Object getXmlObj(Node param, Class<?> c) throws Exception {
 		Element element = (Element) param;
 		Constructor<?> cons = c.getConstructor();
 		Object o = cons.newInstance();
@@ -81,15 +86,18 @@ public class Common {
 			if (param.getNodeName().equals(fieldName)) {
 				value = param.getTextContent();
 			}
-
-			if (value != null && value.length() > 0) {
-				String setMethodName = "set" + field.getName().substring(0, 1).toUpperCase()
-						+ field.getName().substring(1);
-				Method setMethod = c.getMethod(setMethodName, new Class[] { String.class });
-				setMethod.invoke(o, new Object[] { value });
-			}
+			setConfigObj(o,c,fieldName,value); 
 		}
 		return o;
+	}
+	
+	public static void setConfigObj(Object Obj,Class<?> c,String fieldName,String value) throws Exception {
+		if (value != null && value.length() > 0) {
+			String setMethodName = "set" + fieldName.substring(0, 1).toUpperCase()
+					+ fieldName.substring(1);
+			Method setMethod = c.getMethod(setMethodName, new Class[] { String.class });
+			setMethod.invoke(Obj, new Object[] { value });
+		}
 	}
 
 	public static List<String> getKeywords(String queryStr, Analyzer analyzer) {
@@ -394,7 +402,7 @@ public class Common {
 	 * @param storeId
 	 * @param seq table seq
 	 * @param total
-	 * @param maxId
+	 * @param dataBoundary
 	 * @param lastUpdateTime
 	 * @param useTime
 	 * @param types
@@ -402,7 +410,7 @@ public class Common {
 	 */
 	
 	public static String formatLog(String heads,String instanceName, String storeId,
-			String seq, String total, String maxId, String lastUpdateTime,
+			String seq, String total, String dataBoundary, String lastUpdateTime,
 			long useTime, String types, String moreinfo) {
 		String useTimeFormat = Common.seconds2time(useTime);
 		StringBuffer str = new StringBuffer("["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : ""));
@@ -422,7 +430,7 @@ public class Common {
 			str.append(" position:" + update);
 			break;
 		default:
-			str.append(" docs:" + total+ (maxId.equals("0") ? "" : " MaxId:" + maxId)
+			str.append(" docs:" + total+ (dataBoundary.equals("0") ? "" : " dataBoundary:" + dataBoundary)
 			+ " position:" + update + " useTime:"	+ useTimeFormat);
 			break;
 		} 
@@ -498,5 +506,15 @@ public class Common {
 		if((GlobalParam.FLOW_STATUS.get(instance, seq, type).get() & state.getVal())>0)
 			return true; 
 		return false;
+	}
+	
+	public static void initParams(InstanceConfig instanceConfig) {
+		String instance = instanceConfig.getName();
+		String[] seqs = getSeqs(instanceConfig, true);
+		for (String seq : seqs) { 
+			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.FULL.name(), new AtomicInteger(1));
+			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1));
+			GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
+		}
 	}
 }

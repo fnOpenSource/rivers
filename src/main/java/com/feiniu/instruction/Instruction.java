@@ -2,6 +2,10 @@ package com.feiniu.instruction;
 
 import com.feiniu.node.CPU;
 
+/** 
+ * @author chengwen
+ * @version 1.0 
+ */
 public abstract class Instruction {  
 	
 	private String ID = CPU.getUUID(); 

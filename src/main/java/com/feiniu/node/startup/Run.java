@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,13 +17,13 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.NODE_TYPE;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
+import com.feiniu.node.FlowCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.RecoverMonitor;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.task.FlowTask;
-import com.feiniu.task.TaskManager;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNIoc;
 import com.feiniu.util.IKAnalyzer5;
@@ -41,7 +40,7 @@ public final class Run {
 	@Autowired
 	private SearcherService searcherService;
 	@Autowired
-	private TaskManager taskManager;
+	private FlowCenter flowCenter;
 	@Autowired
 	private RecoverMonitor recoverMonitor;
 	@Autowired
@@ -73,7 +72,7 @@ public final class Run {
 		GlobalParam.mailSender = mailSender;
 		GlobalParam.tasks = new HashMap<String, FlowTask>();
 		GlobalParam.SOCKET_CENTER = socketCenter;
-		GlobalParam.TASKMANAGER = taskManager;
+		GlobalParam.FlOW_CENTER = flowCenter;
 		GlobalParam.VERSION = version;
 		GlobalParam.nodeMonitor = nodeMonitor;  
 		GlobalParam.POOL_SIZE = Integer.parseInt(GlobalParam.StartConfig.getProperty("pool_size"));
@@ -91,7 +90,7 @@ public final class Run {
 			for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
 				InstanceConfig instanceConfig = entry.getValue();
 				if (instanceConfig.checkStatus())
-					initParams(instanceConfig);
+					Common.initParams(instanceConfig);
 			}
 		} 
 	}
@@ -102,11 +101,11 @@ public final class Run {
 			searcherService.start();
 		}
 		if ((GlobalParam.SERVICE_LEVEL & 2) > 0)
-			taskManager.startWriteJob();
+			GlobalParam.FlOW_CENTER.buildRWFlow();
 		if ((GlobalParam.SERVICE_LEVEL & 4) > 0)
 			httpReaderService.start();
 		if ((GlobalParam.SERVICE_LEVEL & 8) > 0)
-			taskManager.startInstructions();
+			GlobalParam.FlOW_CENTER.startInstructionsJob();
 	}
 
 	public void loadGlobalConfig(String path,boolean fromZk) {
@@ -168,17 +167,7 @@ public final class Run {
 		} catch (Exception e) {
 			Common.LOG.error("environmentCheck Exception", e);
 		}
-	}
-
-	private void initParams(InstanceConfig instanceConfig) {
-		String instance = instanceConfig.getName();
-		String[] seqs = Common.getSeqs(instanceConfig, true);
-		for (String seq : seqs) { 
-			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.FULL.name(), new AtomicInteger(1));
-			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1));
-			GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
-		}
-	}
+	} 
 	
 	public static void main(String[] args) throws URISyntaxException {
 		GlobalParam.RunBean = (Run) FNIoc.getInstance().getBean("FNStart"); 

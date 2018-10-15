@@ -33,7 +33,7 @@
 
 	<bean id="SocketCenter" class="com.feiniu.node.SocketCenter"/>
 
-	<bean id="TaskManager" class="com.feiniu.task.TaskManager" />
+	<bean id="FlowCenter" class="com.feiniu.node.FlowCenter" />
 
 	<bean id="SearcherService" class="com.feiniu.searcher.service.SearcherService"/> 
 	

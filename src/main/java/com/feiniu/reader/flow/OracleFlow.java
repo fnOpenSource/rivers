@@ -15,12 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
-public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> { 
+public class OracleFlow extends ReaderFlowSocket{ 
   
 	private final static Logger log = LoggerFactory.getLogger(OracleFlow.class);
 
@@ -32,41 +33,37 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
  
 
 	@Override
-	public HashMap<String, Object> getJobPage(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
-		 
-		this.jobPage.clear(); 
+	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
+		boolean releaseConn = false;
 		PREPARE(false,false); 
 		if(!ISLINK())
-			return this.jobPage; 
-		Connection conn = (Connection) GETSOCKET().getConnection(false);
-		boolean releaseConn = false;
-		this.jobPage.put(GlobalParam.READER_STATUS,true);
-	 
-		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){  
+			return this.dataPage; 
+		Connection conn = (Connection) GETSOCKET().getConnection(false); 
+		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
 			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
 			try(ResultSet rs = statement.executeQuery();){				
-				this.jobPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
-				this.jobPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));  
+				this.dataPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
+				this.dataPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));
 				if(handler==null){
 					getAllData(rs,transParams); 
 				}else{
 					handler.Handle(this,rs,transParams);
 				} 
 			} catch (Exception e) {
-				this.jobPage.put(GlobalParam.READER_STATUS,false);
-				log.error("SqlReader init Exception", e);
+				this.dataPage.put(GlobalParam.READER_STATUS,false);
+				log.error("get data Page Exception", e);
 			} 
 		} catch (SQLException e){
-			this.jobPage.put(GlobalParam.READER_STATUS,false);
-			log.error(param.get("sql") + " getJobPage SQLException", e);
+			this.dataPage.put(GlobalParam.READER_STATUS,false);
+			log.error(param.get("sql") + " get dataPage SQLException", e);
 		} catch (Exception e) { 
 			releaseConn = true;
-			this.jobPage.put(GlobalParam.READER_STATUS,false);
-			log.error("getJobPage Exception so free connection,details ", e);
+			this.dataPage.put(GlobalParam.READER_STATUS,false);
+			log.error("get dataPage Exception so free connection,details ", e);
 		}finally{
 			REALEASE(false,releaseConn);
 		} 
-		return this.jobPage;
+		return this.dataPage;
 	}
 
 	@Override
@@ -134,11 +131,13 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				}
 			}
 			Collections.reverse(page);  
-		} catch (SQLException e){
-			log.error(param.get("sql") + " getPageSplit SQLException", e);
-		} catch (Exception e) { 
+		}catch(SQLException e){
+			page = null;
+			log.error("get dataPage SQLException "+sql, e);
+		}catch (Exception e) {
 			releaseConn = true;
-			log.error("getPageSplit Exception so free connection,details ", e);
+			page = null;
+			log.error("get dataPage Exception so free connection,details ", e);
 		}finally{ 
 			try {
 				statement.close();
@@ -146,16 +145,16 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 			} catch (Exception e) {
 				log.error("close connection resource Exception", e);
 			} 
-			REALEASE(false,releaseConn);
+			REALEASE(false,releaseConn);  
 		}  
 		return page;
 	} 
 	 
 
-	private void getAllData(ResultSet rs,Map<String, TransParam> writeParamMap) {  
-		this.datas.clear();
-		String maxId = null;
-		String READER_LAST_STAMP=null;
+	private void getAllData(ResultSet rs,Map<String, TransParam> transParam) {  
+		this.dataUnit.clear();
+		String dataBoundary = null;
+		String updateFieldValue=null;
 		try {  
 			ResultSetMetaData metaData = rs.getMetaData();
 			int columncount = metaData.getColumnCount(); 
@@ -164,28 +163,28 @@ public class OracleFlow extends ReaderFlowSocket<HashMap<String, Object>> {
 				for (int i = 1; i < columncount + 1; i++) {
 					String v = rs.getString(i);
 					String k = metaData.getColumnLabel(i);
-					if(k.equals(this.jobPage.get(GlobalParam.READER_KEY))){
+					if(k.equals(this.dataPage.get(GlobalParam.READER_KEY))){
 						u.setKeyColumnVal(v);
-						maxId = v;
+						dataBoundary = v;
 					}
-					if(k.equals(this.jobPage.get(GlobalParam.READER_SCAN_KEY))){
-						READER_LAST_STAMP = v;
+					if(k.equals(this.dataPage.get(GlobalParam.READER_SCAN_KEY))){
+						updateFieldValue = v;
 					}
-					u.addFieldValue(k, v, writeParamMap);
+					u.addFieldValue(k, v, transParam);
 				}
-				this.datas.add(u);
+				this.dataUnit.add(u);
 			}
 			rs.close();
 		} catch (SQLException e) {
-			this.jobPage.put(GlobalParam.READER_STATUS,false);
-			log.error("getAllData SQLException,", e);
+			this.dataPage.put(GlobalParam.READER_STATUS,false);
+			log.error("get page data SQLException,", e);
 		}
-		if (READER_LAST_STAMP==null){ 
-			this.jobPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
+		if (updateFieldValue==null){ 
+			this.dataPage.put(GlobalParam.READER_LAST_STAMP, System.currentTimeMillis()); 
 		}else{
-			this.jobPage.put(GlobalParam.READER_LAST_STAMP, READER_LAST_STAMP); 
+			this.dataPage.put(GlobalParam.READER_LAST_STAMP, updateFieldValue); 
 		}
-		this.jobPage.put("maxId", maxId);
-		this.jobPage.put("datas", this.datas);
+		this.dataPage.putDataBoundary(dataBoundary);
+		this.dataPage.putData(this.dataUnit);
 	} 
 }

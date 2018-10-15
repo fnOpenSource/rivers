@@ -4,7 +4,7 @@
 	<groupId>com.feiniu.rivers</groupId>
 	<artifactId>rivers</artifactId>
 	<packaging>jar</packaging>
-	<version>3.1</version>
+	<version>3.2</version>
 	<name>rivers</name>
 
 	<url>http://maven.apache.org</url>

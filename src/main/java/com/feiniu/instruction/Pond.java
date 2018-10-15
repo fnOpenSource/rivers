@@ -36,8 +36,7 @@ public class Pond extends Instruction {
 
 	/**
 	 * @param args
-	 *            parameter order is: String instance,String storeId,String keyColumn,
-	 *            String keyVal
+	 *            parameter order is: String storeId,String keyColumn,String keyVal
 	 */
 	public static void deleteByKey(Context context, Object[] args) {
 		boolean freeConn = false;

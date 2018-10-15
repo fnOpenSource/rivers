@@ -4,8 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.feiniu.model.param.TransParam;
+import com.feiniu.util.Common;
 
-public class PipeDataUnit {  
+public class PipeDataUnit implements Cloneable{  
 	public String key_column_val;
 	private HashMap<String,Object> data;  
 	private long SYSTEM_UPDATE_TIME; 
@@ -48,4 +49,13 @@ public class PipeDataUnit {
 	public long getUpdateTime(){
 		return this.SYSTEM_UPDATE_TIME;
 	} 
+	
+	public Object clone() {  
+		try {
+			return super.clone();
+		} catch (Exception e) {
+			Common.LOG.error("Clone not support!"); 
+		}
+		return null;
+	}
 }

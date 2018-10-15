@@ -1,4 +1,4 @@
-package com.feiniu.task;
+package com.feiniu.node;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -10,16 +10,18 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.model.param.InstructionParam;
+import com.feiniu.task.FlowTask;
+import com.feiniu.task.InstructionTask;
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
 import com.feiniu.util.Common;
 
 /**
- * Manage node all flow tasks
+ * read to write flow build center
  * @author chengwen
- * @version 1.0 
+ * @version 2.0 
  */
-public class TaskManager{ 
+public class FlowCenter{ 
 	
 	@Autowired
 	private TaskJobCenter taskJobCenter; 
@@ -30,26 +32,23 @@ public class TaskManager{
 	
 	private HashSet<String> cron_exists=new HashSet<String>();
 
-	public void startWriteJob() { 
+	/**
+	 * build read to flow flow
+	 */
+	public void buildRWFlow() { 
 		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
-		for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
-			String instanceName = entry.getKey();
-			InstanceConfig instanceConfig = entry.getValue(); 
-			startInstance(instanceName, instanceConfig,false); 
-		}
-		//startRabbitmqMessage(MQconsumerMonitorMap);
+		for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) { 
+			addFlowGovern(entry.getKey(), entry.getValue(),false); 
+		} 
 	}
 	
-	public void startInstructions() {
+	public void startInstructionsJob() {
 		Map<String, InstructionParam> instructions = GlobalParam.nodeConfig.getInstructions();
 		for (Map.Entry<String,InstructionParam> entry : instructions.entrySet()){
 			createInstructionScheduleJob(entry.getValue(),InstructionTask.createTask(entry.getKey()));
 		}
 	}
-	
-	/**
-	 * run job now
-	 */
+ 
 	public boolean runInstanceNow(String instanceName,String type){
 		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName); 
 		boolean state = true; 
@@ -77,38 +76,34 @@ public class TaskManager{
 
 		return state;
 	}
-	/**
-	 * clear node instance flow info
-	 * @param instanceName
-	 * @return
-	 */
-	public boolean removeInstance(String instanceName){
+ 
+	public boolean removeInstance(String instance){
 		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
 		boolean state = true;
-		if(configMap.containsKey(instanceName)){
+		if(configMap.containsKey(instance)){
 			try{
-				InstanceConfig instanceConfig = configMap.get(instanceName);
+				InstanceConfig instanceConfig = configMap.get(instance);
 				String[] seqs = Common.getSeqs(instanceConfig,true);
 				for (String seq : seqs) {
 					if (seq == null)
 						continue;  
-					if(GlobalParam.tasks.containsKey(Common.getInstanceName(instanceName, seq))){
-						GlobalParam.tasks.remove(Common.getInstanceName(instanceName, seq));
-					}
-					state = removeFlowScheduleJob(Common.getInstanceName(instanceName, seq),instanceConfig) && state;
+					if(GlobalParam.tasks.containsKey(Common.getInstanceName(instance, seq)))
+						GlobalParam.tasks.remove(Common.getInstanceName(instance, seq));
+					
+					for(GlobalParam.FLOW_TAG tag:GlobalParam.FLOW_TAG.values()) {
+						GlobalParam.SOCKET_CENTER.clearTransDataFlow(instance, seq, tag.name());
+					} 
+					state = removeFlowScheduleJob(Common.getInstanceName(instance, seq),instanceConfig) && state;
 				}
 			}catch(Exception e){
-				Common.LOG.error("remove Instance "+instanceName+" Exception", e);
+				Common.LOG.error("remove Instance "+instance+" Exception", e);
 				return false;
 			} 
 		}
 		return state;
 	}
-	
-	/**
-	 * start or restart add flow job
-	 */
-	public void startInstance(String instanceName, InstanceConfig instanceConfig,boolean needClear) { 
+ 
+	public void addFlowGovern(String instanceName, InstanceConfig instanceConfig,boolean needClear) { 
 		if (instanceConfig.checkStatus()==false || instanceConfig.isIndexer() == false)
 			return;
 		String[] seqs = Common.getSeqs(instanceConfig,true);  
@@ -118,13 +113,13 @@ public class TaskManager{
 					continue; 
 				if(!GlobalParam.tasks.containsKey(Common.getInstanceName(instanceName, seq)) || needClear){
 					GlobalParam.tasks.put(Common.getInstanceName(instanceName, seq), FlowTask.createTask(instanceName,
-							GlobalParam.SOCKET_CENTER.getTransDataFlow(instanceName, seq,needClear,GlobalParam.DEFAULT_RESOURCE_TAG), seq));
+							GlobalParam.SOCKET_CENTER.getTransDataFlow(instanceName, seq,needClear,GlobalParam.FLOW_TAG._DEFAULT.name()), seq));
 				}  
 				createFlowScheduleJob(Common.getInstanceName(instanceName, seq), GlobalParam.tasks.get(Common.getInstanceName(instanceName, seq)),
 						instanceConfig,needClear);
 			}
 		} catch (Exception e) {
-			Common.LOG.error("Start Instance "+instanceName+" Exception", e);
+			Common.LOG.error("Add Flow Govern "+instanceName+" Exception", e);
 		}
 	}
 
@@ -152,16 +147,7 @@ public class TaskManager{
 		} 
 		return state;
 	} 
-	 
-	/*
-	private void startRabbitmqMessage(
-			Map<String, IMessageHandler> MQconsumerMonitorMap) {
-		log.info("start Rabbitmq Message...");
-		RabbitmqConsumerClient RC = new RabbitmqConsumerClient(rabbitmqConfig,
-				MQconsumerMonitorMap);
-		RC.init();
-	}
-	*/
+ 
 	private boolean removeFlowScheduleJob(String instance,InstanceConfig instanceConfig)throws SchedulerException {
 		boolean state = true;
 		if (instanceConfig.getPipeParam().getFullCron() != null) { 

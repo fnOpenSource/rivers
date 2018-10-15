@@ -105,7 +105,7 @@ public class FlowTask {
 						getNextJobs(transDataFlow.getInstanceConfig().getPipeParam().getNextJob()));
 
 				for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
-					GlobalParam.TASKMANAGER.runInstanceNow(slave, "full");
+					GlobalParam.FlOW_CENTER.runInstanceNow(slave, "full");
 				}
 			} catch (Exception e) {
 				log.error(instanceName + " Full Exception", e);
@@ -126,7 +126,7 @@ public class FlowTask {
 					.put(GlobalParam.FLOWINFO.INCRE_STOREID.name(), storeId);
 			try {
 				for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
-					GlobalParam.TASKMANAGER.runInstanceNow(slave, "increment");
+					GlobalParam.FlOW_CENTER.runInstanceNow(slave, "increment");
 				}
 			} finally {
 				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready);  
@@ -167,7 +167,7 @@ public class FlowTask {
 						log.error(instanceName + " Increment Exception", ex);
 					}
 				}
-				log.error(instanceName + " startIncrementJob Exception", e);
+				log.error(instanceName + " IncrementJob Exception", e);
 			} finally {
 				recompute = false;
 				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready); 
