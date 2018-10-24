@@ -2,7 +2,7 @@
     Rivers是一个支持在任意类型数据源之间建立可计算流的处理中间件。 
 
 
-![image](https://github.com/fnOpenSource/rivers/blob/master/architecture.png)
+![image](https://github.com/fnOpenSource/rivers/blob/master/architecture.jpg)
 
 # Rivers用来解决什么?
 
