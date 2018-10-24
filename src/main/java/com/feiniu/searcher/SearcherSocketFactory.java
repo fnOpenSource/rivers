@@ -2,7 +2,6 @@ package com.feiniu.searcher;
 
 import java.util.HashMap;
 
-import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.flow.Socket;
 import com.feiniu.model.param.WarehouseNosqlParam;
@@ -39,8 +38,7 @@ public class SearcherSocketFactory implements Socket<SearcherFlowSocket>{
 	private static SearcherFlowSocket getNosqlFlowSocket(WarehouseParam params, InstanceConfig instanceConfig, String seq) {
 		HashMap<String, Object> connectParams = params.getConnectParams(seq);
 		connectParams.put("instanceConfig", instanceConfig);
-		connectParams.put("handler", params.getHandler());
-		connectParams.put("analyzer", GlobalParam.SEARCH_ANALYZER);
+		connectParams.put("handler", params.getHandler()); 
 		SearcherFlowSocket searcher = null;
 		switch (params.getType()) {
 		case ES:

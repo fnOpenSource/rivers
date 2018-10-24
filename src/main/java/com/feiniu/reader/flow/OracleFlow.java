@@ -15,9 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
@@ -33,7 +33,7 @@ public class OracleFlow extends ReaderFlowSocket{
  
 
 	@Override
-	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
+	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) {
 		boolean releaseConn = false;
 		PREPARE(false,false); 
 		if(!ISLINK())
@@ -151,7 +151,7 @@ public class OracleFlow extends ReaderFlowSocket{
 	} 
 	 
 
-	private void getAllData(ResultSet rs,Map<String, TransParam> transParam) {  
+	private void getAllData(ResultSet rs,Map<String, RiverField> transParam) {  
 		this.dataUnit.clear();
 		String dataBoundary = null;
 		String updateFieldValue=null;

@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.solr.client.solrj.SolrQuery;
 
 import com.feiniu.config.InstanceConfig;
@@ -26,10 +25,10 @@ public class SearcherSolrModel implements SearcherModel<SolrQuery, String, Strin
 	private Map<String, SolrQuery> attrQueryMap = new HashMap<String, SolrQuery>(); 
 	private List<String> sortinfo;
 	
-	public static SearcherSolrModel getInstance(SearcherRequest request, Analyzer analyzer,InstanceConfig instanceConfig) {
+	public static SearcherSolrModel getInstance(SearcherRequest request, InstanceConfig instanceConfig) {
 		SearcherSolrModel sq = new SearcherSolrModel(); 
 		sq.setQuery(SolrQueryBuilder.queryBuilder(request, instanceConfig,
-				analyzer, new HashMap<String, String>()));
+				 new HashMap<String, String>()));
 		return sq;
 	}
  

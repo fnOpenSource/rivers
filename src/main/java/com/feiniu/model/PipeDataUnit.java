@@ -3,7 +3,7 @@ package com.feiniu.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.feiniu.model.param.TransParam;
+import com.feiniu.field.RiverField;
 import com.feiniu.util.Common;
 
 public class PipeDataUnit implements Cloneable{  
@@ -19,8 +19,8 @@ public class PipeDataUnit implements Cloneable{
 		this.SYSTEM_UPDATE_TIME = System.currentTimeMillis();
 	}
 	
-	public boolean addFieldValue(String k,Object v,Map<String, TransParam> transParams){
-		TransParam param = transParams.get(k);
+	public boolean addFieldValue(String k,Object v,Map<String, RiverField> transParams){
+		RiverField param = transParams.get(k);
 		if (param != null){
 			if (param.getHandler()!=null){
 				param.getHandler().handle(this, v,transParams); 

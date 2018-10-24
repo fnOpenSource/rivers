@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.handler.ConnectionHandler;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.SearcherDataUnit;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherResult;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.searcher.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
@@ -203,7 +203,7 @@ public class SolrFlow extends SearcherFlowSocket {
 		if (fq.getFl().length() > 0) {
 			fl = fq.getFl(); 
 		} else { 
-			for (Map.Entry<String, TransParam> e : instanceConfig
+			for (Map.Entry<String, RiverField> e : instanceConfig
 					.getTransParams().entrySet()) {
 				if (e.getValue().getStored().equalsIgnoreCase("true"))
 					fl += "," + e.getKey();

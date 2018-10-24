@@ -9,10 +9,11 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,14 +41,15 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	public boolean connect() {
 		if (this.connectParams.get("ip") != null) {
 			if (this.conn == null) {
-				Settings settings = Settings.builder().put("cluster.name", this.connectParams.get("name"))
-						.put("client.transport.sniff", true).build();
-				this.conn = TransportClient.builder().settings(settings).build();
+				Settings settings = Settings.builder()
+				        .put("client.transport.sniff", true)
+				        .put("cluster.name", String.valueOf(this.connectParams.get("name"))).build(); 
+				this.conn = new PreBuiltTransportClient(settings);
 				String Ips = (String) this.connectParams.get("ip");
 				for (String ip : Ips.split(",")) {
 					try {
 						((TransportClient) this.conn)
-								.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ip), 9300));
+								.addTransportAddress(new TransportAddress(InetAddress.getByName(ip), 9300));
 					} catch (Exception e) {
 						log.error("connect Exception", e);
 					}

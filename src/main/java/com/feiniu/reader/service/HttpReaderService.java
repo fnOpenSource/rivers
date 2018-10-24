@@ -16,12 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.field.RiverField;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
 import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.model.param.WarehouseParam;
 import com.feiniu.node.CPU;
 import com.feiniu.searcher.service.SearcherService;
@@ -191,7 +191,7 @@ public class HttpReaderService {
 							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq), GlobalParam.SEARCH_ANALYZER,transFlow.getInstanceConfig());
+								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq),transFlow.getInstanceConfig());
 								break; 
 							default:
 								break;
@@ -219,7 +219,7 @@ public class HttpReaderService {
 		}
 
 		private DataPage getPageData(Object data, String keycolumn, String updatecolumn,
-				Map<String, TransParam> transParams) {
+				Map<String, RiverField> transParams) {
 			DataPage DP = new DataPage();
 			LinkedList<PipeDataUnit> datas = new LinkedList<PipeDataUnit>();
 			DP.put(GlobalParam.READER_KEY, keycolumn);

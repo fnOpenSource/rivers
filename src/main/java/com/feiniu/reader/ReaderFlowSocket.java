@@ -15,10 +15,10 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
+import com.feiniu.field.RiverField;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.handler.Handler;
 
 /**
@@ -30,7 +30,7 @@ import com.feiniu.reader.handler.Handler;
 @NotThreadSafe
 public class ReaderFlowSocket implements Flow{ 
 	
-	protected HashMap<String, Object> connectParams;
+	protected volatile HashMap<String, Object> connectParams;
 
 	protected DataPage dataPage = new DataPage();
 	
@@ -98,7 +98,7 @@ public class ReaderFlowSocket implements Flow{
 		return true;
 	}   
 
-	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) {
+	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) {
 		return null;
 	}
 

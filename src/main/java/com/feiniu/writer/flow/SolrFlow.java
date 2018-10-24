@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnectionPool;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.FNIoc;
@@ -76,7 +76,7 @@ public class SolrFlow extends WriterFlowSocket{
  
 	 
 	@Override
-	public boolean create(String instantcName, String storeId, Map<String, TransParam> transParams) {
+	public boolean create(String instantcName, String storeId, Map<String, RiverField> transParams) {
 		String name = Common.getStoreName(instantcName, storeId);
 		String path = null; 
 		try {
@@ -100,7 +100,7 @@ public class SolrFlow extends WriterFlowSocket{
 	} 
 	
 	@Override
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		String name = Common.getStoreName(instantcName,storeId);
 		if (unit.getData().size() == 0){
 			log.warn("Empty IndexUnit for " + name );
@@ -115,7 +115,7 @@ public class SolrFlow extends WriterFlowSocket{
 			if (r.getValue() == null)
 				continue;
 			String value = String.valueOf(r.getValue());
-			TransParam transParam = writeParamMap.get(field);
+			RiverField transParam = writeParamMap.get(field);
 			if (transParam == null)
 				continue;
 			
@@ -275,7 +275,7 @@ public class SolrFlow extends WriterFlowSocket{
 		} 
 	}
  
-	private void getSchemaFile(Map<String,TransParam> paramMap,String instantcName, String storeId,String zkHost) {
+	private void getSchemaFile(Map<String,RiverField> paramMap,String instantcName, String storeId,String zkHost) {
 		BufferedReader head_reader = null;
 		BufferedReader tail_reader = null; 
 		String path = null;
@@ -310,8 +310,8 @@ public class SolrFlow extends WriterFlowSocket{
 			
 			StringBuilder field = new StringBuilder();
 			String firstFiled = null;
-			for (Map.Entry<String, TransParam> e : paramMap.entrySet()) {
-				TransParam tp = e.getValue();
+			for (Map.Entry<String, RiverField> e : paramMap.entrySet()) {
+				RiverField tp = e.getValue();
 				field.delete(0, field.length());
 				if (tp.getName() == null)
 					continue;

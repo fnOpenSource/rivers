@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.writer.WriterFlowSocket;
 
 /**
@@ -57,7 +57,7 @@ public class HBaseFlow extends WriterFlowSocket {
 
 	 
 	@Override
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
 		if (unit.getData().size() == 0){
 			log.info("Empty IndexUnit for " + instantcName + " " + storeId);
 			return;
@@ -76,7 +76,7 @@ public class HBaseFlow extends WriterFlowSocket {
 			if (value == null)
 				continue;
 			
-			TransParam transParam = transParams.get(field);
+			RiverField transParam = transParams.get(field);
 			if (transParam == null)
 				transParam = transParams.get(field.toLowerCase());
 			if (transParam == null)
@@ -120,7 +120,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	}
  
 	@Override
-	public boolean create(String instantcName, String batchId, Map<String, TransParam> transParams) {
+	public boolean create(String instantcName, String batchId, Map<String, RiverField> transParams) {
 		return true;
 	}
 

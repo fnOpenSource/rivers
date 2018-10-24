@@ -2,8 +2,8 @@ package com.feiniu.writerUnit.handler;
 
 import java.util.Map;
 
+import com.feiniu.field.RiverField;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 
 /**
  * user defined data unit process function
@@ -11,5 +11,5 @@ import com.feiniu.model.param.TransParam;
  * @version 1.0 
  */
 public interface Handler { 
-	void handle(PipeDataUnit u,Object obj,Map<String, TransParam> transParams); 
+	void handle(PipeDataUnit u,Object obj,Map<String, RiverField> transParams); 
 }

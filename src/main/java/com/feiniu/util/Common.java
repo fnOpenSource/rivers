@@ -1,7 +1,5 @@
 package com.feiniu.util;
 
-import java.io.Reader;
-import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -13,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.slf4j.Logger;
@@ -25,6 +22,7 @@ import org.w3c.dom.NodeList;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.GlobalParam.STATUS;
+import com.feiniu.field.RiverField;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.InstructionTree;
@@ -100,29 +98,22 @@ public class Common {
 		}
 	}
 
-	public static List<String> getKeywords(String queryStr, Analyzer analyzer) {
-		List<String> ret = new ArrayList<String>();
-		if (analyzer == null) {
-			ret.add(queryStr);
-			return ret;
-		}
-
+	public static List<String> getKeywords(String queryStr) {
+		List<String> ret = new ArrayList<String>(); 
 		try {
-			Reader reader = new StringReader(queryStr);
-			TokenStream tokenStream = analyzer.tokenStream("default", reader);
-			tokenStream.addAttribute(CharTermAttribute.class);
-
+			TokenStream tokenStream = IK.participle(queryStr);
+			tokenStream.addAttribute(CharTermAttribute.class); 
 			tokenStream.reset();
 			while (tokenStream.incrementToken()) {
 				String text = tokenStream.getAttribute(CharTermAttribute.class).toString();
 				ret.add(text);
 			}
 			tokenStream.end();
-			tokenStream.close();
-			return ret;
+			tokenStream.close(); 
 		} catch (Exception e) {
-			return null;
+			ret.add(queryStr);
 		}
+		return ret;
 	}
 
 	public static String long2DateFormat(long t) {
@@ -516,5 +507,16 @@ public class Common {
 			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1));
 			GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
 		}
+	}
+	
+	public static Object parseFieldValue(String v, RiverField fd) throws Exception {
+		if (fd == null)
+			return null; 
+		if (v==null) {
+			v = fd.getDefaultvalue();
+		} 
+		Class<?> c = Class.forName(fd.getParamtype());  
+		Method method = c.getMethod("valueOf", String.class);
+		return method.invoke(c,String.valueOf(v));
 	}
 }

@@ -42,10 +42,8 @@
 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
 	<bean id="taskJobCenter" class="com.feiniu.task.schedule.TaskJobCenter"/>
 	<bean id="healthChecker" class="com.feiniu.util.HealthChecker"/> 
-	<bean id="RIVERS" class="com.feiniu.node.startup.Run"/>
-	<bean id="FNMonitor" class="com.feiniu.service.FNMonitor" init-method="start"/>
-	<bean id="FNStart" class="com.feiniu.node.startup.Run">
+	<bean id="RIVERS" class="com.feiniu.node.startup.Run"/> 
+	<bean id="FNStart" class="com.feiniu.node.startup.Run"> 
 		<constructor-arg type="String" index="0" value="#{riverPathConfig['config.path']}/config/config.properties"/>
-		<constructor-arg type="String" index="1" value="#{riverPathConfig['config.path']}"/> 
 	</bean>
 </beans>

@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.lucene.analysis.Analyzer;
-
 import com.feiniu.model.RiverState;
 import com.feiniu.node.FlowCenter;
 import com.feiniu.node.NodeMonitor;
@@ -45,8 +43,6 @@ public class GlobalParam {
 	public static boolean WRITE_BATCH = false;
 	/**#1 searcher service  2 writer service 4 http reader service 8 instruction service*/
 	public static int SERVICE_LEVEL;
-	
-	public static Analyzer SEARCH_ANALYZER; 
 	
 	public static String CONFIG_PATH;
 	

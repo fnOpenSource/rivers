@@ -31,8 +31,8 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.connect.FnConnectionPool;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.writer.WriterFlowSocket;
@@ -57,7 +57,7 @@ public class ESFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void write(String keyColumn, PipeDataUnit unit, Map<String, TransParam> transParams, String instance,
+	public void write(String keyColumn, PipeDataUnit unit, Map<String, RiverField> transParams, String instance,
 			String storeId, boolean isUpdate) throws FNException {
 		try {
 			String name = Common.getStoreName(instance, storeId);
@@ -74,13 +74,13 @@ public class ESFlow extends WriterFlowSocket {
 				if (r.getValue() == null)
 					continue;
 				String value = String.valueOf(r.getValue());
-				TransParam transParam = transParams.get(field);
+				RiverField transParam = transParams.get(field);
 				if (transParam == null)
 					transParam = transParams.get(field.toLowerCase());
 				if (transParam == null)
 					continue;
 				
-				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))) {
+				if (transParam.getAnalyzer().length()==0) {
 					if(transParam.getIndextype().equalsIgnoreCase("geo_point")) {
 						String[] vs = value.split(transParam.getSeparator());
 						if(vs.length==2)
@@ -125,7 +125,7 @@ public class ESFlow extends WriterFlowSocket {
 			if (e.getMessage().contains("IndexNotFoundException")) {
 				throw new FNException("storeId not found");
 			} else {
-				throw new FNException(e.getMessage());
+				throw new FNException(e);
 			}
 		}
 	}
@@ -157,7 +157,7 @@ public class ESFlow extends WriterFlowSocket {
 	 *            data source main tag name
 	 */
 	@Override
-	public boolean create(String instance, String storeId, Map<String, TransParam> transParams) {
+	public boolean create(String instance, String storeId, Map<String, RiverField> transParams) {
 		String name = Common.getStoreName(instance, storeId);
 		String type = instance;
 		try {
@@ -314,44 +314,42 @@ public class ESFlow extends WriterFlowSocket {
 		}
 	} 
 	
-	private Map<String, Object> getSettingMap(Map<String, TransParam> transParams) {
-		Map<String, Object> config_map = new HashMap<String, Object>();
-		try {
-
-			for (Map.Entry<String, TransParam> e : transParams.entrySet()) {
+	private Map<String, Object> getSettingMap(Map<String, RiverField> transParams) {
+		Map<String, Object> settingMap = new HashMap<String, Object>();
+		Map<String, Object> root_map = new HashMap<String, Object>();
+		try { 
+			for (Map.Entry<String, RiverField> e : transParams.entrySet()) {
 				Map<String, Object> map = new HashMap<String, Object>();
-				TransParam p = e.getValue();
+				RiverField p = e.getValue();
 				if (p.getName() == null)
 					continue;
 				map.put("type", p.getIndextype()); // type is must
 				if (p.getStored().toLowerCase().equals("false")) {
-					map.put("store", "false");
+					map.put("store", false);
+				}else {
+					map.put("store", true);
 				}
-				if (p.getIndexed().toLowerCase().equals("true")) {
-					if (p.getAnalyzer().length() > 0) {
-						if (p.getAnalyzer().equalsIgnoreCase(("not_analyzed")))
-							map.put("index", "not_analyzed");
-						else {
-							map.put("index", "analyzed");
-							map.put("analyzer", p.getAnalyzer());
-							Map<String, Boolean> enabledMap = new HashMap<String, Boolean>();
-							enabledMap.put("enabled", false);
-							map.put("norms", enabledMap);
-							map.put("index_options", p.getIndex_options()!=null?p.getIndex_options():"docs");
-						}
+				if(p.getDsl()!=null) {
+					for(String r:p.getDsl().split(",")) {
+						String[] _dsl = r.split(":");
+						map.put(_dsl[0], _dsl[1]);
+					}
+				}
+				if (p.getIndexed().toLowerCase().equals("true")) { 
+					if (p.getAnalyzer().length()>0) {
+						map.put("analyzer", p.getAnalyzer());
 					}
 				} else {
-					map.put("index", "not_analyzed");
-				}
-				config_map.put(p.getAlias(), map);
+					//map.put("analyzed", false);
+				} 
+				settingMap.put(p.getAlias(), map);
 			}
+			settingMap.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){
+				private static final long serialVersionUID = 1L;{put("type", "long");}});
+			root_map.put("properties", settingMap);
 		} catch (Exception e) {
-			log.error("getSettingMap error:" + e.getMessage());
-		}
-		config_map.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){
-			private static final long serialVersionUID = 1L;{put("type", "long");}});
-		Map<String, Object> root_map = new HashMap<String, Object>();
-		root_map.put("properties", config_map);
+			log.error("getSettingMap Exception",e);
+		}   
 		Map<String, Object> _source_map = new HashMap<String, Object>();
 		_source_map.put("enabled", "true");
 		root_map.put("_source", _source_map);

@@ -2,9 +2,14 @@ package com.feiniu.connect;
 
 import java.util.HashMap;
 
+/** 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-24 13:53
+ */
 public class FnConnectionSocket{
 	
-	protected HashMap<String, Object> connectParams = null;
+	protected volatile HashMap<String, Object> connectParams = null;
 	
 	private boolean isShare = false;
 	 

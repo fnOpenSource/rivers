@@ -13,13 +13,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.feiniu.field.RiverField;
 import com.feiniu.model.param.BasicParam;
 import com.feiniu.model.param.MessageParam;
 import com.feiniu.model.param.NOSQLParam;
 import com.feiniu.model.param.SQLParam;
 import com.feiniu.model.param.SearcherParam;
 import com.feiniu.model.param.PipeParam;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
@@ -35,7 +35,7 @@ public class InstanceConfig {
 	private String alias = "";
 	private boolean status = true;
 	private String name;
-	private Map<String, TransParam> transParams;
+	private Map<String, RiverField> transParams;
 	private Map<String,SearcherParam> searchParams;
 	private PipeParam pipeParam;
 	private MessageParam messageParam ; 
@@ -51,7 +51,7 @@ public class InstanceConfig {
 
 	public void init() { 
 		this.pipeParam = new PipeParam();
-		this.transParams = new HashMap<String, TransParam>(); 
+		this.transParams = new HashMap<String, RiverField>(); 
 		this.searchParams = new HashMap<String, SearcherParam>();
 		this.messageParam = new MessageParam(); 
 		loadConfigFromZk();
@@ -71,7 +71,7 @@ public class InstanceConfig {
 		}
 	}
 
-	public TransParam getTransParam(String key) {
+	public RiverField getTransParam(String key) {
 		return this.transParams.get(key);
 	}
 	
@@ -87,7 +87,7 @@ public class InstanceConfig {
 		return this.messageParam;
 	} 
 
-	public Map<String, TransParam> getTransParams() {
+	public Map<String, RiverField> getTransParams() {
 		return this.transParams;
 	}
  
@@ -206,7 +206,7 @@ public class InstanceConfig {
 
 			params = (Element) doc.getElementsByTagName("fields").item(0);
 			paramlist = params.getElementsByTagName("field");
-			parseNode(paramlist, "TransParam", TransParam.class); 
+			parseNode(paramlist, "TransParam", RiverField.class); 
 
 			params = (Element) doc.getElementsByTagName("searchParams").item(0);
 			paramlist = params.getElementsByTagName("param");
@@ -226,7 +226,7 @@ public class InstanceConfig {
 					Object o = Common.getXmlObj(param, c);
 					switch (type) {
 					case "TransParam":
-						TransParam e = (TransParam) o;
+						RiverField e = (RiverField) o;
 						transParams.put(e.getName(), e);
 						break;
 					case "pipeParam":

@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.DataPage;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
@@ -53,7 +53,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 	}
  
 	@Override
-	public DataPage getPageData(HashMap<String, String> param,Map<String, TransParam> transParams,Handler handler) { 
+	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) { 
 		PREPARE(false,false);
 		boolean releaseConn = false;
 		try {

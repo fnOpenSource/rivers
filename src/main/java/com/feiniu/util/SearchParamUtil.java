@@ -5,18 +5,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.script.Script;
+import org.elasticsearch.search.sort.ScriptSortBuilder.ScriptSortType;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
+import com.feiniu.field.RiverField;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearcherParam;
-import com.feiniu.model.param.TransParam; 
+import com.feiniu.model.param.SearcherParam; 
 
 public class SearchParamUtil {
 
@@ -52,9 +54,9 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
+	public static List<SortBuilder<?>> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
 		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
-		List<SortBuilder> sortList = new ArrayList<SortBuilder>();
+		List<SortBuilder<?>> sortList = new ArrayList<SortBuilder<?>>();
 		boolean useScore = false;
 		if (sortstrs != null && sortstrs.length() > 0) { 
 			boolean reverse = false;
@@ -82,16 +84,15 @@ public class SearchParamUtil {
 					useScore = true;
 					break;
 				case GlobalParam.PARAM_FIELD_RANDOM:
-					sortList.add(SortBuilders.scriptSort(
-							new Script("random()"), "number"));
+					sortList.add(SortBuilders.scriptSort(new Script("random()"), ScriptSortType.NUMBER)); 
 					break; 
 				default:
-					TransParam checked; 
+					RiverField checked; 
 					SearcherParam sp;
 					if(instanceConfig.getTransParam(fieldname)!=null && instanceConfig.getTransParam(fieldname).getIndextype().equals("geo_point")) {
 						String _tmp = request.getParam(fieldname);
-						String[] _geo = _tmp.split(":");
-						sortList.add(SortBuilders.geoDistanceSort(fieldname).point(Double.parseDouble(_geo[0]), Double.parseDouble(_geo[0])).order(reverse ? SortOrder.DESC : SortOrder.ASC));
+						String[] _geo = _tmp.split(":"); 
+						sortList.add(SortBuilders.geoDistanceSort(fieldname,new GeoPoint(Double.parseDouble(_geo[0]), Double.parseDouble(_geo[0]))).order(reverse ? SortOrder.DESC : SortOrder.ASC));
 						break;
 					}
 					if ((checked = instanceConfig.getTransParam(fieldname)) != null) { 

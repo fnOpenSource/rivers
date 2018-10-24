@@ -173,7 +173,7 @@ public class FlowTask {
 				Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready); 
 			}
 		} else {
-			log.info(instanceName + " flow have been closed!startIncrement flow failed!");
+			log.info(instanceName + " flow have been closed!Current Start Increment flow failed!");
 		}
 	}
 

@@ -126,7 +126,7 @@ public final class NodeMonitor {
 				setResponse(0, "Actions Not Exists!");
 			}
 		} catch (Exception e) {
-			setResponse(0, "Actions Exception!");
+			setResponse(0, "Actions Exception!"+e.getMessage());
 			Common.LOG.error("ac " + rq.getParameter("ac") + " Exception ", e);
 		}
 	}
@@ -192,11 +192,9 @@ public final class NodeMonitor {
 				GlobalParam.StartConfig.setProperty(rq.getParameter("k"), rq.getParameter("v"));
 			} else {
 				GlobalParam.StartConfig.remove(rq.getParameter("k"));
-			}
-			OutputStream os = null;
+			} 
 			try {
-				os = new FileOutputStream(configPath.replace("file:", "") + "/config/config.properties");
-				GlobalParam.StartConfig.store(os, "Auto Save Config with no format,BeCarefull!");
+				saveNodeConfig();
 				setResponse(1, "Config set success!");
 			} catch (Exception e) {
 				setResponse(0, "Config save Exception " + e.getMessage());
@@ -204,7 +202,8 @@ public final class NodeMonitor {
 		} else {
 			setResponse(0, "Config parameters k v or type not exists!");
 		}
-	}
+	} 
+	
 
 	public void stopHttpReaderServiceService(Request rq) {
 		int service_level = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
@@ -369,6 +368,8 @@ public final class NodeMonitor {
 					for (String seriesDataSeq : wsp.getSeq()) {
 						String strs = getZkData(
 								Common.getTaskStorePath(instance, seriesDataSeq, GlobalParam.JOB_INCREMENTINFO_PATH));
+						if(strs==null)
+							continue;
 						sb.append(
 								"\r\n;(" + seriesDataSeq + ") " + strs.split(GlobalParam.JOB_STATE_SPERATOR)[0] + ":");
 						if (strs.split(GlobalParam.JOB_STATE_SPERATOR).length == 1)
@@ -578,7 +579,7 @@ public final class NodeMonitor {
 	 */
 	public void addInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			GlobalParam.nodeConfig.loadConfig(rq.getParameter("instance"), true);
+			GlobalParam.nodeConfig.loadConfig(rq.getParameter("instance"), false);
 			String tmp[] = rq.getParameter("instance").split(":");
 			String instanceName = rq.getParameter("instance");
 			if (tmp.length > 1)
@@ -586,8 +587,14 @@ public final class NodeMonitor {
 			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName);
 			if (instanceConfig.checkStatus())
 				Common.initParams(instanceConfig);
-			rebuildFlowGovern(rq.getParameter("instance"));
-			setResponse(1, instanceName + " add to node " + GlobalParam.IP + " Success!");
+			rebuildFlowGovern(rq.getParameter("instance")); 
+			GlobalParam.StartConfig.setProperty("instances", GlobalParam.StartConfig.getProperty("instances")+","+instanceName);
+			try {
+				saveNodeConfig();
+				setResponse(1, instanceName + " add to node " + GlobalParam.IP + " Success!");
+			}catch (Exception e) {
+				setResponse(0, e.getMessage());
+			} 
 		} else {
 			setResponse(0, "Parameter not match!");
 		}
@@ -690,9 +697,21 @@ public final class NodeMonitor {
 			GlobalParam.FLOW_INFOS.remove(instance, JOB_TYPE.FULL.name());
 			GlobalParam.FLOW_INFOS.remove(instance, JOB_TYPE.INCREMENT.name());
 		}
-		GlobalParam.nodeConfig.getInstanceConfigs().remove(instance);
-
+		GlobalParam.nodeConfig.getInstanceConfigs().remove(instance); 
 		GlobalParam.FlOW_CENTER.removeInstance(instance);
+		String tmp="";
+		for(String str:GlobalParam.StartConfig.getProperty("instances").split(",")) {
+			String[] s = str.split(":");
+			if(s[0].equals(instance))
+				continue;
+			tmp+=str+",";
+		}
+		GlobalParam.StartConfig.setProperty("instances", tmp);
+		try {
+			saveNodeConfig(); 
+		}catch (Exception e) {
+			setResponse(0, e.getMessage());
+		} 
 	}
 
 	/**
@@ -851,6 +870,12 @@ public final class NodeMonitor {
 				}
 			}
 		}
+	}
+	
+	private void saveNodeConfig() throws Exception {
+		OutputStream os = null;
+		os = new FileOutputStream(configPath.replace("file:", "") + "/config/config.properties");
+		GlobalParam.StartConfig.store(os, "Auto Save Config with no format,BeCarefull!");  
 	}
 
 	private String getBatchId(String path) {

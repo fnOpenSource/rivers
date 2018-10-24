@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.model.param.SearcherParam;
-import com.feiniu.model.param.TransParam;
 
 public class SearcherRequest {
 	private String pipe = null;
@@ -101,28 +100,7 @@ public class SearcherRequest {
 			e.printStackTrace();
 		}
 		return null;
-	}
-	
-	public Object get(String key, TransParam tp) {
-		if (tp == null)
-			return null;
-		try {
-			Class<?> c = Class.forName(tp.getParamtype());
-			String v;
-			if (params.containsKey(key)) {
-				v = params.get(key);
-			}else{
-				v = tp.getDefaultvalue();
-			}
-			if (c.getSimpleName().equalsIgnoreCase("String"))
-				return v;
-			Method method = c.getMethod("valueOf", String.class);
-			return method.invoke(c,String.valueOf(v)); 
-		} catch (Exception e) {
-			addError("param "+key+" parse Exception!");
-		}
-		return null;
-	}
+	} 
 	
 	public void addError(String e){
 		this.errors.add(e); 

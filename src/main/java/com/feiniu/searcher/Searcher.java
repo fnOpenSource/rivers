@@ -1,6 +1,5 @@
 package com.feiniu.searcher;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,8 +7,8 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherESModel;
 import com.feiniu.model.SearcherModel;
 import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.SearcherState;
 import com.feiniu.model.SearcherSolrModel;
+import com.feiniu.model.SearcherState;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.SearchParamUtil;
 
@@ -59,17 +58,15 @@ public class Searcher {
 			response.setParams(rq.getParams(), null);
 			return response;
 		}
-		response.setParams(rq.getParams(), instanceConfig);
-		Analyzer analyzer = this.searcher.getAnalyzer();
-
+		response.setParams(rq.getParams(), instanceConfig); 
 		SearcherModel<?, ?, ?> searcherModel = null;
 		switch (this.searcher.getType()) {
 		case ES:
-			searcherModel = SearcherESModel.getInstance(rq, analyzer,instanceConfig);
+			searcherModel = SearcherESModel.getInstance(rq,instanceConfig);
 			SearchParamUtil.normalParam(rq, searcherModel,instanceConfig);
 			break;
 		case SOLR:
-			searcherModel = SearcherSolrModel.getInstance(rq, analyzer,instanceConfig);
+			searcherModel = SearcherSolrModel.getInstance(rq,instanceConfig);
 			SearchParamUtil.normalParam(rq, searcherModel,instanceConfig);
 			break; 
 		default:

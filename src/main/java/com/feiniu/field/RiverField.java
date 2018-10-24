@@ -1,14 +1,14 @@
-package com.feiniu.model.param;
+package com.feiniu.field;
 
 import com.feiniu.writerUnit.handler.Handler;
 
-public class TransParam { 
+public class RiverField { 
 	/**read name*/
 	private String name;
 	/**write name*/
 	private String alias;
 	private String defaultvalue;
-	private String analyzer;
+	private String analyzer="";
 	private String stored = "false";
 	private String separator;
 	/**for data storetype*/
@@ -18,7 +18,7 @@ public class TransParam {
 	private Handler handler;
 	private boolean router=false;
 	private String paramtype;
-	private String index_options;
+	private String dsl;
 
 	public boolean isValid(String value) { 
 		return true;
@@ -133,11 +133,11 @@ public class TransParam {
 		this.router = router.toLowerCase().equals("true")?true:false;
 	}
 
-	public String getIndex_options() {
-		return index_options;
+	public String getDsl() {
+		return dsl;
 	}
 
-	public void setIndex_options(String index_options) {
-		this.index_options = index_options;
+	public void setDsl(String dsl) {
+		this.dsl = dsl;
 	} 
 }

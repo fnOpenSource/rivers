@@ -13,9 +13,9 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.FnConnection;
 import com.feiniu.connect.FnConnectionPool;
+import com.feiniu.field.RiverField;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.param.TransParam;
 
 /**
  * Flow into Pond Manage
@@ -27,9 +27,9 @@ import com.feiniu.model.param.TransParam;
 public class WriterFlowSocket implements Flow{
 	
 	/**batch submit documents*/
-	protected volatile Boolean isBatch = true;
-	protected HashMap<String, Object> connectParams;
-	protected volatile String poolName;  
+	protected Boolean isBatch = true;
+	protected volatile HashMap<String, Object> connectParams;
+	protected String poolName;  
 	protected FnConnection<?> FC;
 	protected AtomicInteger retainer = new AtomicInteger(0);
 	private final static Logger log = LoggerFactory.getLogger(WriterFlowSocket.class); 
@@ -90,7 +90,7 @@ public class WriterFlowSocket implements Flow{
 		FnConnectionPool.release(this.poolName);
 	}
 	
-	public boolean create(String instance, String batchId, Map<String,TransParam> transParams) {
+	public boolean create(String instance, String batchId, Map<String,RiverField> transParams) {
 		return false;
 	}
 	
@@ -98,7 +98,7 @@ public class WriterFlowSocket implements Flow{
 		return null;
 	}
 
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, TransParam> transParams,String instance, String batchId,boolean isUpdate) throws Exception {
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams,String instance, String batchId,boolean isUpdate) throws Exception {
 	}
 
 	public void delete(String instance, String storeId,String keyColumn,String keyVal) throws Exception {

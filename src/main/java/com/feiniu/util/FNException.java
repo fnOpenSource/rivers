@@ -5,4 +5,7 @@ public class FNException extends Exception{
 	public FNException(String msg){
 		super(msg); 
 	} 
+	public FNException(Exception e){
+		super(e); 
+	}
 }

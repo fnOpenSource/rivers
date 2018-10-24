@@ -8,8 +8,6 @@ import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.wltea.analyzer.cfg.Configuration;
-import org.wltea.analyzer.dic.Dictionary;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -23,10 +21,10 @@ import com.feiniu.node.RecoverMonitor;
 import com.feiniu.node.SocketCenter;
 import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
+import com.feiniu.service.FNMonitor;
 import com.feiniu.task.FlowTask;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNIoc;
-import com.feiniu.util.IKAnalyzer5;
 import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
 
@@ -34,7 +32,7 @@ import com.feiniu.util.email.FNEmailSender;
  * app entry startup file
  * 
  * @author chengwen
- * @version 2.1
+ * @version 3.1
  */
 public final class Run {
 	@Autowired
@@ -62,9 +60,8 @@ public final class Run {
 	public Run() {
 		
 	}
-	public Run(String startConfigPath,String dictionaryPath) {
-		this.startConfigPath = startConfigPath; 
-		Dictionary.initial(new Configuration(dictionaryPath));
+	public Run(String startConfigPath) {
+		this.startConfigPath = startConfigPath;
 	} 
 	
 	public void init(boolean initInstance) {
@@ -96,8 +93,7 @@ public final class Run {
 	}
 
 	public void startService() {
-		if ((GlobalParam.SERVICE_LEVEL & 1) > 0) {
-			GlobalParam.SEARCH_ANALYZER = IKAnalyzer5.getInstance(true);
+		if ((GlobalParam.SERVICE_LEVEL & 1) > 0) { 
 			searcherService.start();
 		}
 		if ((GlobalParam.SERVICE_LEVEL & 2) > 0)
@@ -106,6 +102,7 @@ public final class Run {
 			httpReaderService.start();
 		if ((GlobalParam.SERVICE_LEVEL & 8) > 0)
 			GlobalParam.FlOW_CENTER.startInstructionsJob();
+		new FNMonitor().start();
 	}
 
 	public void loadGlobalConfig(String path,boolean fromZk) {
@@ -143,6 +140,7 @@ public final class Run {
 			init(true); 
 			startService();
 		} 
+		Common.LOG.info("River Start Success!");
 	}
 
 	private void environmentCheck() {

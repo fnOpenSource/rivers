@@ -7,20 +7,19 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.solr.client.solrj.SolrQuery;
 
-import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.InstanceConfig;
+import com.feiniu.field.RiverField;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearcherParam;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
 
 public class SolrQueryBuilder {
 
 	public static SolrQuery queryBuilder(SearcherRequest request, InstanceConfig prs,
-			Analyzer analyzer, Map<String, String> attrQueryMap) {
+			Map<String, String> attrQueryMap) {
 		SolrQuery sq = new SolrQuery();
 		StringBuffer qr = new StringBuffer();
 		Map<String, String> paramMap = request.getParams();
@@ -57,7 +56,7 @@ public class SolrQueryBuilder {
 				continue;
 			}
 			
-			TransParam tp = prs.getTransParam(k);
+			RiverField tp = prs.getTransParam(k);
 			SearcherParam sp = prs.getSearchParam(k);
 			if (tp == null && sp==null){
 				continue; 

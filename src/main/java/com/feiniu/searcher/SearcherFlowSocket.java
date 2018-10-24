@@ -22,7 +22,7 @@ public class SearcherFlowSocket implements Flow{
 	
 	protected Analyzer analyzer;
 	protected InstanceConfig instanceConfig;
-	protected HashMap<String, Object> connectParams;
+	protected volatile HashMap<String, Object> connectParams;
 	protected String poolName;
 	protected FnConnection<?> FC;
 	protected AtomicInteger retainer = new AtomicInteger(0);

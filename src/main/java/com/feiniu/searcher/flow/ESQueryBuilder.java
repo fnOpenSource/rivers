@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -18,18 +17,17 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptService.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.QUERY_TYPE;
+import com.feiniu.field.RiverField;
+import com.feiniu.field.handler.LongRange;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.SearcherRequest;
 import com.feiniu.model.param.SearcherParam;
-import com.feiniu.model.param.TransParam;
 import com.feiniu.util.Common;
-import com.feiniu.util.LongRangeType;
 
 public class ESQueryBuilder {
 
@@ -40,7 +38,7 @@ public class ESQueryBuilder {
 	}
 
 	static public BoolQueryBuilder buildBooleanQuery(SearcherRequest request, InstanceConfig instanceConfig,
-			Analyzer analyzer, Map<String, QueryBuilder> attrQueryMap) {
+		 Map<String, QueryBuilder> attrQueryMap) {
 		BoolQueryBuilder bquery = QueryBuilders.boolQuery();
 		try {
 			Map<String, String> paramMap = request.getParams();
@@ -100,16 +98,16 @@ public class ESQueryBuilder {
 					occur = Occur.MUST_NOT;
 				}
 
-				TransParam tp = instanceConfig.getTransParam(key);
+				RiverField tp = instanceConfig.getTransParam(key);
 				SearcherParam sp = instanceConfig.getSearchParam(key);
 				if ((tp == null && sp == null) || Common.isDefaultParam(key)) {
 					continue;
 				}
 				QueryBuilder query = null;
 				if (sp != null && sp.getFields() != null && sp.getFields().length() > 0)
-					query = buildMultiQuery(sp.getFields(), value, instanceConfig, request, analyzer, key, fuzzy);
+					query = buildMultiQuery(sp.getFields(), value, instanceConfig, request, key, fuzzy);
 				else
-					query = buildSingleQuery(tp.getAlias(), value, tp, sp, request, analyzer, key, fuzzy);
+					query = buildSingleQuery(tp.getAlias(), value, tp, sp, request, key, fuzzy);
 
 				if (occur == Occur.MUST_NOT && query != null) {
 					bquery.mustNot(query);
@@ -126,7 +124,7 @@ public class ESQueryBuilder {
 		return bquery;
 	}
 
-	static private void QueryBoost(QueryBuilder query, TransParam tp, SearcherRequest request) throws Exception {
+	static private void QueryBoost(QueryBuilder query, RiverField tp, SearcherRequest request) throws Exception {
 		float boostValue = tp.getBoost();
 
 		Method m = query.getClass().getMethod("boost", new Class[] { float.class });
@@ -135,11 +133,11 @@ public class ESQueryBuilder {
 		m.invoke(query, boostValue);
 	}
 
-	static private QueryBuilder buildSingleQuery(String key, String value, TransParam tp, SearcherParam sp,
-			SearcherRequest request, Analyzer analyzer, String paramKey, int fuzzy) throws Exception {
+	static private QueryBuilder buildSingleQuery(String key, String value, RiverField tp, SearcherParam sp,
+			SearcherRequest request, String paramKey, int fuzzy) throws Exception {
 		if (value == null || (tp.getDefaultvalue() == null && value.length() <= 0) || tp == null)
 			return null;
-		boolean not_analyzed = tp.getAnalyzer().equalsIgnoreCase(GlobalParam.NOT_ANALYZED) ? true : false;
+		boolean not_analyzed = tp.getAnalyzer().length()>0 ? false : true;
 
 		if (!not_analyzed)
 			value = value.toLowerCase().trim();
@@ -149,27 +147,18 @@ public class ESQueryBuilder {
 		for (String v : values) {
 			QueryBuilder query = null;
 			if (!not_analyzed) {
-				query = fieldParserQuery(key, String.valueOf(v), fuzzy, analyzer);
+				query = fieldParserQuery(key, String.valueOf(v), fuzzy);
 			} else if (tp.getIndextype().equalsIgnoreCase("long") || tp.getIndextype().equalsIgnoreCase("double")
 					|| tp.getIndextype().equalsIgnoreCase("int")) {
-				Object val = request.get(key, tp);
-				if (val instanceof LongRangeType) {
-					LongRangeType longRangeValue = LongRangeType.valueOf(v);
-					query = QueryBuilders.rangeQuery(key).from(longRangeValue.getMin()).to(longRangeValue.getMax())
+				Object _v = Common.parseFieldValue(v, tp);
+				if (_v instanceof LongRange) {
+					LongRange val = (LongRange) _v; 
+					query = QueryBuilders.rangeQuery(key).from(val.getMin()).to(val.getMax())
 							.includeLower(sp == null ? true : sp.isIncludeLower())
 							.includeUpper(sp == null ? true : sp.isIncludeUpper());
 				} else
 					query = QueryBuilders.termQuery(key, String.valueOf(v));
-			} else if (tp.getIndextype().equalsIgnoreCase("geo_point")) {
-				String[] _geo = String.valueOf(v).split(":");
-				if (_geo.length == 3) {
-					query = QueryBuilders.geoDistanceRangeQuery(key).point(Double.valueOf(_geo[0]),
-							Double.valueOf(_geo[1])).from(_geo[2]);
-				}else if(_geo.length == 4) {
-					query = QueryBuilders.geoDistanceRangeQuery(key).point(Double.valueOf(_geo[0]),
-							Double.valueOf(_geo[1])).from(_geo[2]).to(_geo[3]);
-				} 
-			} else { 
+			}  else { 
 				query = QueryBuilders.termQuery(key, String.valueOf(v));
 				QueryBoost(query, tp, request);
 			}
@@ -185,13 +174,13 @@ public class ESQueryBuilder {
 		return bquery;
 	}
 
-	static private QueryBuilder fieldParserQuery(String field, String queryStr, int fuzzy, Analyzer analyzer) {
-		return fieldParserQuery(field, queryStr, analyzer, fuzzy, ESSimpleQuery.createQuery(QUERY_TYPE.BOOLEAN_QUERY));
+	static private QueryBuilder fieldParserQuery(String field, String queryStr, int fuzzy) {
+		return fieldParserQuery(field, queryStr, fuzzy, ESSimpleQuery.createQuery(QUERY_TYPE.BOOLEAN_QUERY));
 	}
 
-	static private QueryBuilder fieldParserQuery(String field, String queryStr, Analyzer analyzer, int fuzzy,
+	static private QueryBuilder fieldParserQuery(String field, String queryStr, int fuzzy,
 			ESSimpleQuery ESSimpleQuery) {
-		List<String> terms = Common.getKeywords(queryStr, analyzer);
+		List<String> terms = Common.getKeywords(queryStr);
 		for (String term : terms) {
 			if (fuzzy > 0) {
 				FuzzyQueryBuilder fzQuery = QueryBuilders.fuzzyQuery(field, term);
@@ -208,7 +197,7 @@ public class ESQueryBuilder {
 	}
 
 	static private QueryBuilder buildMultiQuery(String multifield, String value, InstanceConfig instanceConfig,
-			SearcherRequest request, Analyzer analyzer, String paramKey, int fuzzy) throws Exception {
+			SearcherRequest request, String paramKey, int fuzzy) throws Exception {
 		DisMaxQueryBuilder bquery = null;
 		String[] keys = multifield.split(",");
 
@@ -216,23 +205,23 @@ public class ESQueryBuilder {
 			return null;
 
 		if (keys.length == 1) {
-			TransParam tp = instanceConfig.getTransParam(keys[0]);
-			return buildSingleQuery(tp.getAlias(), value, tp, instanceConfig.getSearchParam(keys[0]), request, analyzer,
+			RiverField tp = instanceConfig.getTransParam(keys[0]);
+			return buildSingleQuery(tp.getAlias(), value, tp, instanceConfig.getSearchParam(keys[0]), request,
 					paramKey, fuzzy);
 		}
 
 		String[] word_vals = value.split(",");
 		for (String word : word_vals) {
 			BoolQueryBuilder subquery2 = null;
-			List<String> vals = Common.getKeywords(word, analyzer);
+			List<String> vals = Common.getKeywords(word);
 
 			for (String val : vals) {
 				DisMaxQueryBuilder parsedDisMaxQuery = null;
 				for (String key2 : keys) {
-					TransParam _tp = instanceConfig.getTransParam(key2);
+					RiverField _tp = instanceConfig.getTransParam(key2);
 					QueryBuilder query = buildSingleQuery(_tp.getAlias(),
 							_tp.getAnalyzer().equals("NOT_ANALYZED") ? word : val, _tp,
-							instanceConfig.getSearchParam(key2), request, analyzer, paramKey, fuzzy);
+							instanceConfig.getSearchParam(key2), request, paramKey, fuzzy);
 					if (query != null) {
 						if (parsedDisMaxQuery == null)
 							parsedDisMaxQuery = QueryBuilders.disMaxQuery()
@@ -257,7 +246,7 @@ public class ESQueryBuilder {
 	}
 
 	static private QueryBuilder getScript(String str) {
-		return QueryBuilders.scriptQuery(new Script(str.replace("\\", ""), ScriptType.INLINE, "groovy", null));
+		return QueryBuilders.scriptQuery( new Script(str.replace("\\", ""))); 
 	}
 }
 
