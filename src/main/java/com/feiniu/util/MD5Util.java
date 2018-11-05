@@ -2,6 +2,12 @@ package com.feiniu.util;
 
 import java.security.MessageDigest;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:21
+ */
 public class MD5Util {
 	public final static String SaltMd5(String strs){
 		return MD5(MD5(strs).substring(5, 8)+strs+MD5(strs).substring(0,5));
@@ -30,6 +36,6 @@ public class MD5Util {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(SaltMd5("removeInstance"));
+		System.out.println(SaltMd5("getStatus"));
 	}
 }

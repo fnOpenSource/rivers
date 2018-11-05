@@ -1,18 +1,15 @@
 package com.feiniu.node;
 
 import org.apache.commons.net.telnet.TelnetClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.node.startup.Run;
 import com.feiniu.util.Common;
+import com.feiniu.util.NodeUtil;
 
 @Component
 public class RecoverMonitor {
-	@Autowired
-	private Run RIVERS;
-	
+	 	
 	private String takeIp;
 	
 	public void start() {
@@ -46,7 +43,7 @@ public class RecoverMonitor {
 				try { 
 					client.connect(this.takeIp, 8617); 
 					Common.LOG.info("start restart and return Node "+this.takeIp);
-					Common.runShell(GlobalParam.StartConfig.getProperty("restart_shell"));
+					NodeUtil.runShell(GlobalParam.StartConfig.getProperty("restart_shell"));
 					return;
 				} catch (Exception e) { 
 					Thread.sleep(5000); 
@@ -58,9 +55,9 @@ public class RecoverMonitor {
 	}
 	
 	private void takeOverNode() { 
-		RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+this.takeIp+"/configs",true); 
-		RIVERS.init(true);
-		RIVERS.startService();
+		GlobalParam.RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+this.takeIp+"/configs",true); 
+		GlobalParam.RIVERS.init(true);
+		GlobalParam.RIVERS.startService();
 		Common.LOG.info(GlobalParam.IP+" has take Over Node "+this.takeIp);
 		new Thread() {
 			public void run() {

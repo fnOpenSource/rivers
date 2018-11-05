@@ -17,6 +17,12 @@ import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class ESConnection extends FnConnectionSocket implements FnConnection<ESConnector> {
 
 	private Client conn;
@@ -85,8 +91,8 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	@Override
 	public boolean free() {
 		try {
-			this.conn.close(); 
 			freeBP();
+			this.conn.close();  
 			this.ESC = null;
 			this.conn = null;
 			this.connectParams = null;
@@ -105,33 +111,30 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	}
 
 	private BulkProcessor getBulkProcessor(Client _client) {
-		if (this.bulkProcessor == null) {
-			this.bulkProcessor = BulkProcessor.builder(_client, new BulkProcessor.Listener() {
-				@Override
-				public void beforeBulk(long executionId, BulkRequest request) {
-				}
+		this.bulkProcessor = BulkProcessor.builder(_client, new BulkProcessor.Listener() {
+			@Override
+			public void beforeBulk(long executionId, BulkRequest request) {
+			}
 
-				@Override
-				public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-					if (response.hasFailures()) {
-						log.error("BulkProcessor error," + response.buildFailureMessage());
-						ESC.setRunState(false);
-					}else {
-						ESC.setRunState(true);
-					}
+			@Override
+			public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+				if (response.hasFailures()) {
+					log.error("BulkProcessor error," + response.buildFailureMessage());
+					ESC.setRunState(false);
+				}else {
+					ESC.setRunState(true);
 				}
+			}
 
-				@Override
-				public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-					if (failure != null) {
-						failure.printStackTrace();
-					}
+			@Override
+			public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+				if (failure != null) {
+					failure.printStackTrace();
 				}
-			}).setBulkActions(BULK_BUFFER).setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
-					.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
-					.setConcurrentRequests(BULK_CONCURRENT).build();
-
-		}
+			}
+		}).setBulkActions(BULK_BUFFER).setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
+				.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
+				.setConcurrentRequests(BULK_CONCURRENT).build();
 		return this.bulkProcessor;
 	}
 }

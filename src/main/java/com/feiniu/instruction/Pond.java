@@ -7,6 +7,12 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class Pond extends Instruction {
 
 	private final static Logger log = LoggerFactory.getLogger("Pond");
@@ -19,19 +25,19 @@ public class Pond extends Instruction {
 		if (!isValid(2, args)) {
 			log.error("Pond createStorePosition parameter not match!");
 			return false;
-		}
+		} 
 		context.getWriter().PREPARE(false, false);
+		boolean state = false;
 		if (context.getWriter().ISLINK()) {
 			try { 
 				String mainName = (String) args[0]; 
-				String storeId = (String) args[1]; 
-				context.getWriter().create(mainName, storeId, context.getInstanceConfig().getTransParams());
-				return true;
-			} finally {
-				context.getWriter().REALEASE(false,false);
+				String storeId = (String) args[1];  
+				state = context.getWriter().create(mainName, storeId, context.getInstanceConfig().getWriteFields());    
+			}finally {
+				context.getWriter().REALEASE(false,state?false:true);
 			}
 		}
-		return false;
+		return state;
 	}
 
 	/**
@@ -80,19 +86,20 @@ public class Pond extends Instruction {
 			}
 		}
 	}
-
+	
 	/**
-	 * @param args
-	 *            parameter order is: String mainName, String storeId
+	 * @param args 
+	 *            parameter order is: String instance, String seq, String storeId
 	 */
 	public static boolean switchInstance(Context context, Object[] args) {
-		if (!isValid(2, args)) {
-			log.error("optimizeInstance parameter not match!");
+		if (!isValid(3, args)) {
+			log.error("switchInstance parameter not match!");
 			return false;
 		}
 		String removeId = ""; 
-		String mainName = (String) args[0]; 
-		String storeId = (String) args[1]; 
+		String mainName,storeId; 
+		mainName = Common.getInstanceName(String.valueOf(args[0]),String.valueOf(args[1]));
+		storeId = String.valueOf(args[2]); 
 		int waittime=0; 
 		if(Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Running)) {
 			Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination);
@@ -100,9 +107,8 @@ public class Pond extends Instruction {
 				try {
 					waittime++;
 					Thread.sleep(2000);
-					if (waittime > 10) {
-						
-						Thread.sleep(10000);
+					if (waittime > 30) {
+						break;
 					}
 				} catch (InterruptedException e) {
 					log.error("currentThreadState InterruptedException", e);
@@ -110,7 +116,7 @@ public class Pond extends Instruction {
 			}  
 		} 
 		Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination); 
-		context.getWriter().PREPARE(false, false); 
+		context.getWriter().PREPARE(false, false);  
 		if (context.getWriter().ISLINK()) {
 			try {
 				if (storeId.equals("a")) {
@@ -126,14 +132,14 @@ public class Pond extends Instruction {
 			} catch (Exception e) {
 				log.error("switchInstance Exception", e);
 			} finally { 
+				Common.saveTaskInfo(String.valueOf(args[0]), String.valueOf(args[1]), storeId, GlobalParam.JOB_INCREMENTINFO_PATH);
 				Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready);
-				context.getWriter().REALEASE(false,true);
-				context.getWriter().freeConnPool();
+				context.getWriter().REALEASE(false,false); 
 			}
 		}
 		return false;
 	}
-
+ 
 	/**
 	 * @param args
 	 *            parameter order is: String mainName, boolean isIncrement 
@@ -147,11 +153,14 @@ public class Pond extends Instruction {
 		String mainName = (String) args[0];
 		boolean isIncrement = (boolean) args[1]; 
 		context.getWriter().PREPARE(false, false);
+		boolean release = false;
 		if (context.getWriter().ISLINK()) {
 			try {
 				taskId = context.getWriter().getNewStoreId(mainName, isIncrement, context.getInstanceConfig());
-			} finally {
-				context.getWriter().REALEASE(false,false);
+			} catch (Exception e) {
+				release = true;
+			}finally {
+				context.getWriter().REALEASE(false,release);
 			}
 		}
 		return taskId;

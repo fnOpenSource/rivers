@@ -18,7 +18,7 @@
         http://www.springframework.org/schema/mvc/spring-mvc.xsd"> 
 	<context:component-scan base-package="com.feiniu" />
 	<util:properties id="riverPathConfig" location="classpath:config/configPath.properties"></util:properties>
-	<util:properties id="chechksrvConfig" location="classpath:config/checksrv.properties"></util:properties>
+	<util:properties id="nodeSystemInfo" location="classpath:config/node.properties"></util:properties>
  
 	<bean id="log4jInitialization" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
 	   <property name="targetClass" value="org.springframework.util.Log4jConfigurer" />
@@ -31,19 +31,14 @@
 	   </property>
 	</bean>  
 
-	<bean id="SocketCenter" class="com.feiniu.node.SocketCenter"/>
-
-	<bean id="FlowCenter" class="com.feiniu.node.FlowCenter" />
-
-	<bean id="SearcherService" class="com.feiniu.searcher.service.SearcherService"/> 
-	
-	<bean id="HttpReaderService" class="com.feiniu.reader.service.HttpReaderService"/>  
- 
+	<bean id="SocketCenter" class="com.feiniu.node.SocketCenter"/> 
+	<bean id="FlowCenter" class="com.feiniu.node.FlowCenter" /> 
 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
 	<bean id="taskJobCenter" class="com.feiniu.task.schedule.TaskJobCenter"/>
-	<bean id="healthChecker" class="com.feiniu.util.HealthChecker"/> 
-	<bean id="RIVERS" class="com.feiniu.node.startup.Run"/> 
-	<bean id="FNStart" class="com.feiniu.node.startup.Run"> 
+	<bean id="HttpReaderService" class="com.feiniu.reader.service.HttpReaderService"/> 
+	<bean id="SearcherService" class="com.feiniu.searcher.service.SearcherService"/> 
+	<bean id="ComputerService" class="com.feiniu.computer.service.ComputerService"/>  
+	<bean id="RIVERS" class="com.feiniu.node.startup.Run">  
 		<constructor-arg type="String" index="0" value="#{riverPathConfig['config.path']}/config/config.properties"/>
 	</bean>
 </beans>

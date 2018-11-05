@@ -3,7 +3,8 @@ package com.feiniu.task.schedule;
 /**
  * ScheduleJob model
  * @author chengwen
- * @version 1.0 
+ * @version 2.0
+ * @date 2018-10-26 09:21
  */
 public class JobModel {  
 	   

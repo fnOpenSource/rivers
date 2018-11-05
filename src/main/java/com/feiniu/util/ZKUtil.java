@@ -12,6 +12,12 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:14
+ */
 public class ZKUtil {
 
 	private static final int CONNECTION_TIMEOUT = 50000;

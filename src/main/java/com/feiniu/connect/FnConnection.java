@@ -2,6 +2,12 @@ package com.feiniu.connect;
 
 import java.util.HashMap;
  
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public interface FnConnection<T>{ 
 	
 	public void init(HashMap<String, Object> ConnectParams);

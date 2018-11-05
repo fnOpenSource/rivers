@@ -1,31 +1,24 @@
 package com.feiniu.searcher;
 
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.connect.FnConnection;
-import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.flow.Flow;
-import com.feiniu.model.SearcherModel;
-import com.feiniu.model.SearcherResult;
+import com.feiniu.model.searcher.SearcherModel;
+import com.feiniu.model.searcher.SearcherResult;
 import com.feiniu.searcher.handler.Handler;
 
 /** 
  * @author chengwen
- * @version 1.0 
+ * @version 2.0 
  */
-public class SearcherFlowSocket implements Flow{
+public abstract class SearcherFlowSocket extends Flow{
 	
 	protected Analyzer analyzer;
-	protected InstanceConfig instanceConfig;
-	protected volatile HashMap<String, Object> connectParams;
-	protected String poolName;
-	protected FnConnection<?> FC;
-	protected AtomicInteger retainer = new AtomicInteger(0);
+	protected InstanceConfig instanceConfig;  
 	
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
@@ -45,49 +38,6 @@ public class SearcherFlowSocket implements Flow{
 	
 	public DATA_TYPE getType() {
 		return (DATA_TYPE) connectParams.get("type");
-	}
-	
-	@Override
-	public FnConnection<?> PREPARE(boolean isMonopoly,boolean canSharePipe) {  
-		if(isMonopoly) {
-			synchronized (this) {
-				if(this.FC==null) 
-					this.FC = FnConnectionPool.getConn(this.connectParams,
-							this.poolName,canSharePipe); 
-			} 
-		}else {
-			synchronized (retainer) { 
-				if(retainer.incrementAndGet()==1 || this.FC==null) {
-					this.FC = FnConnectionPool.getConn(this.connectParams,
-							this.poolName,canSharePipe); 
-					retainer.set(1);;
-				}
-			} 
-		} 
-		return this.FC;
-	}
-	
-	@Override
-	public void REALEASE(boolean isMonopoly,boolean releaseConn) { 
-		if(isMonopoly==false) { 
-			synchronized(retainer){ 
-				if(retainer.decrementAndGet()<=0){
-					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
-					retainer.set(0);
-				}
-			} 
-		}
-	} 
+	}   
  
-	@Override
-	public FnConnection<?> GETSOCKET() { 
-		return this.FC;
-	}
-
-	@Override
-	public boolean ISLINK() { 
-		if(this.FC==null) 
-			return false;
-		return true;
-	} 
 }

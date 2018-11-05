@@ -4,12 +4,13 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import com.feiniu.flow.Socket;
-import com.feiniu.model.param.WarehouseNosqlParam;
-import com.feiniu.model.param.WarehouseParam;
-import com.feiniu.model.param.WarehouseSqlParam;
+import com.feiniu.param.warehouse.WarehouseNosqlParam;
+import com.feiniu.param.warehouse.WarehouseParam;
+import com.feiniu.param.warehouse.WarehouseSqlParam;
 import com.feiniu.util.Common;
 import com.feiniu.writer.flow.ESFlow;
 import com.feiniu.writer.flow.HBaseFlow;
+import com.feiniu.writer.flow.MysqlFlow;
 import com.feiniu.writer.flow.SolrFlow;
 
 /**
@@ -42,9 +43,10 @@ public class WriterSocketFactory implements Socket<WriterFlowSocket>{
 	private static WriterFlowSocket getSqlFlow(WarehouseParam param,String seq,String handler) {
 		WriterFlowSocket writer = null;  
 		WarehouseSqlParam params = (WarehouseSqlParam) param;
-		//HashMap<String, Object> connectParams = param.getConnectParams(seq);
+		HashMap<String, Object> connectParams = params.getConnectParams(seq);
 		switch (params.getType()) {
-		case MYSQL:  
+		case MYSQL: 
+			writer = MysqlFlow.getInstance(connectParams);
 			break; 
 		default:
 			break;

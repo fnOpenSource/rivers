@@ -2,7 +2,6 @@ package com.feiniu.searcher.service;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -16,10 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.SearcherState;
+import com.feiniu.model.ResponseState;
+import com.feiniu.model.RiverRequest;
 import com.feiniu.node.SocketCenter;
-import com.feiniu.searcher.Searcher;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
@@ -38,10 +36,10 @@ public class SearcherService{
 	 
 	public boolean start() {
 		HashMap<String, Object> serviceParams = new HashMap<String, Object>();
-		serviceParams.put("confident_port", GlobalParam.StartConfig.get("http_service_confident_port"));
-		serviceParams.put("max_idle_time", GlobalParam.StartConfig.get("http_service_max_idle_time"));
-		serviceParams.put("port", GlobalParam.StartConfig.get("http_service_port"));
-		serviceParams.put("thread_pool", GlobalParam.StartConfig.get("http_service_thread_pool"));
+		serviceParams.put("confident_port", GlobalParam.StartConfig.get("searcher_service_confident_port"));
+		serviceParams.put("max_idle_time", GlobalParam.StartConfig.get("searcher_service_max_idle_time"));
+		serviceParams.put("port", GlobalParam.StartConfig.get("searcher_service_port"));
+		serviceParams.put("thread_pool", GlobalParam.StartConfig.get("searcher_service_thread_pool"));
 		serviceParams.put("httpHandle", new httpHandle());
 		FS=HttpService.getInstance(serviceParams);		
 		FS.start();
@@ -53,33 +51,15 @@ public class SearcherService{
 			FS.close();
 		} 
 		return true;
-	}
-  
-	public static SearcherRequest parseRequest(Object input) {
-		SearcherRequest rq = SearcherRequest.getInstance(); 
-		Request base_request = (Request) input;
-		String path = base_request.getPathInfo();
-		String pipe = path.substring(1); 
-		rq.setPipe(pipe);  
-		@SuppressWarnings("unchecked")
-		Iterator<Map.Entry<String,String>> iter = base_request.getParameterMap().entrySet().iterator();
-		while (iter.hasNext()) { 
-			Map.Entry<String,String> entry = iter.next();
-			String key = (String) entry.getKey();
-			String value = base_request.getParameter(key);
-			rq.addParam(key, value);
-		}
-		return rq;
-	}
+	} 
 	
-	public SearcherState process(SearcherRequest request) { 
+	public ResponseState process(RiverRequest request) { 
 		long startTime = System.currentTimeMillis();
-		SearcherState response = null; 
+		ResponseState response = null; 
 		String pipe = request.getPipe(); 
 		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getSearchConfigs();
-		if (configMap.containsKey(pipe)) { 
-			Searcher searcher = SocketCenter.getSearcher(pipe,"","",false);
-			response = searcher.startSearch(request);
+		if (configMap.containsKey(pipe)) {  
+			response = SocketCenter.getSearcher(pipe,"","",false).startSearch(request);
 		} 
 		long endTime = System.currentTimeMillis();
 		if (response != null){
@@ -89,7 +69,7 @@ public class SearcherService{
 		return response;
 	}
 
-	public class httpHandle extends AbstractHandler {
+	class httpHandle extends AbstractHandler {
 		@Override
 		public void handle(String target, HttpServletRequest request,
 				HttpServletResponse response, int dispatch) throws IOException,
@@ -101,18 +81,18 @@ public class SearcherService{
 			response.setStatus(HttpServletResponse.SC_OK);
 			response.setHeader("PowerBy", "rivers"); 
 			rq.setHandled(true);
-			SearcherRequest _request = parseRequest((Object) rq);
+			RiverRequest _request = Common.getRequest(rq);
 
 			if (GlobalParam.nodeConfig.getSearchConfigs().containsKey(
 					_request.getPipe())) {
-				SearcherState searcherRes = null;
+				ResponseState rps = null;
 				try {
-					searcherRes = process(_request);
+					rps = process(_request);
 				} catch (Exception e) {
 					Common.LOG.error("httpHandle error,",e);
 				}
-				if (searcherRes != null)
-					response.getWriter().println(searcherRes.toJson());
+				if (rps != null)
+					response.getWriter().println(rps.getResponse(true));
 			} else {
 				response.getWriter().println("The Alias is Not Exists OR Not Start Up!");
 			}

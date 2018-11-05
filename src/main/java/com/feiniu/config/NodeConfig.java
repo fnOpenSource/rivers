@@ -13,25 +13,26 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.feiniu.config.GlobalParam.INSTANCE_TYPE;
 import com.feiniu.config.GlobalParam.RESOURCE_TYPE;
-import com.feiniu.model.param.InstructionParam;
-import com.feiniu.model.param.WarehouseNosqlParam;
-import com.feiniu.model.param.WarehouseSqlParam;
+import com.feiniu.param.pipe.InstructionParam;
+import com.feiniu.param.warehouse.WarehouseNosqlParam;
+import com.feiniu.param.warehouse.WarehouseSqlParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
 /**
  * node configs center,manage flows config and sql/nosql dataflows configs
  * @author chengwen
- * @version 1.2
+ * @version 4.1
  * @date 2018-10-11 14:50
  */
 public class NodeConfig { 
 	
 	private Map<String, InstanceConfig> instanceConfigs;
 	private Map<String, InstanceConfig> searchConfigMap = new HashMap<String, InstanceConfig>();
-	private Map<String, WarehouseSqlParam> SqlParamMap = new HashMap<String, WarehouseSqlParam>();
-	private Map<String, WarehouseNosqlParam> NoSqlParamMap = new HashMap<String, WarehouseNosqlParam>(); 
+	private Map<String, WarehouseSqlParam> sqlWarehouse = new HashMap<String, WarehouseSqlParam>();
+	private Map<String, WarehouseNosqlParam> NoSqlWarehouse = new HashMap<String, WarehouseNosqlParam>(); 
 	private Map<String,InstructionParam> instructions = new HashMap<String, InstructionParam>();
 	private String pondFile = null; 
 	private String instructionsFile = null; 
@@ -61,15 +62,15 @@ public class NodeConfig {
 			return;
 		for(String inst : instances.split(",")){
 			String[] strs = inst.split(":");
-			if (strs.length <= 0)
+			if (strs.length <= 0 || strs[0].length()<1)
 				continue;
-			int indexType=0;
+			int instanceType = INSTANCE_TYPE.Blank.getVal();
 			String name = strs[0].trim();
 			if(strs.length==2){
-				indexType = Integer.parseInt(strs[1]); 
+				instanceType = Integer.parseInt(strs[1]); 
 			}
 			String filename = GlobalParam.CONFIG_PATH + "/" +  name  + "/" +  name + ".xml";
-			InstanceConfig nconfig = new InstanceConfig(filename, indexType);  
+			InstanceConfig nconfig = new InstanceConfig(filename, instanceType);  
 			nconfig.init();
 			if(nconfig.getAlias().equals("")){
 				nconfig.setAlias(name);
@@ -92,12 +93,12 @@ public class NodeConfig {
 		return this.searchConfigMap;
 	}
 	
-    public Map<String, WarehouseSqlParam> getSqlParamMap() {
-		return this.SqlParamMap;
+    public Map<String, WarehouseSqlParam> getSqlWarehouse() {
+		return this.sqlWarehouse;
 	}
     
-	public Map<String, WarehouseNosqlParam> getNoSqlParamMap() {
-		return this.NoSqlParamMap;
+	public Map<String, WarehouseNosqlParam> getNoSqlWarehouse() {
+		return this.NoSqlWarehouse;
 	}
 
 	public void init(){
@@ -116,12 +117,12 @@ public class NodeConfig {
 		switch (type) {
 		case SQL:
 			WarehouseSqlParam e1 = (WarehouseSqlParam) o;
-			SqlParamMap.put(e1.getAlias(), e1);
+			sqlWarehouse.put(e1.getAlias(), e1);
 			break;
 
 		case NOSQL:
 			WarehouseNosqlParam e2 = (WarehouseNosqlParam) o;
-			NoSqlParamMap.put(e2.getAlias(), e2);
+			NoSqlWarehouse.put(e2.getAlias(), e2);
 			break;
 			
 		case INSTRUCTION:

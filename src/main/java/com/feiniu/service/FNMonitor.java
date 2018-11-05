@@ -10,21 +10,18 @@ import javax.servlet.http.HttpServletResponse;
 import org.mortbay.jetty.HttpConnection;
 import org.mortbay.jetty.Request;
 import org.mortbay.jetty.handler.AbstractHandler;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.util.HealthChecker;
 import com.feiniu.util.MD5Util;
 
+
 /**
- * Monitor node all instances running
+ *  * Monitor node all instances running
  * @author chengwen
- *
+ * @version 4.0
+ * @date 2018-10-26 09:13
  */
-public class FNMonitor { 
-	
-	@Autowired
-	protected HealthChecker healthChecker;
+public class FNMonitor {  
 	
 	public void start() {
 		HashMap<String, Object> serviceParams = new HashMap<String, Object>();
@@ -60,8 +57,8 @@ public class FNMonitor {
 				}
 			}
 				break;   
-			case "feiniufnapphealthcheckstatus.jsp":
-				response.getWriter().println(healthChecker.getCheckInfo());
+			case "_version":
+				response.getWriter().println(GlobalParam.VERSION);
 				break;
 			}
 			response.getWriter().flush();

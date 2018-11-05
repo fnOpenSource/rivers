@@ -3,8 +3,8 @@ package com.feiniu.reader.util;
 import java.util.LinkedList;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.model.DataPage;
-import com.feiniu.model.PipeDataUnit; 
+import com.feiniu.model.reader.DataPage;
+import com.feiniu.model.reader.PipeDataUnit; 
 
 /**
  *  * pass data set in argument,writer will auto get each line
@@ -21,7 +21,7 @@ public class DataSetReader{
 	private boolean status = true;
  
 	public void init(DataPage DP) {
-		if (DP.size() > 2) {
+		if (DP.size() > 1) {
 			this.keyColumn =  String.valueOf(DP.get(GlobalParam.READER_KEY));
 			this.IncrementColumn = String.valueOf(DP.get(GlobalParam.READER_SCAN_KEY));
 			this.dataBoundary = DP.getDataBoundary();

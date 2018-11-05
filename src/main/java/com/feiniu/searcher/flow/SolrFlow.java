@@ -23,13 +23,19 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.handler.ConnectionHandler;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.SearcherDataUnit;
-import com.feiniu.model.SearcherModel;
-import com.feiniu.model.SearcherResult;
+import com.feiniu.model.ResponseDataUnit;
+import com.feiniu.model.searcher.SearcherModel;
+import com.feiniu.model.searcher.SearcherResult;
 import com.feiniu.searcher.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:23
+ */
 public class SolrFlow extends SearcherFlowSocket { 
 	
 	private String collectionName = "";
@@ -129,7 +135,7 @@ public class SolrFlow extends SearcherFlowSocket {
 				setnum = false;
 				List<Group> tmps = groupCommand.getValues();
 				for (Group g : tmps) {
-					SearcherDataUnit u = SearcherDataUnit.getInstance();
+					ResponseDataUnit u = ResponseDataUnit.getInstance();
 					u.addObject(g.getGroupValue(), g.getResult());
 					res.getUnitSet().add(u);
 				}
@@ -144,7 +150,7 @@ public class SolrFlow extends SearcherFlowSocket {
 						res.setTotalHit((int) v.getNumFound());
 					setnum = false;
 					for (SolrDocument sd : v) {
-						SearcherDataUnit u = SearcherDataUnit.getInstance();
+						ResponseDataUnit u = ResponseDataUnit.getInstance();
 						for (String n : sd.getFieldNames()) {
 							if(fq.isShowQueryInfo()){ 
 								if(n.equals("score")){
@@ -204,7 +210,7 @@ public class SolrFlow extends SearcherFlowSocket {
 			fl = fq.getFl(); 
 		} else { 
 			for (Map.Entry<String, RiverField> e : instanceConfig
-					.getTransParams().entrySet()) {
+					.getWriteFields().entrySet()) {
 				if (e.getValue().getStored().equalsIgnoreCase("true"))
 					fl += "," + e.getKey();
 			} 

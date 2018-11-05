@@ -30,23 +30,24 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.ESConnector;
-import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.writer.WriterFlowSocket;
-
+ 
 /**
  * ElasticSearch Writer Manager
- * 
  * @author chengwen
- * @version 1.0
+ * @version 2.0
+ * @date 2018-10-30 14:02
  */
 @NotThreadSafe
 public class ESFlow extends WriterFlowSocket {
 	
 	protected ESConnector CONNS;
+	
+	private boolean reconn=false;
  
 	private final static Logger log = LoggerFactory.getLogger("ESFlow");
 
@@ -114,7 +115,7 @@ public class ESFlow extends WriterFlowSocket {
 				_IB.setSource(cbuilder);
 				if (routing.length() > 0)
 					_IB.setRouting(routing.toString());
-				if (this.isBatch) {
+				if (this.isBatch) {  
 					getESC().getBulkProcessor().add(_IB.request()); 
 				} else {
 					_IB.execute().actionGet();
@@ -161,13 +162,13 @@ public class ESFlow extends WriterFlowSocket {
 		String name = Common.getStoreName(instance, storeId);
 		String type = instance;
 		try {
-			log.info("setting index " + name + ":" + type);
+			log.info("create Instance " + name + ":" + type); 
 			IndicesExistsResponse indicesExistsResponse = getESC().getClient().admin().indices()
 					.exists(new IndicesExistsRequest(name)).actionGet();
 			if (!indicesExistsResponse.isExists()) {
 				CreateIndexResponse createIndexResponse = getESC().getClient().admin().indices()
 						.create(new CreateIndexRequest(name)).actionGet();
-				log.info("create new index " + name + " response isAcknowledged:"
+				log.info("create new Instance " + name + " response isAcknowledged:"
 						+ createIndexResponse.isAcknowledged());
 			}
 
@@ -177,7 +178,8 @@ public class ESFlow extends WriterFlowSocket {
 			log.info("setting response isAcknowledged:" + response.isAcknowledged());
 			return true;
 		} catch (Exception e) {
-			log.error("setting index " + name + ":" + type + " failed.", e);
+			reconn = true;
+			log.error("setting Instance " + name + ":" + type + " failed.", e);
 			return false;
 		}
 	}
@@ -194,12 +196,12 @@ public class ESFlow extends WriterFlowSocket {
 			ForceMergeResponse response = getESC().getClient().admin().indices().forceMerge(request).actionGet();
 			int failed_cnt = response.getFailedShards();
 			if (failed_cnt > 0) {
-				log.warn("index " + name + " optimize getFailedShards " + failed_cnt);
+				log.warn("Instance " + name + " optimize getFailedShards " + failed_cnt);
 			} else {
-				log.info("index " + name + " optimize Success!");
+				log.info("Instance " + name + " optimize Success!");
 			}
 		} catch (Exception e) {
-			log.error("index " + name + " optimize failed.", e);
+			log.error("Instance " + name + " optimize failed.", e);
 		}
 	}
 
@@ -209,21 +211,21 @@ public class ESFlow extends WriterFlowSocket {
 			return;
 		String name = Common.getStoreName(instanceName, storeId);
 		try {
-			log.info("trying to remove index " + name);
+			log.info("trying to remove Instance " + name);
 			IndicesExistsResponse res = getESC().getClient().admin().indices().prepareExists(name).execute()
 					.actionGet();
 			if (!res.isExists()) {
-				log.info("index " + name + " didn't exist.");
+				log.info("Instance " + name + " didn't exist.");
 			} else {
 				DeleteIndexRequest deleteRequest = new DeleteIndexRequest(name);
 				DeleteIndexResponse deleteResponse = getESC().getClient().admin().indices().delete(deleteRequest)
 						.actionGet();
 				if (deleteResponse.isAcknowledged()) {
-					log.info("index " + name + " removed ");
+					log.info("Instance " + name + " removed ");
 				}
 			}
 		} catch (Exception e) {
-			log.error("remove index " + name + " Exception", e);
+			log.error("remove Instance " + name + " Exception", e);
 		}
 	}
 
@@ -264,7 +266,7 @@ public class ESFlow extends WriterFlowSocket {
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)) {
-				this.create(mainName, select, instanceConfig.getTransParams());
+				this.create(mainName, select, instanceConfig.getWriteFields());
 			}
 
 			if ((select.equals("a") && !a) || (select.equals("b") && !b)
@@ -371,26 +373,14 @@ public class ESFlow extends WriterFlowSocket {
 		AliasesExistResponse response = getESC().getClient().admin().indices().prepareAliasesExist(alias)
 				.setIndices(name).get();
 		return response.exists();
-	}
-	
-	public void REALEASE(boolean isMonopoly,boolean releaseConn){
-		if(isMonopoly==false) { 
-			synchronized(retainer){ 
-				if(retainer.decrementAndGet()<=0){
-					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
-					this.CONNS = null;
-					retainer.set(0); 
-				}else{
-					log.info(this.FC+" retainer is "+retainer.get());
-				}
-			} 
-		} 
-	}
+	} 
 	
 	private ESConnector getESC() { 
 		synchronized (this) {
-			if(this.CONNS==null)
+			if(this.CONNS==null || reconn) {
+				reconn = false;
 				this.CONNS = (ESConnector) GETSOCKET().getConnection(false); 
+			} 
 			return this.CONNS;
 		}
 	}

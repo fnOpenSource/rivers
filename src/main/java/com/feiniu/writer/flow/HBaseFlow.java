@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.writer.WriterFlowSocket;
 
 /**

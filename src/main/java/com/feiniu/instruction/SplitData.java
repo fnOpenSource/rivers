@@ -2,6 +2,12 @@ package com.feiniu.instruction;
 
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class SplitData extends Instruction{ 
 	
 	public static double getSplitDayPoint(Context context, Object[] args) {

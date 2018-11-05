@@ -13,20 +13,22 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.feiniu.config.GlobalParam.INSTANCE_TYPE;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.param.BasicParam;
-import com.feiniu.model.param.MessageParam;
-import com.feiniu.model.param.NOSQLParam;
-import com.feiniu.model.param.SQLParam;
-import com.feiniu.model.param.SearcherParam;
-import com.feiniu.model.param.PipeParam;
+import com.feiniu.param.BasicParam;
+import com.feiniu.param.end.MessageParam;
+import com.feiniu.param.end.SearcherParam;
+import com.feiniu.param.ml.ComputeParam;
+import com.feiniu.param.pipe.PipeParam;
+import com.feiniu.param.warehouse.NoSQLParam;
+import com.feiniu.param.warehouse.SQLParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
 /**
  * instance configs loading 
  * @author chengwen
- * @version 1.1 
+ * @version 3.1 
  * @date 2018-10-11 15:13
  */
 public class InstanceConfig {
@@ -35,25 +37,26 @@ public class InstanceConfig {
 	private String alias = "";
 	private boolean status = true;
 	private String name;
-	private Map<String, RiverField> transParams;
-	private Map<String,SearcherParam> searchParams;
-	private PipeParam pipeParam;
-	private MessageParam messageParam ; 
-	/**
-	 *  1 do index 2 do rabitmq 4 do kafka
-	 */
-	private int indexType = 0;  
+	private volatile Map<String, RiverField> writeFields;
+	private volatile Map<String, RiverField> computeFields;
+	private volatile Map<String,SearcherParam> searchParams;
+	private volatile PipeParam pipeParams;
+	private volatile MessageParam messageParam ; 
+	private volatile ComputeParam computeParams;
+	private int instanceType = INSTANCE_TYPE.Blank.getVal();  
 
-	public InstanceConfig(String fileName, int indexType) {
-		this.filename = fileName;
-		this.indexType = indexType;
+	public InstanceConfig(String fileName, int instanceType) {
+		this.filename = fileName; 
+		this.instanceType = instanceType;
 	}
 
 	public void init() { 
-		this.pipeParam = new PipeParam();
-		this.transParams = new HashMap<String, RiverField>(); 
-		this.searchParams = new HashMap<String, SearcherParam>();
-		this.messageParam = new MessageParam(); 
+		this.pipeParams = new PipeParam();
+		this.writeFields = new HashMap<>();
+		this.computeFields = new HashMap<>();
+		this.searchParams = new HashMap<>();
+		this.messageParam = new MessageParam();
+		this.computeParams = new ComputeParam();
 		loadConfigFromZk();
 		Common.LOG.info(filename + " config loaded");
 	}
@@ -63,57 +66,62 @@ public class InstanceConfig {
 		init();
 	} 
 	
-	public boolean checkTransParam(String key, String value) {
-		if (!transParams.containsKey(key)) {
+	public boolean checkWriteField(String key, String value) {
+		if (!writeFields.containsKey(key)) {
 			return true;
 		} else {
-			return transParams.get(key).isValid(value);
+			return writeFields.get(key).isValid(value);
 		}
 	}
 
-	public RiverField getTransParam(String key) {
-		return this.transParams.get(key);
-	}
+	public RiverField getWriteField(String key) {
+		return writeFields.get(key);
+	} 
 	
 	public SearcherParam getSearchParam(String key) {
-		return this.searchParams.get(key);
+		return searchParams.get(key);
 	}
-
+	
+	public ComputeParam getComputeParams() {
+		return computeParams;
+	}
 	public PipeParam getPipeParam() {
-		return this.pipeParam;
+		return pipeParams;
 	}
 
 	public MessageParam getMessageParam() {
-		return this.messageParam;
+		return messageParam;
 	} 
 
-	public Map<String, RiverField> getTransParams() {
-		return this.transParams;
+	public Map<String, RiverField> getWriteFields() {
+		return writeFields;
+	}
+	
+	public Map<String, RiverField> getComputeFields() {
+		return computeFields;
 	}
  
-	public boolean isIndexer() {
-		if((indexType & 1) > 0){
-			if(pipeParam.getDataFrom()!=null && pipeParam.getWriteTo()!=null){
+	public boolean openTrans() {
+		if((instanceType & INSTANCE_TYPE.Trans.getVal()) > 0){
+			if(pipeParams.getReadFrom()!=null && pipeParams.getWriteTo()!=null){
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	public int getIndexType(){
-		return this.indexType;
+	public boolean openCompute() {
+		if((instanceType & INSTANCE_TYPE.WithCompute.getVal()) > 0) {
+			return true;
+		}
+		return false;
 	}
+ 
+	public int getInstanceType(){
+		return this.instanceType;
+	} 
 
-	public boolean hasKafka() {
-		return (indexType & 4) > 0 && messageParam.getHandler() != null ? true
-				: false;
-	}
-
-	public boolean hasRabitmq() {
-		return (indexType & 2) > 0 && messageParam.getHandler() != null ? true
-				: false;
-	}
-	
+ 
 	public void setAlias(String alias) {
 		this.alias = alias;
 	}
@@ -163,54 +171,60 @@ public class InstanceConfig {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			Document doc = db.parse(in);
-
+		 
 			Element params;
-			NodeList paramlist;
-			Element tmp;
-
-			params = (Element) doc.getElementsByTagName("dataflow").item(0);
-
-			if (params != null) { 
-				if (!params.getAttribute("alias").equals("")) {
-					this.alias = params.getAttribute("alias");
-				} 
+			NodeList paramlist; 
 			 
-				paramlist = params.getElementsByTagName("configs");
-				if (paramlist.getLength() > 0) {
-					tmp = (Element) doc.getElementsByTagName("configs").item(0);
-					parseNode(tmp.getElementsByTagName("sql"), "dumpSql",
-							SQLParam.class); 
-					parseNode(tmp.getElementsByTagName("nosql"), "nosql",
-							NOSQLParam.class);
-					tmp = (Element) doc.getElementsByTagName("TransParam").item(0); 
-					if (tmp!=null) {
-						parseNode(tmp.getElementsByTagName("param"), "pipeParam", BasicParam.class);
-					}else{
-						Common.LOG.error(this.filename+" config setting not correct");
-						return;
-					}
-					if(doc.getElementsByTagName("pageSql").getLength() > 0) {
-						SQLParam _sq = (SQLParam) Common.getXmlObj(doc.getElementsByTagName("pageSql").item(0), SQLParam.class);
-						pipeParam.getSqlParam().setPageSql(_sq.getPageSql());
-					} 
+			Element dataflow = (Element) doc.getElementsByTagName("dataflow").item(0);
+
+			if (dataflow!=null) {  
+				if (!dataflow.getAttribute("alias").equals("")) {
+					this.alias = dataflow.getAttribute("alias");
+				}  
+				
+				params = (Element) dataflow.getElementsByTagName("TransParam").item(0); 
+				if (params!=null) {
+					parseNode(params.getElementsByTagName("param"), "pipeParam", BasicParam.class);
+				}else{
+					Common.LOG.error(this.filename+" config setting not correct");
+					return;
 				}
-
-				paramlist = params.getElementsByTagName("message");
-				if (paramlist.getLength() > 0) {
-					parseNode(paramlist, "MessageParam", MessageParam.class);
-					tmp = (Element) doc.getElementsByTagName("message").item(0);
-					parseNode(tmp.getElementsByTagName("sql"), "MessageSql",
-							SQLParam.class);
+				
+				params = (Element) dataflow.getElementsByTagName("ReadParam").item(0);
+				if(params!=null) {
+					parseNode(params.getElementsByTagName("sql"), "readParamSql",
+						SQLParam.class); 
+					parseNode(params.getElementsByTagName("nosql"), "readParamNoSql",
+						NoSQLParam.class);
+					params = (Element) params.getElementsByTagName("PageScan").item(0);
+					if(params!=null) {
+						pipeParams.getReadParam().setPageScan(params.getTextContent().trim());
+					}  
+				} 
+				
+				params = (Element) dataflow.getElementsByTagName("ComputeParam").item(0);   
+				if (params!=null) {
+					parseNode(params.getElementsByTagName("param"), "computeParam", BasicParam.class);
+					params = (Element) params.getElementsByTagName("fields").item(0);
+					paramlist = params.getElementsByTagName("field");
+					parseNode(paramlist, "computeFields", RiverField.class); 
 				}
-			}
-
-			params = (Element) doc.getElementsByTagName("fields").item(0);
-			paramlist = params.getElementsByTagName("field");
-			parseNode(paramlist, "TransParam", RiverField.class); 
-
-			params = (Element) doc.getElementsByTagName("searchParams").item(0);
-			paramlist = params.getElementsByTagName("param");
-			parseNode(paramlist, "SearchParam", SearcherParam.class);
+				
+				params = (Element) dataflow.getElementsByTagName("WriteParam").item(0);   
+				if (params!=null) {
+					params = (Element) params.getElementsByTagName("fields").item(0);
+					paramlist = params.getElementsByTagName("field");
+					parseNode(paramlist, "writeFields", RiverField.class); 
+				}
+				
+				params = (Element) dataflow.getElementsByTagName("SearchParam").item(0);   
+				if (params!=null) {
+					paramlist = params.getElementsByTagName("param");
+					parseNode(paramlist, "SearchParam", SearcherParam.class);
+				} 
+				
+			} 
+			
 		} catch (Exception e) {
 			setStatus(false);
 			Common.LOG.error(this.filename+" configParse error,",e);
@@ -225,19 +239,27 @@ public class InstanceConfig {
 				if (param.getNodeType() == Node.ELEMENT_NODE) {
 					Object o = Common.getXmlObj(param, c);
 					switch (type) {
-					case "TransParam":
-						RiverField e = (RiverField) o;
-						transParams.put(e.getName(), e);
+					case "writeFields":
+						RiverField wf = (RiverField) o;
+						writeFields.put(wf.getName(), wf);
+						break;
+					case "computeFields":
+						RiverField cf = (RiverField) o;
+						computeFields.put(cf.getName(), cf);
+						break;
+					case "computeParam":
+						BasicParam cbp = (BasicParam) o; 
+						computeParams.setKeyValue(cbp.getName(), cbp.getValue());
 						break;
 					case "pipeParam":
-						BasicParam tbp = (BasicParam) o;
-						pipeParam.setKeyValue(tbp.getName(), tbp.getValue());
+						BasicParam pbp = (BasicParam) o;
+						pipeParams.setKeyValue(pbp.getName(), pbp.getValue());
 						break;
-					case "nosql":
-						pipeParam.setNoSqlParam((NOSQLParam) o);
+					case "readParamNoSql":
+						pipeParams.setReadParam((NoSQLParam) o);
 						break;
-					case "dumpSql":
-						pipeParam.setSqlParam((SQLParam) o);
+					case "readParamSql":
+						pipeParams.setReadParam((SQLParam) o);
 						break; 
 					case "MessageParam":
 						messageParam = (MessageParam) o;
@@ -249,7 +271,9 @@ public class InstanceConfig {
 						SearcherParam v  = (SearcherParam) o;
 						searchParams.put(v.getName(), v);
 						break;  
-					default: 
+					case "PageScan":
+						SQLParam sp = (SQLParam) o;
+						pipeParams.getReadParam().setPageScan(sp.getSql()); 
 						break;
 					}
 				}

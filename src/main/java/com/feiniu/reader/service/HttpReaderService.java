@@ -18,13 +18,12 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.field.RiverField;
 import com.feiniu.instruction.flow.TransDataFlow;
-import com.feiniu.model.DataPage;
-import com.feiniu.model.PipeDataUnit;
-import com.feiniu.model.SearcherESModel;
-import com.feiniu.model.SearcherModel;
-import com.feiniu.model.param.WarehouseParam;
+import com.feiniu.model.reader.DataPage;
+import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.model.searcher.SearcherESModel;
+import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.node.CPU;
-import com.feiniu.searcher.service.SearcherService;
+import com.feiniu.param.warehouse.WarehouseParam;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
@@ -48,10 +47,10 @@ public class HttpReaderService {
 
 	public boolean start() {
 		HashMap<String, Object> serviceParams = new HashMap<String, Object>();
-		serviceParams.put("confident_port", GlobalParam.StartConfig.get("http_reader_confident_port"));
-		serviceParams.put("max_idle_time", GlobalParam.StartConfig.get("http_reader_max_idle_time"));
-		serviceParams.put("port", GlobalParam.StartConfig.get("http_reader_port"));
-		serviceParams.put("thread_pool", GlobalParam.StartConfig.get("http_reader_thread_pool"));
+		serviceParams.put("confident_port", GlobalParam.StartConfig.get("reader_service_confident_port"));
+		serviceParams.put("max_idle_time", GlobalParam.StartConfig.get("reader_service_max_idle_time"));
+		serviceParams.put("port", GlobalParam.StartConfig.get("reader_service_port"));
+		serviceParams.put("thread_pool", GlobalParam.StartConfig.get("reader_service_thread_pool"));
 		serviceParams.put("httpHandle", new httpHandle());
 		FS = HttpService.getInstance(serviceParams);
 		FS.start();
@@ -125,7 +124,7 @@ public class HttpReaderService {
 								transDataFlow.writeDataSet("HTTP PUT",
 										writeTo,
 										storeid, "", getPageData(rq.getParameter("data"), keycolumn, updatecolumn,
-												transDataFlow.getInstanceConfig().getTransParams()),
+												transDataFlow.getInstanceConfig().getWriteFields()),
 										"", isUpdate,monopoly);
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
@@ -169,7 +168,7 @@ public class HttpReaderService {
 										transDataFlow, false, false);
 								CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition",true,instance, storeid);    
 							} 
-							CPU.RUN(transDataFlow.getID(), "Pond", "switchInstance",true, Common.getInstanceName(instance,seq),storeid);
+							CPU.RUN(transDataFlow.getID(), "Pond", "switchInstance",true, instance,seq,storeid);
 							transDataFlow.run(instance, storeid, "-1", seq, true,transDataFlow.getInstanceConfig().getPipeParam().getInstanceName()==null?false:true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
@@ -191,7 +190,7 @@ public class HttpReaderService {
 							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParam().getWriteTo());
 							switch (param.getType()) {
 							case ES:
-								query = SearcherESModel.getInstance(SearcherService.parseRequest(rq),transFlow.getInstanceConfig());
+								query = SearcherESModel.getInstance(Common.getRequest(rq),transFlow.getInstanceConfig());
 								break; 
 							default:
 								break;

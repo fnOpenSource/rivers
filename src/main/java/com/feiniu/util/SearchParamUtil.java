@@ -16,13 +16,19 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.field.RiverField;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.model.SearcherModel;
-import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearcherParam; 
+import com.feiniu.model.RiverRequest;
+import com.feiniu.model.searcher.SearcherModel;
+import com.feiniu.param.end.SearcherParam; 
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:14
+ */
 public class SearchParamUtil {
 
-	public static void normalParam(SearcherRequest request, SearcherModel<?, ?, ?> fq,InstanceConfig instanceConfig) {
+	public static void normalParam(RiverRequest request, SearcherModel<?, ?, ?> fq,InstanceConfig instanceConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
 				instanceConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
 		int start = 0;
@@ -54,7 +60,7 @@ public class SearchParamUtil {
 			fq.setRequestHandler(request.getParam(GlobalParam.PARAM_REQUEST_HANDLER));
 	}
 	
-	public static List<SortBuilder<?>> getSortField(SearcherRequest request, InstanceConfig instanceConfig) {  
+	public static List<SortBuilder<?>> getSortField(RiverRequest request, InstanceConfig instanceConfig) {  
 		String sortstrs = request.getParam(KEY_PARAM.sort.toString());
 		List<SortBuilder<?>> sortList = new ArrayList<SortBuilder<?>>();
 		boolean useScore = false;
@@ -89,13 +95,13 @@ public class SearchParamUtil {
 				default:
 					RiverField checked; 
 					SearcherParam sp;
-					if(instanceConfig.getTransParam(fieldname)!=null && instanceConfig.getTransParam(fieldname).getIndextype().equals("geo_point")) {
+					if(instanceConfig.getWriteField(fieldname)!=null && instanceConfig.getWriteField(fieldname).getIndextype().equals("geo_point")) {
 						String _tmp = request.getParam(fieldname);
 						String[] _geo = _tmp.split(":"); 
 						sortList.add(SortBuilders.geoDistanceSort(fieldname,new GeoPoint(Double.parseDouble(_geo[0]), Double.parseDouble(_geo[0]))).order(reverse ? SortOrder.DESC : SortOrder.ASC));
 						break;
 					}
-					if ((checked = instanceConfig.getTransParam(fieldname)) != null) { 
+					if ((checked = instanceConfig.getWriteField(fieldname)) != null) { 
 						sortList.add(SortBuilders.fieldSort(checked.getAlias()).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));
 					}else if((sp = instanceConfig.getSearchParam(fieldname))!=null){
@@ -125,7 +131,7 @@ public class SearchParamUtil {
 	 * @param prs
 	 * @return
 	 */
-		public static Map<String,List<String[]>> getFacetParams(SearcherRequest rq,
+		public static Map<String,List<String[]>> getFacetParams(RiverRequest rq,
 				InstanceConfig prs) {
 			Map<String,List<String[]>> res = new LinkedHashMap<String,List<String[]>>();
 			if(rq.getParam("facet")!=null){

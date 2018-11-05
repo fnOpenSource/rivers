@@ -7,12 +7,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.mortbay.jetty.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
@@ -22,12 +24,13 @@ import org.w3c.dom.NodeList;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.GlobalParam.STATUS;
-import com.feiniu.field.RiverField;
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.field.RiverField;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.InstructionTree;
-import com.feiniu.model.param.WarehouseParam;
-import com.feiniu.node.CPU; 
+import com.feiniu.model.RiverRequest;
+import com.feiniu.node.CPU;
+import com.feiniu.param.warehouse.WarehouseParam; 
 
 /**
  * 
@@ -35,7 +38,7 @@ import com.feiniu.node.CPU;
  * @version 1.2
  * @date 2018-10-11 11:00
  */
-public class Common {
+public final class Common {
 	
 	public static SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
@@ -306,26 +309,10 @@ public class Common {
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static String getStoreId(String instanceName, String seq, TransDataFlow transDataFlow, boolean isIncrement,
+	public static synchronized String getStoreId(String instanceName, String seq, TransDataFlow transDataFlow, boolean isIncrement,
 			boolean reCompute) {
-		if (isIncrement) {
-			String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
-			byte[] b = ZKUtil.getData(path,true);
-			String storeId = "";
-			if (b != null && b.length > 0) {
-				String str = new String(b);
-				String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
-				if (strs.length > 0) {
-					if (strs[0].equals("a") || strs[0].equals("b")) {
-						storeId = strs[0];
-					} else {
-						storeId = "";
-					}
-				}
-				if (strs.length > 1) {
-					GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, strs[1]);
-				}
-			}
+		if (isIncrement) { 
+			String storeId = getStoreIdFromZK(instanceName,seq,true); 
 			if (storeId.length() == 0 || reCompute) {
 				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getInstanceName(instanceName, seq), true); 
 				if (storeId == null)
@@ -336,6 +323,27 @@ public class Common {
 		} else {
 			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getInstanceName(instanceName, seq), false);
 		}
+	}
+	
+	public static String getStoreIdFromZK(String instanceName, String seq,boolean initParam) {
+		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+		byte[] b = ZKUtil.getData(path,true);
+		String storeId = "";
+		if (b != null && b.length > 0) {
+			String str = new String(b);
+			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
+			if (strs.length > 0) {
+				if (strs[0].equals("a") || strs[0].equals("b")) {
+					storeId = strs[0];
+				} else {
+					storeId = "";
+				}
+			}
+			if (strs.length > 1 && initParam) {
+				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, strs[1]);
+			}
+		}
+		return storeId; 
 	}
 	
 	/**
@@ -369,12 +377,12 @@ public class Common {
 	public static String[] getSeqs(InstanceConfig instanceConfig,boolean fillDefault){
 		String[] seqs = {};
 		WarehouseParam whParam;
-		if(GlobalParam.nodeConfig.getNoSqlParamMap().get(instanceConfig.getPipeParam().getDataFrom())!=null){
-			whParam = GlobalParam.nodeConfig.getNoSqlParamMap().get(
-					instanceConfig.getPipeParam().getDataFrom());
+		if(GlobalParam.nodeConfig.getNoSqlWarehouse().get(instanceConfig.getPipeParam().getReadFrom())!=null){
+			whParam = GlobalParam.nodeConfig.getNoSqlWarehouse().get(
+					instanceConfig.getPipeParam().getReadFrom());
 		}else{
-			whParam = GlobalParam.nodeConfig.getSqlParamMap().get(
-					instanceConfig.getPipeParam().getDataFrom());
+			whParam = GlobalParam.nodeConfig.getSqlWarehouse().get(
+					instanceConfig.getPipeParam().getReadFrom());
 		}
 		if (null != whParam) {
 			seqs = whParam.getSeq();
@@ -454,21 +462,6 @@ public class Common {
 			res.add(instructionTree);
 		}
 		return res;
-	}
-	
-	public static void runShell(String path) { 
-		Process  pc = null;
-		try { 
-			LOG.info("Start Run Script "+path);
-			pc = Runtime.getRuntime().exec(path);
-			pc.waitFor();
-		} catch (Exception e) {
-			LOG.error("restartNode Exception",e);
-		}finally {
-			if(pc != null){
-				pc.destroy();
-            }
-		}
 	} 
 	
 	/**
@@ -497,17 +490,7 @@ public class Common {
 		if((GlobalParam.FLOW_STATUS.get(instance, seq, type).get() & state.getVal())>0)
 			return true; 
 		return false;
-	}
-	
-	public static void initParams(InstanceConfig instanceConfig) {
-		String instance = instanceConfig.getName();
-		String[] seqs = getSeqs(instanceConfig, true);
-		for (String seq : seqs) { 
-			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.FULL.name(), new AtomicInteger(1));
-			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1));
-			GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
-		}
-	}
+	} 
 	
 	public static Object parseFieldValue(String v, RiverField fd) throws Exception {
 		if (fd == null)
@@ -518,5 +501,27 @@ public class Common {
 		Class<?> c = Class.forName(fd.getParamtype());  
 		Method method = c.getMethod("valueOf", String.class);
 		return method.invoke(c,String.valueOf(v));
+	}
+	
+	/**
+	 * jetty request convert to RiverRequest
+	 * @param input
+	 * @return
+	 */
+	public static RiverRequest getRequest(Request input) {
+		RiverRequest rr = RiverRequest.getInstance(); 
+		Request rq = (Request) input;
+		String path = rq.getPathInfo();
+		String pipe = path.substring(1); 
+		rr.setPipe(pipe);  
+		@SuppressWarnings("unchecked")
+		Iterator<Map.Entry<String,String>> iter = rq.getParameterMap().entrySet().iterator();
+		while (iter.hasNext()) { 
+			Map.Entry<String,String> entry = iter.next();
+			String key = (String) entry.getKey();
+			String value = rq.getParameter(key);
+			rr.addParam(key, value);
+		}
+		return rr;
 	}
 }

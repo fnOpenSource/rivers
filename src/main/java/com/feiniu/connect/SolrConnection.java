@@ -6,6 +6,12 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class SolrConnection extends FnConnectionSocket implements FnConnection<CloudSolrClient> {
 
 	private final static int zkClientTimeout = 180000;

@@ -16,11 +16,17 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.DataPage;
-import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.reader.DataPage;
+import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:24
+ */
 public class MysqlFlow extends ReaderFlowSocket{    
 
 	private final static Logger log = LoggerFactory.getLogger(MysqlFlow.class);  
@@ -46,7 +52,7 @@ public class MysqlFlow extends ReaderFlowSocket{
 				if(handler==null){
 					getAllData(rs,transParams); 
 				}else{
-					handler.Handle(this,rs,transParams);
+					handler.handleData(this,rs,transParams);
 				} 
 			} catch (Exception e) {
 				this.dataPage.put(GlobalParam.READER_STATUS,false);

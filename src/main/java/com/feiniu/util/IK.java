@@ -5,6 +5,12 @@ import java.io.StringReader;
 import org.apache.lucene.analysis.TokenStream;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:15
+ */
 public class IK {
 	 static IKAnalyzer analyzer;
 	 static {

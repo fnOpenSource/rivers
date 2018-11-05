@@ -33,9 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.connect.FnConnectionPool;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.FNIoc;
@@ -44,7 +43,8 @@ import com.feiniu.writer.WriterFlowSocket;
 /**
  * solr flow Writer Manager
  * @author chengwen
- * @version 1.0 
+ * @version 2.0
+ * @date 2018-10-30 14:08
  */
 @NotThreadSafe
 public class SolrFlow extends WriterFlowSocket{
@@ -70,7 +70,7 @@ public class SolrFlow extends WriterFlowSocket{
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams; 
 		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.property = (Properties)FNIoc.getInstance().getBean("riverPathConfig");
+		this.property = (Properties)FNIoc.getBean("riverPathConfig");
 		this.isBatch = GlobalParam.WRITE_BATCH;
 	}
  
@@ -80,7 +80,7 @@ public class SolrFlow extends WriterFlowSocket{
 		String name = Common.getStoreName(instantcName, storeId);
 		String path = null; 
 		try {
-			log.info("setting index " + name);
+			log.info("create index " + name);
 			path = this.property.getProperty("config.path"); 
 			String zkHost = getSolrConn().getZkHost();
 			moveFile2ZookeeperDest((path+"/"+srcDir).replace("file:", ""), zkDir+"/"+instantcName, zkHost);
@@ -120,7 +120,7 @@ public class SolrFlow extends WriterFlowSocket{
 				continue;
 			
 			if(isUpdate){  
-				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
+				if (transParam.getAnalyzer().length()==0){
 					if (transParam.getSeparator() != null){
 						String[] vs = value.split(transParam.getSeparator());
 						Map<String,Object> fm = new HashMap<>(1);
@@ -142,7 +142,7 @@ public class SolrFlow extends WriterFlowSocket{
 					doc.setField(field, fm);
 				}
 			}else{
-				if (transParam.getAnalyzer().equalsIgnoreCase(("not_analyzed"))){
+				if (transParam.getAnalyzer().length()==0){
 					if (transParam.getSeparator() != null){
 						String[] vs = value.split(transParam.getSeparator());
 						doc.addField(field, vs);
@@ -248,7 +248,7 @@ public class SolrFlow extends WriterFlowSocket{
 				select = "b"; 
 			}else{
 				select = "a"; 
-				create(mainName,select, instanceConfig.getTransParams());
+				create(mainName,select, instanceConfig.getWriteFields());
 				setAlias(mainName, select, instanceConfig.getAlias());
 			}   
 		}else{
@@ -256,30 +256,16 @@ public class SolrFlow extends WriterFlowSocket{
 			if(this.existsCollection(b)){ 
 				select =  "a";
 			}
-			create(mainName,select, instanceConfig.getTransParams());
+			create(mainName,select, instanceConfig.getWriteFields());
 		} 
 		return select;
-	}
- 
-	public void REALEASE(boolean isMonopoly,boolean releaseConn){
-		if(isMonopoly==false) { 
-			synchronized(retainer){ 
-				if(retainer.decrementAndGet()<=0){
-					FnConnectionPool.freeConn(this.FC, this.poolName,releaseConn);
-					this.CONNS = null;
-					retainer.set(0); 
-				}else{
-					log.info(this.FC+" retainer is "+retainer.get());
-				}
-			} 
-		} 
-	}
+	} 
  
 	private void getSchemaFile(Map<String,RiverField> paramMap,String instantcName, String storeId,String zkHost) {
 		BufferedReader head_reader = null;
 		BufferedReader tail_reader = null; 
 		String path = null;
-		String destPaht = zkDir+"/"+instantcName+"/schema.xml";
+		String destPath = zkDir+"/"+instantcName+"/schema.xml";
 		ZooKeeper zk = null;
 		Stat stat = null;
 		final CountDownLatch connectedSemaphore = new CountDownLatch( 1 ); //防止出现ConnectionLossException
@@ -293,9 +279,9 @@ public class SolrFlow extends WriterFlowSocket{
 			zk = new ZooKeeper(zkHost, 5000, watcher);
 			connectedSemaphore.await();
 			 
-			stat = zk.exists(destPaht, watcher);
+			stat = zk.exists(destPath, watcher);
 			if (null == stat) {
-				zk.create(destPaht, "".getBytes(), Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+				zk.create(destPath, "".getBytes(), Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
 			}
 			
 			path = property.getProperty("config.path");
@@ -319,7 +305,7 @@ public class SolrFlow extends WriterFlowSocket{
 					firstFiled = tp.getName();
 				}
 				field.append("<field ").append("name=\"").append(tp.getAlias()).append("\" ");
-				if("string".equals(tp.getIndextype()) && "not_analyzed".equalsIgnoreCase(tp.getAnalyzer())) {
+				if("string".equals(tp.getIndextype()) && tp.getAnalyzer().length()==0) {
 					field.append("type=\"").append("string\" ");
 				}else{
 					field.append("type=\"").append(tp.getIndextype()).append("\" ");
@@ -338,7 +324,7 @@ public class SolrFlow extends WriterFlowSocket{
 				sb.append(str).append("\n");
 			}
 
-			zk.setData(destPaht, sb.toString().getBytes(), -1);
+			zk.setData(destPath, sb.toString().getBytes(), -1);
 		} catch (Exception e) {
 			log.error("getSchemaFile Exception ",e); 
 		} finally {
@@ -440,7 +426,7 @@ public class SolrFlow extends WriterFlowSocket{
 	private static void moveFile2ZookeeperDest( String sourceAdd, String destinationAdd,String zkHost) {
 		ZooKeeper zk = null;
 		Stat stat = null;
-		final CountDownLatch connectedSemaphore = new CountDownLatch( 1 ); //防止出现ConnectionLossException
+		final CountDownLatch connectedSemaphore = new CountDownLatch( 1 );  
 		try { 
 			Watcher watcher = new Watcher() { 
 				public void process(WatchedEvent event) {

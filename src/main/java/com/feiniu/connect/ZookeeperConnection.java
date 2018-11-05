@@ -8,6 +8,12 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class ZookeeperConnection extends FnConnectionSocket implements FnConnection<ZooKeeper> {
 
 	private final static int CONNECTION_TIMEOUT = 50000; 

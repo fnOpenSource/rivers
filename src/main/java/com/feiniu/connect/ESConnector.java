@@ -5,6 +5,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.Client;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public final class ESConnector {
 	
 	private Client client;

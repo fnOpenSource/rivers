@@ -74,10 +74,12 @@ public class FlowTask {
 					CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition", true,
 							Common.getInstanceName(instanceName, seq), storeId);
 				}
-				transDataFlow.run(instanceName, storeId, Common.getFullStartInfo(instanceName, seq), seq, true,
-						masterControl);
-				GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, keepCurrentUpdateTime);
-				Common.saveTaskInfo(instanceName, seq, storeId, GlobalParam.JOB_INCREMENTINFO_PATH);
+				if(storeId!=null) {
+					transDataFlow.run(instanceName, storeId, Common.getFullStartInfo(instanceName, seq), seq, true,
+							masterControl);
+					GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, keepCurrentUpdateTime);
+					Common.saveTaskInfo(instanceName, seq, storeId, GlobalParam.JOB_INCREMENTINFO_PATH);
+				} 
 			} catch (Exception e) {
 				log.error(instanceName + " Full Exception", e);
 			} finally {
@@ -181,7 +183,7 @@ public class FlowTask {
 		StringBuffer sf = new StringBuffer();
 		for (String job : nextJobs) {
 			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(job);
-			if (instanceConfig.isIndexer() != false) {
+			if (instanceConfig.openTrans()) {
 				String[] _seqs = Common.getSeqs(instanceConfig, true);
 				for (String seq : _seqs) {
 					if (seq == null)

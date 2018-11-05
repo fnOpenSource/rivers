@@ -41,7 +41,7 @@ public class GlobalParam {
 	public volatile static RiverState<String> LAST_UPDATE_TIME = new RiverState<String>();
 	
 	public static boolean WRITE_BATCH = false;
-	/**#1 searcher service  2 writer service 4 http reader service 8 instruction service*/
+	/**#1 searcher service  2 writer service 4 http reader service 8 instruction service 16 compute service*/
 	public static int SERVICE_LEVEL;
 	
 	public static String CONFIG_PATH;
@@ -66,7 +66,7 @@ public class GlobalParam {
 	
 	public static Properties StartConfig;
 	
-	public static Run RunBean;
+	public static Run RIVERS;
 	
 	/**master,slave,backup*/
 	public static enum NODE_TYPE{
@@ -78,6 +78,16 @@ public class GlobalParam {
 	};
 	 
 	//writer parameters
+	public static enum INSTANCE_TYPE {  
+		Blank(0),Trans(1),WithCompute(2);
+		private int v;
+		private INSTANCE_TYPE(int val) {   
+		    this.v = val;  
+		}
+		public int getVal() {  
+	        return v;  
+	    } 
+	} 
 	public static enum KEY_PARAM {
 		start, count, sort, facet, detail, facet_count,group,fl
 	}  

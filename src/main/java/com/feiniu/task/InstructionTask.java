@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.model.InstructionTree;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:22
+ */
 public class InstructionTask {
 
 	private String codeID;

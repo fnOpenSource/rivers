@@ -4,10 +4,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 /**
- * get system info
- * 
- * @author sprig.zhang
- * 
+ *  * get system info
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:14
  */
 public class SystemInfoUtil {
 	public static String getCpuUsage() throws Exception {

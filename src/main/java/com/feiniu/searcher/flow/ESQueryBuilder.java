@@ -24,11 +24,17 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.QUERY_TYPE;
 import com.feiniu.field.RiverField;
 import com.feiniu.field.handler.LongRange;
+import com.feiniu.model.RiverRequest;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearcherParam;
+import com.feiniu.param.end.SearcherParam;
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:23
+ */
 public class ESQueryBuilder {
 
 	private final static Logger log = LoggerFactory.getLogger(ESQueryBuilder.class);
@@ -37,7 +43,7 @@ public class ESQueryBuilder {
 		return QueryBuilders.termQuery("EMPTY", "0x000");
 	}
 
-	static public BoolQueryBuilder buildBooleanQuery(SearcherRequest request, InstanceConfig instanceConfig,
+	static public BoolQueryBuilder buildBooleanQuery(RiverRequest request, InstanceConfig instanceConfig,
 		 Map<String, QueryBuilder> attrQueryMap) {
 		BoolQueryBuilder bquery = QueryBuilders.boolQuery();
 		try {
@@ -98,7 +104,7 @@ public class ESQueryBuilder {
 					occur = Occur.MUST_NOT;
 				}
 
-				RiverField tp = instanceConfig.getTransParam(key);
+				RiverField tp = instanceConfig.getWriteField(key);
 				SearcherParam sp = instanceConfig.getSearchParam(key);
 				if ((tp == null && sp == null) || Common.isDefaultParam(key)) {
 					continue;
@@ -124,7 +130,7 @@ public class ESQueryBuilder {
 		return bquery;
 	}
 
-	static private void QueryBoost(QueryBuilder query, RiverField tp, SearcherRequest request) throws Exception {
+	static private void QueryBoost(QueryBuilder query, RiverField tp, RiverRequest request) throws Exception {
 		float boostValue = tp.getBoost();
 
 		Method m = query.getClass().getMethod("boost", new Class[] { float.class });
@@ -134,7 +140,7 @@ public class ESQueryBuilder {
 	}
 
 	static private QueryBuilder buildSingleQuery(String key, String value, RiverField tp, SearcherParam sp,
-			SearcherRequest request, String paramKey, int fuzzy) throws Exception {
+			RiverRequest request, String paramKey, int fuzzy) throws Exception {
 		if (value == null || (tp.getDefaultvalue() == null && value.length() <= 0) || tp == null)
 			return null;
 		boolean not_analyzed = tp.getAnalyzer().length()>0 ? false : true;
@@ -197,7 +203,7 @@ public class ESQueryBuilder {
 	}
 
 	static private QueryBuilder buildMultiQuery(String multifield, String value, InstanceConfig instanceConfig,
-			SearcherRequest request, String paramKey, int fuzzy) throws Exception {
+			RiverRequest request, String paramKey, int fuzzy) throws Exception {
 		DisMaxQueryBuilder bquery = null;
 		String[] keys = multifield.split(",");
 
@@ -205,7 +211,7 @@ public class ESQueryBuilder {
 			return null;
 
 		if (keys.length == 1) {
-			RiverField tp = instanceConfig.getTransParam(keys[0]);
+			RiverField tp = instanceConfig.getWriteField(keys[0]);
 			return buildSingleQuery(tp.getAlias(), value, tp, instanceConfig.getSearchParam(keys[0]), request,
 					paramKey, fuzzy);
 		}
@@ -218,7 +224,7 @@ public class ESQueryBuilder {
 			for (String val : vals) {
 				DisMaxQueryBuilder parsedDisMaxQuery = null;
 				for (String key2 : keys) {
-					RiverField _tp = instanceConfig.getTransParam(key2);
+					RiverField _tp = instanceConfig.getWriteField(key2);
 					QueryBuilder query = buildSingleQuery(_tp.getAlias(),
 							_tp.getAnalyzer().equals("NOT_ANALYZED") ? word : val, _tp,
 							instanceConfig.getSearchParam(key2), request, paramKey, fuzzy);

@@ -4,12 +4,18 @@ import java.util.HashMap;
 
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.flow.Socket;
-import com.feiniu.model.param.WarehouseNosqlParam;
-import com.feiniu.model.param.WarehouseParam;
+import com.feiniu.param.warehouse.WarehouseNosqlParam;
+import com.feiniu.param.warehouse.WarehouseParam;
 import com.feiniu.searcher.flow.ESFlow;
 import com.feiniu.searcher.flow.MysqlFlow;
 import com.feiniu.searcher.flow.SolrFlow;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:24
+ */
 public class SearcherSocketFactory implements Socket<SearcherFlowSocket>{
 
 	private static SearcherSocketFactory o = new SearcherSocketFactory();

@@ -19,14 +19,20 @@ import org.elasticsearch.search.sort.SortBuilder;
 import com.alibaba.fastjson.JSON;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.SearcherDataUnit;
-import com.feiniu.model.SearcherModel;
-import com.feiniu.model.SearcherResult;
+import com.feiniu.model.ResponseDataUnit;
+import com.feiniu.model.searcher.SearcherModel;
+import com.feiniu.model.searcher.SearcherResult;
 import com.feiniu.searcher.SearcherFlowSocket;
 import com.feiniu.searcher.handler.Handler;
 import com.feiniu.util.FNException;
 
-public class ESFlow extends SearcherFlowSocket {  
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:23
+ */
+public final class ESFlow extends SearcherFlowSocket {  
 	 
 	public static ESFlow getInstance(HashMap<String, Object> connectParams) {
 		ESFlow o = new ESFlow();
@@ -60,7 +66,7 @@ public class ESFlow extends SearcherFlowSocket {
 					returnFields.add(s);
 				}
 			} else {
-				Map<String, RiverField> tmpFields = instanceConfig.getTransParams();
+				Map<String, RiverField> tmpFields = instanceConfig.getWriteFields();
 				for (Map.Entry<String, RiverField> e : tmpFields.entrySet()) {
 					if (e.getValue().getStored().equalsIgnoreCase("true"))
 						returnFields.add(e.getKey());
@@ -89,10 +95,10 @@ public class ESFlow extends SearcherFlowSocket {
 		 
 		for (SearchHit h:hits) {
 			Map<String, DocumentField> fieldMap = h.getFields(); 
-			SearcherDataUnit u = SearcherDataUnit.getInstance();
+			ResponseDataUnit u = ResponseDataUnit.getInstance();
 			for (Map.Entry<String, DocumentField> e : fieldMap.entrySet()) {
 				String name = e.getKey();
-				RiverField param = instanceConfig.getTransParams().get(name);
+				RiverField param = instanceConfig.getWriteFields().get(name);
 				DocumentField v = e.getValue();  
 				if (param!=null && param.getSeparator() != null) { 
 					u.addObject(name, v.getValues());

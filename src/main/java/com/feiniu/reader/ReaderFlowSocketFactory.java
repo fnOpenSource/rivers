@@ -5,9 +5,9 @@ import java.util.HashMap;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 import com.feiniu.flow.Socket;
-import com.feiniu.model.param.WarehouseNosqlParam;
-import com.feiniu.model.param.WarehouseParam;
-import com.feiniu.model.param.WarehouseSqlParam;
+import com.feiniu.param.warehouse.WarehouseNosqlParam;
+import com.feiniu.param.warehouse.WarehouseParam;
+import com.feiniu.param.warehouse.WarehouseSqlParam;
 import com.feiniu.reader.flow.HbaseFlow;
 import com.feiniu.reader.flow.MysqlFlow;
 import com.feiniu.reader.flow.OracleFlow;
@@ -18,7 +18,7 @@ import com.feiniu.util.Common;
  * @author chengwen
  * @version 1.0
  */
-public class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket>{
+public final class ReaderFlowSocketFactory implements Socket<ReaderFlowSocket>{
 	
 	private static ReaderFlowSocketFactory o = new ReaderFlowSocketFactory();
 	

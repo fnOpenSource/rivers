@@ -21,7 +21,7 @@ public class JobRunFactory implements Job {
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		JobModel job = (JobModel) context.getMergedJobDataMap().get(GlobalParam.FLOW_TAG._DEFAULT.name());
 		if (!invokeMethod(job)) {
-			GlobalParam.mailSender.sendHtmlMailBySynchronizationMode(" [SearchPlatForm] " + GlobalParam.run_environment,
+			GlobalParam.mailSender.sendHtmlMailBySynchronizationMode(" [Rivers] " + GlobalParam.run_environment,
 					"job [" + job.getJobName() + "] fire fail,with invokeMethod error!");
 		}
 	}

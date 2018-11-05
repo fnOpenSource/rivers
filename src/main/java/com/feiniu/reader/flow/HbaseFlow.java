@@ -22,11 +22,17 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.DataPage;
-import com.feiniu.model.PipeDataUnit;
+import com.feiniu.model.reader.DataPage;
+import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:24
+ */
 public class HbaseFlow extends ReaderFlowSocket { 
 	 
 	private final static Logger log = LoggerFactory.getLogger(HbaseFlow.class); 
@@ -100,7 +106,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 							u.addFieldValue(k, v, transParams);
 						} 
 					}else{
-						handler.Handle(r,u);
+						handler.handleData(r,u);
 					} 
 					this.dataUnit.add(u);
 				} 

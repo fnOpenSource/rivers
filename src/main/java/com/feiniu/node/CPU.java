@@ -18,7 +18,7 @@ import com.feiniu.writer.WriterFlowSocket;
  */
 public class CPU { 
 	
-	static HashMap<String, Context> Contexts = new HashMap<>();
+	static volatile HashMap<String, Context> Contexts = new HashMap<>();
 	
 	public static void prepare(String runId,InstanceConfig instanceConfig,WriterFlowSocket writer,ReaderFlowSocket reader) { 
 		Contexts.put(runId, Context.initContext(instanceConfig, writer,reader));

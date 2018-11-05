@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.STATUS;
-import com.feiniu.model.param.InstructionParam;
+import com.feiniu.param.pipe.InstructionParam;
 import com.feiniu.task.FlowTask;
 import com.feiniu.task.InstructionTask;
 import com.feiniu.task.schedule.JobModel;
@@ -53,7 +53,7 @@ public class FlowCenter{
 		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName); 
 		boolean state = true; 
 		try {
-			if (instanceConfig.isIndexer() == false)
+			if (instanceConfig.openTrans() == false)
 				return false;   
 			String[] seqs = Common.getSeqs(instanceConfig,true);  
 			for (String seq : seqs) {
@@ -104,7 +104,7 @@ public class FlowCenter{
 	}
  
 	public void addFlowGovern(String instanceName, InstanceConfig instanceConfig,boolean needClear) { 
-		if (instanceConfig.checkStatus()==false || instanceConfig.isIndexer() == false)
+		if (instanceConfig.checkStatus()==false || instanceConfig.openTrans() == false)
 			return;
 		String[] seqs = Common.getSeqs(instanceConfig,true);  
 		try {
@@ -190,7 +190,7 @@ public class FlowCenter{
 					getJobName(instance, GlobalParam.JOB_TYPE.FULL.name()), instanceConfig.getPipeParam().getFullCron(),
 					"com.feiniu.task.FlowTask", fullFun, task); 
 			taskJobCenter.addJob(_sj); 
-		}else if(instanceConfig.getPipeParam().getDataFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) { 
+		}else if(instanceConfig.getPipeParam().getReadFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) { 
 			if(needclear)
 				jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove");
 			JobModel _sj = new JobModel(
@@ -220,7 +220,7 @@ public class FlowCenter{
 					instanceConfig.getPipeParam().getDeltaCron(), "com.feiniu.task.FlowTask",
 					incrementFun, task); 
 			taskJobCenter.addJob(_sj);
-		}else if(instanceConfig.getPipeParam().getDataFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) {
+		}else if(instanceConfig.getPipeParam().getReadFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) {
 			if(needclear)
 				jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove");
 			JobModel _sj = new JobModel(

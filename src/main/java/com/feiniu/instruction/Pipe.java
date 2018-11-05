@@ -3,6 +3,12 @@ package com.feiniu.instruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class Pipe extends Instruction {
 	
 	private final static Logger log = LoggerFactory.getLogger("Pipe");

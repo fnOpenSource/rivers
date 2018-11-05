@@ -12,13 +12,19 @@ import org.apache.solr.client.solrj.SolrQuery;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.SearcherRequest;
-import com.feiniu.model.param.SearcherParam;
+import com.feiniu.model.RiverRequest;
+import com.feiniu.param.end.SearcherParam;
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-10-26 09:24
+ */
 public class SolrQueryBuilder {
 
-	public static SolrQuery queryBuilder(SearcherRequest request, InstanceConfig prs,
+	public static SolrQuery queryBuilder(RiverRequest request, InstanceConfig prs,
 			Map<String, String> attrQueryMap) {
 		SolrQuery sq = new SolrQuery();
 		StringBuffer qr = new StringBuffer();
@@ -56,7 +62,7 @@ public class SolrQueryBuilder {
 				continue;
 			}
 			
-			RiverField tp = prs.getTransParam(k);
+			RiverField tp = prs.getWriteField(k);
 			SearcherParam sp = prs.getSearchParam(k);
 			if (tp == null && sp==null){
 				continue; 

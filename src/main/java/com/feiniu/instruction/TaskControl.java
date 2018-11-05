@@ -7,6 +7,12 @@ import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class TaskControl extends Instruction{ 
 	
 	public static void moveFullPosition(Context context, Object[] args) {
@@ -46,7 +52,7 @@ public class TaskControl extends Instruction{
 		String[] seqs = Common.getSeqs(context.getInstanceConfig(),true);  
 		for(String seq:seqs) { 
 			String saveInfo=""; 
-			List<String> table_seq = context.getInstanceConfig().getPipeParam().getSqlParam().getSeq();
+			List<String> table_seq = context.getInstanceConfig().getPipeParam().getReadParam().getSeq();
 			TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 			String storeId = Common.getStoreId(context.getInstanceConfig().getName(), seq, transDataFlow, true, false);
 			if(storeId==null)

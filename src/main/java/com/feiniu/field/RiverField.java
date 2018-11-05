@@ -19,7 +19,7 @@ public class RiverField {
 	private boolean router=false;
 	private String paramtype;
 	private String dsl;
-
+	 
 	public boolean isValid(String value) { 
 		return true;
 	}  

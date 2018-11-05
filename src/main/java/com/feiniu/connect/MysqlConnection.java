@@ -7,6 +7,12 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-26 09:25
+ */
 public class MysqlConnection extends FnConnectionSocket implements FnConnection<Connection>{ 
 	
 	private Connection conn = null;  
