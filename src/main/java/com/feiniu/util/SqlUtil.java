@@ -76,7 +76,7 @@ public final class SqlUtil {
 			if (transParam == null)
 				continue;
 			values.append("'" + value + "' ,");
-			columns.append(field + " ,");
+			columns.append(transParam.getAlias() + " ,");
 		}
 		sql = sql + "(" + columns.substring(0, columns.length() - 1) + ") VALUES ("
 				+ values.substring(0, values.length() - 1) + ")";

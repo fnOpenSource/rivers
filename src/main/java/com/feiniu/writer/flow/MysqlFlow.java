@@ -107,7 +107,7 @@ public class MysqlFlow extends WriterFlowSocket {
 			RiverField p = e.getValue();
 			if (p.getName() == null)
 				continue;
-			sf.append(p.getName());
+			sf.append(p.getAlias());
 			sf.append(" " + p.getIndextype());
 			sf.append(" ,");
 			if (p.getIndexed() == "true") {

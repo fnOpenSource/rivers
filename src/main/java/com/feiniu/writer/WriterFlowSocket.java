@@ -44,10 +44,10 @@ public abstract class WriterFlowSocket extends Flow{
 	public void delete(String instance, String storeId,String keyColumn,String keyVal) throws Exception {
 	}
   
-	public void removeInstance(String instance, String batchId) {
+	public void removeInstance(String instance, String storeId) {
 	}
 	
-	public void setAlias(String instance, String batchId, String aliasName) {
+	public void setAlias(String instance, String storeId, String aliasName) {
 	}
 
 	public void flush() throws Exception {

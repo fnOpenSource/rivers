@@ -352,8 +352,8 @@ public final class Common {
 	 * @param seq
 	 * @return String
 	 */
-	public static String getStoreId(String instanceName, String seq) {
-		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+	public static String getStoreId(String instance, String seq) {
+		String path = Common.getTaskStorePath(instance, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
 		byte[] b = ZKUtil.getData(path, true);
 		String storeId = "";
 		if (b != null && b.length > 0) {

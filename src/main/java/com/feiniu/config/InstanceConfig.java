@@ -196,7 +196,7 @@ public class InstanceConfig {
 						SQLParam.class); 
 					parseNode(params.getElementsByTagName("nosql"), "readParamNoSql",
 						NoSQLParam.class);
-					params = (Element) params.getElementsByTagName("PageScan").item(0);
+					params = (Element) params.getElementsByTagName("pageScan").item(0);
 					if(params!=null) {
 						pipeParams.getReadParam().setPageScan(params.getTextContent().trim());
 					}  
@@ -270,11 +270,7 @@ public class InstanceConfig {
 					case "SearchParam":
 						SearcherParam v  = (SearcherParam) o;
 						searchParams.put(v.getName(), v);
-						break;  
-					case "PageScan":
-						SQLParam sp = (SQLParam) o;
-						pipeParams.getReadParam().setPageScan(sp.getSql()); 
-						break;
+						break;   
 					}
 				}
 			}

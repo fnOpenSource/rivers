@@ -88,11 +88,11 @@ public class ESFlow extends WriterFlowSocket {
 							cbuilder.latlon(field, Double.parseDouble(vs[0]), Double.parseDouble(vs[1]));
 					}else if (transParam.getSeparator() != null) {
 						String[] vs = value.split(transParam.getSeparator());
-						cbuilder.array(field, vs);
+						cbuilder.array(transParam.getAlias(), vs);
 					} else 
-						cbuilder.field(field, value);
+						cbuilder.field(transParam.getAlias(), value);
 				} else {
-					cbuilder.field(field, value);
+					cbuilder.field(transParam.getAlias(), value);
 				}
 				if (transParam.isRouter()) {
 					routing.append(value);
@@ -185,8 +185,8 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void optimize(String instanceName, String storeId) {
-		String name = Common.getStoreName(instanceName, storeId);
+	public void optimize(String instance, String storeId) {
+		String name = Common.getStoreName(instance, storeId);
 		try {
 			ForceMergeRequest request = new ForceMergeRequest(name);
 			request.maxNumSegments(2);
@@ -206,10 +206,10 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void removeInstance(String instanceName, String storeId) {
+	public void removeInstance(String instance, String storeId) {
 		if (storeId == null || storeId.length() == 0)
-			return;
-		String name = Common.getStoreName(instanceName, storeId);
+			storeId = "a";
+		String name = Common.getStoreName(instance, storeId);
 		try {
 			log.info("trying to remove Instance " + name);
 			IndicesExistsResponse res = getESC().getClient().admin().indices().prepareExists(name).execute()

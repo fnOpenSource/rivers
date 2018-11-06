@@ -233,11 +233,11 @@ public class HttpReaderService {
 				@SuppressWarnings("unchecked")
 				Set<Entry<String, String>> itr = jo.entrySet();
 				for (Entry<String, String> k : itr) {
-					if (k.getKey().equals(DP.get(GlobalParam.READER_KEY))) {
+					if (k.getKey().equals(DP.get(keycolumn))) {
 						u.setKeyColumnVal(k.getValue());
 						dataBoundary = String.valueOf(k.getValue());
 					}
-					if (k.getKey().equals(DP.get(GlobalParam.READER_SCAN_KEY))) {
+					if (k.getKey().equals(updatecolumn)) {
 						updateFieldValue = String.valueOf(k.getValue());
 					}
 					u.addFieldValue(k.getKey(), k.getValue(), transParams);

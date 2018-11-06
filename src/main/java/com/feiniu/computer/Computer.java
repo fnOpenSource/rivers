@@ -5,7 +5,6 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.ml.Algorithm;
 import com.feiniu.model.ResponseState;
@@ -49,9 +48,7 @@ public class Computer {
 			log.info("start loading model...");
 			HashMap<String, String> params = new HashMap<>(); 
 			String table = Common.getStoreName(instanceName, Common.getStoreIdFromZK(instanceName,"",true));
-			params.put("sql", "select model,remark from "+table);
-			params.put(GlobalParam.READER_SCAN_KEY, "");
-			params.put(GlobalParam.READER_KEY, "");
+			params.put("sql", "select model,remark from "+table); 
 			DataPage dp = readerFlowSocket.getPageData(params, instanceConfig.getWriteFields(), null);
 			DataSetReader DSReader = new DataSetReader();
 			DSReader.init(dp);

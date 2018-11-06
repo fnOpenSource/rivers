@@ -125,32 +125,32 @@ public class SolrFlow extends WriterFlowSocket{
 						String[] vs = value.split(transParam.getSeparator());
 						Map<String,Object> fm = new HashMap<>(1);
 						fm.put("set",vs);
-						doc.setField(field, fm);
+						doc.setField(transParam.getAlias(), fm);
 					}
 					else{
 						if(keyColumn.equals(field)){
-							doc.setField(field, value);
+							doc.setField(transParam.getAlias(), value);
 						}else{
 							Map<String, String> fm = new HashMap<>(1);
 							fm.put("set",value);
-							doc.setField(field, fm);
+							doc.setField(transParam.getAlias(), fm);
 						}  
 					} 
 				} else {
 					Map<String, String> fm = new HashMap<>(1);
 					fm.put("set",value);
-					doc.setField(field, fm);
+					doc.setField(transParam.getAlias(), fm);
 				}
 			}else{
 				if (transParam.getAnalyzer().length()==0){
 					if (transParam.getSeparator() != null){
 						String[] vs = value.split(transParam.getSeparator());
-						doc.addField(field, vs);
+						doc.addField(transParam.getAlias(), vs);
 					}
 					else
-						doc.addField(field, value); 
+						doc.addField(transParam.getAlias(), value); 
 				} else {
-					doc.addField(field, value);
+					doc.addField(transParam.getAlias(), value);
 				}
 			} 
 		}  
