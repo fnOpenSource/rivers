@@ -31,21 +31,21 @@ public class MysqlFlow extends ReaderFlowSocket{
 
 	private final static Logger log = LoggerFactory.getLogger(MysqlFlow.class);  
 
-	public static MysqlFlow getInstance(HashMap<String, Object> connectParams) {
+	public static MysqlFlow getInstance(final HashMap<String, Object> connectParams) {
 		MysqlFlow o = new MysqlFlow();
 		o.INIT(connectParams);
 		return o;
 	}  
  
 	@Override
-	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) {  
+	public DataPage getPageData(final HashMap<String, String> param,final Map<String, RiverField> transParams,Handler handler,int pageSize) {  
 		boolean releaseConn = false;
 		PREPARE(false,false); 
 		if(!ISLINK())
 			return this.dataPage; 
 		Connection conn = (Connection) GETSOCKET().getConnection(false); 
 		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
-			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
+			statement.setFetchSize(pageSize); 
 			try(ResultSet rs = statement.executeQuery();){				
 				this.dataPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
 				this.dataPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));
@@ -72,7 +72,7 @@ public class MysqlFlow extends ReaderFlowSocket{
 	} 
 	
 	@Override
-	public List<String> getPageSplit(final HashMap<String, String> param) {
+	public List<String> getPageSplit(final HashMap<String, String> param,int pageSize) {
 		String sql;
 		if(param.get("pageSql")!=null){
 			sql = " select #{COLUMN} as id,(@a:=@a+1) AS FN_ROW_ID from ("
@@ -84,7 +84,7 @@ public class MysqlFlow extends ReaderFlowSocket{
 					+ ") FN_FPG_MAIN join (SELECT @a := -1) FN_FPG_ROW order by #{COLUMN} desc"; 
 		}
 		sql = " select id from (" + sql
-				+ ") FN_FPG_END where MOD(FN_ROW_ID, "+GlobalParam.MAX_PER_PAGE+") = 0";
+				+ ") FN_FPG_END where MOD(FN_ROW_ID, "+pageSize+") = 0";
 		sql = sql
 				.replace("#{TABLE}", param.get("table"))
 				.replace("#{table}", param.get("table"))
@@ -122,7 +122,7 @@ public class MysqlFlow extends ReaderFlowSocket{
 				statement = conn.prepareStatement(sql.replace("#{end}", Long.MAX_VALUE + "").replace(
 						"#{END}", Long.MAX_VALUE + ""));
 			} 
-			statement.setFetchSize(GlobalParam.MAX_PER_PAGE);
+			statement.setFetchSize(pageSize);
 			rs = statement.executeQuery(); 
 			while (rs.next()) { 
 				page.add(rs.getString("id"));

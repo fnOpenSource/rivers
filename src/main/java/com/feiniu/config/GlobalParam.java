@@ -146,7 +146,7 @@ public class GlobalParam {
 	public static final String _start = "#{start}";
 	public static final String _end = "#{end}"; 
 	public static final String _seq = "#{seq}"; 
-	public static final int MAX_PER_PAGE = 10000;
+	public static final int READ_PAGE_SIZE = 10000;
 	public static final String _table = "#{table}";
 	public static final String _column = "#{column}";
 	public static final String _incrementField = "#{update_time}"; 

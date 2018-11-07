@@ -11,6 +11,7 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.node.CPU;
 import com.feiniu.util.Common;
+import com.feiniu.util.FNException;
 
 /**
  * schedule task description,to manage task job
@@ -158,14 +159,14 @@ public class FlowTask {
 				lastUpdateTime = transDataFlow.run(instanceName, storeId,
 						GlobalParam.LAST_UPDATE_TIME.get(instanceName, seq), seq, false, masterControl);
 				GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, lastUpdateTime);
-			} catch (Exception e) {
+			} catch (FNException e) {
 				if (!masterControl && e.getMessage().equals("storeId not found")) {
 					storeId = Common.getStoreId(instanceName, seq, transDataFlow, true, true);
 					try {
 						lastUpdateTime = transDataFlow.run(instanceName, storeId,
 								GlobalParam.LAST_UPDATE_TIME.get(instanceName, seq), seq, false, masterControl);
 						GlobalParam.LAST_UPDATE_TIME.set(instanceName, seq, lastUpdateTime);
-					} catch (Exception ex) {
+					} catch (FNException ex) {
 						log.error(instanceName + " Increment Exception", ex);
 					}
 				}

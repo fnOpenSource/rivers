@@ -59,7 +59,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 	}
  
 	@Override
-	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) { 
+	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler,int pageSize) { 
 		PREPARE(false,false);
 		boolean releaseConn = false;
 		try {
@@ -81,7 +81,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 					filters));
 			scan.setStartRow(Bytes.toBytes(param.get(GlobalParam._start)));
 			scan.setStopRow(Bytes.toBytes(param.get(GlobalParam._end)));
-			scan.setCaching(GlobalParam.MAX_PER_PAGE);
+			scan.setCaching(pageSize);
 			scan.addFamily(Bytes.toBytes(this.connectParams.get("columnFamily")
 					.toString()));
 			ResultScanner resultScanner = table.getScanner(scan);
@@ -131,7 +131,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 	}
 
 	@Override
-	public List<String> getPageSplit(HashMap<String, String> param) {
+	public List<String> getPageSplit(HashMap<String, String> param,int pageSize) {
 		int i = 0;
 		List<String> dt = new ArrayList<String>(); 
 		PREPARE(false,false);
@@ -153,7 +153,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 			filters.add(range);
 			scan.setFilter(new FilterList(FilterList.Operator.MUST_PASS_ALL,
 					filters));
-			scan.setCaching(GlobalParam.MAX_PER_PAGE);
+			scan.setCaching(pageSize);
 			scan.addFamily(Bytes.toBytes(this.connectParams.get("columnFamily")
 					.toString()));
 			scan.addColumn(Bytes.toBytes(this.connectParams.get("columnFamily")
@@ -163,7 +163,7 @@ public class HbaseFlow extends ReaderFlowSocket {
 					.toString()), Bytes.toBytes(param.get("column")));
 			ResultScanner resultScanner = table.getScanner(scan);
 			for (Result r : resultScanner) {
-				if (i % GlobalParam.MAX_PER_PAGE == 0) {
+				if (i % pageSize == 0) {
 					dt.add(Bytes.toString(r.getRow()));
 				}
 				i += r.size();

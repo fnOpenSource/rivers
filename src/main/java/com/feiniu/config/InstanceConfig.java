@@ -253,7 +253,7 @@ public class InstanceConfig {
 						break;
 					case "pipeParam":
 						BasicParam pbp = (BasicParam) o;
-						pipeParams.setKeyValue(pbp.getName(), pbp.getValue());
+						PipeParam.setKeyValue(pipeParams,pbp.getName(), pbp.getValue());
 						break;
 					case "readParamNoSql":
 						pipeParams.setReadParam((NoSQLParam) o);

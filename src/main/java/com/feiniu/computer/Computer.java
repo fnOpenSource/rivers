@@ -49,7 +49,7 @@ public class Computer {
 			HashMap<String, String> params = new HashMap<>(); 
 			String table = Common.getStoreName(instanceName, Common.getStoreIdFromZK(instanceName,"",true));
 			params.put("sql", "select model,remark from "+table); 
-			DataPage dp = readerFlowSocket.getPageData(params, instanceConfig.getWriteFields(), null);
+			DataPage dp = readerFlowSocket.getPageData(params, instanceConfig.getWriteFields(), null,instanceConfig.getPipeParam().getReadPageSize());
 			DataSetReader DSReader = new DataSetReader();
 			DSReader.init(dp);
 			while (DSReader.nextLine()) {

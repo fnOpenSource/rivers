@@ -31,7 +31,7 @@ public class OracleFlow extends ReaderFlowSocket{
   
 	private final static Logger log = LoggerFactory.getLogger(OracleFlow.class);
 
-	public static OracleFlow getInstance(HashMap<String, Object> connectParams) {
+	public static OracleFlow getInstance(final HashMap<String, Object> connectParams) {
 		OracleFlow o = new OracleFlow();
 		o.INIT(connectParams);
 		return o;
@@ -39,14 +39,14 @@ public class OracleFlow extends ReaderFlowSocket{
  
 
 	@Override
-	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) {
+	public DataPage getPageData(final HashMap<String, String> param,final Map<String, RiverField> transParams,Handler handler,int pageSize) {
 		boolean releaseConn = false;
 		PREPARE(false,false); 
 		if(!ISLINK())
 			return this.dataPage; 
 		Connection conn = (Connection) GETSOCKET().getConnection(false); 
 		try (PreparedStatement statement = conn.prepareStatement(param.get("sql"));){ 
-			statement.setFetchSize(GlobalParam.MAX_PER_PAGE); 
+			statement.setFetchSize(pageSize); 
 			try(ResultSet rs = statement.executeQuery();){				
 				this.dataPage.put(GlobalParam.READER_KEY, param.get(GlobalParam.READER_KEY));
 				this.dataPage.put(GlobalParam.READER_SCAN_KEY, param.get(GlobalParam.READER_SCAN_KEY));
@@ -73,7 +73,7 @@ public class OracleFlow extends ReaderFlowSocket{
 	}
 
 	@Override
-	public List<String> getPageSplit(final HashMap<String, String> param) {
+	public List<String> getPageSplit(final HashMap<String, String> param,int pageSize) {
 		String sql;
 		if(param.get("pageSql")!=null){
 			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
@@ -85,7 +85,7 @@ public class OracleFlow extends ReaderFlowSocket{
 					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
 		} 
 		sql = " select id from (" + sql + ") FN_FPG_END where MOD(FN_ROW_ID, "
-				+ GlobalParam.MAX_PER_PAGE + ") = 0";
+				+ pageSize + ") = 0";
 		sql = sql
 				.replace("#{TABLE}", param.get("table"))
 				.replace("#{table}", param.get("table"))
@@ -122,7 +122,7 @@ public class OracleFlow extends ReaderFlowSocket{
 				statement = conn.prepareStatement(sql.replace("#{end}", Long.MAX_VALUE + "").replace(
 						"#{END}", Long.MAX_VALUE + ""));
 			} 
-			statement.setFetchSize(GlobalParam.MAX_PER_PAGE);
+			statement.setFetchSize(pageSize);
 			rs = statement.executeQuery(); 
 			while (rs.next()) { 
 				page.add(rs.getString("id"));

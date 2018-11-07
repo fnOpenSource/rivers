@@ -1,5 +1,6 @@
 package com.feiniu.param.pipe;
 
+import com.feiniu.config.GlobalParam;
 import com.feiniu.param.warehouse.ScanParam;
 
 /**
@@ -9,7 +10,8 @@ import com.feiniu.param.warehouse.ScanParam;
  * @date 2018-10-25 16:14
  */
 public class PipeParam {
-	private ScanParam readParam; 
+	private ScanParam readParam;
+	private int readPageSize = GlobalParam.READ_PAGE_SIZE;
 	private String writeTo;
 	private String modelFrom;
 	private String writeHandler;
@@ -39,6 +41,9 @@ public class PipeParam {
 	}
 	public String getWriteTo() {
 		return writeTo;
+	}
+	public int getReadPageSize() {
+		return readPageSize;
 	}
 	public String getModelFrom() {
 		return modelFrom;
@@ -114,60 +119,63 @@ public class PipeParam {
 		return isMaster;
 	} 
 	
-	public void setKeyValue(String k,String v){ 
+	public static void setKeyValue(PipeParam PP,String k,String v){ 
 		switch (k.toLowerCase()) {
 		case "writeto":
-			this.writeTo = v;
+			PP.writeTo = v;
 			break;
 		case "writerpoolsharealias":
-			this.writerPoolShareAlias = Boolean.valueOf(v);
+			PP.writerPoolShareAlias = Boolean.valueOf(v);
 			break;
 		case "readerpoolsharealias":
-			this.readerPoolShareAlias = Boolean.valueOf(v);
+			PP.readerPoolShareAlias = Boolean.valueOf(v);
 			break;
 		case "searchersharealias":
-			this.searcherShareAlias = Boolean.valueOf(v);
+			PP.searcherShareAlias = Boolean.valueOf(v);
 			break;
 		case "readfrom":
-			this.readFrom = v;
+			PP.readFrom = v;
 			break;
+		case "readpagesize":
+			PP.readPageSize = Integer.valueOf(v);
+			break;	
 		case "modelfrom":
-			this.modelFrom = v;
+			PP.modelFrom = v;
 			break;
 		case "deltacron":
-			this.deltaCron = v;
+			PP.deltaCron = v;
 			break;
 		case "fullcron":
-			this.fullCron = v;
+			PP.fullCron = v;
 			break;
 		case "optimizecron":
-			this.optimizeCron = v;
+			PP.optimizeCron = v;
 			break; 
 		case "searchfrom":
-			this.searchFrom = v;
+			PP.searchFrom = v;
 			break;
 		case "searcherhandler":
-			this.searcherHandler = v;
+			PP.searcherHandler = v;
 			break;
 		case "readhandler":
-			this.readHandler = v;
+			PP.readHandler = v;
 			break;
 		case "writehandler":
-			this.writeHandler = v;
+			PP.writeHandler = v;
 			break;
 		case "instancename":
-			this.instanceName = v;
+			PP.instanceName = v;
 			break;
 		case "nextjob":
-			this.nextJob = v.replace(",", " ").trim().split(" "); 
+			PP.nextJob = v.replace(",", " ").trim().split(" "); 
 			break;
 		case "ismaster":
 			if(v.length()>0 && v.toLowerCase().equals("true"))
-				this.isMaster = true;
+				PP.isMaster = true;
 			break;
 		case "writetype":
 			if(v.length()>0 && (v.equals("full") || v.equals("increment")))
-				this.writeType = v;
+				PP.writeType = v;
 			break;
 		}
 	}

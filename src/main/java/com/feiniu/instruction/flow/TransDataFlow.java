@@ -89,7 +89,7 @@ public final class TransDataFlow extends Instruction {
 		int num = 0;
 		if (DSReader.status()) {
 			try {
-				SampleSets samples = SampleSets.getInstance(GlobalParam.MAX_PER_PAGE);
+				SampleSets samples = SampleSets.getInstance(pageData.getData().size());
 				while (DSReader.nextLine()) {
 					samples.addPoint(DSReader.getLineData(), getInstanceConfig().getComputeParams());
 					num++;
@@ -198,7 +198,7 @@ public final class TransDataFlow extends Instruction {
 			param.put("column", noSqlParam.getKeyColumn());
 			param.put("startTime", lastTime);
 			param.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
-			List<String> pageList = getReader().getPageSplit(param);
+			List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParam().getReadPageSize());
 			if (pageList.size() > 0) {
 				log.info(Common.formatLog("start " + desc, destName, storeId, "", "", "", lastTime, 0, "start",
 						",totalpage:" + pageList.size()));
@@ -218,7 +218,7 @@ public final class TransDataFlow extends Instruction {
 					pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 
 					rstate = writeDataSet(desc, destName, storeId, "",
-							getReader().getPageData(pageParams, getInstanceConfig().getWriteFields(), this.readHandler),
+							getReader().getPageData(pageParams, getInstanceConfig().getWriteFields(), this.readHandler,getInstanceConfig().getPipeParam().getReadPageSize()),
 							",process:" + processPos + "/" + pageList.size(), false, false);
 
 					total += rstate.getCount();
@@ -307,7 +307,7 @@ public final class TransDataFlow extends Instruction {
 				do { 
 					GlobalParam.FLOW_INFOS.get(instanceName, desc).put(instanceName + tseq, "start count page..."); 
 					getReader().lock.lock();
-					List<String> pageList = getReader().getPageSplit(param);
+					List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParam().getReadPageSize());
 					getReader().lock.unlock();
 					if (pageList == null)
 						throw new FNException("read data get page split exception!");
@@ -432,7 +432,7 @@ public final class TransDataFlow extends Instruction {
 		params.put("sql", sql);
 		params.put(GlobalParam.READER_SCAN_KEY, incrementField);
 		params.put(GlobalParam.READER_KEY, keyColumn);
-		DataPage tmp = (DataPage) getReader().getPageData(params, transField, this.readHandler);
+		DataPage tmp = (DataPage) getReader().getPageData(params, transField, this.readHandler,getInstanceConfig().getPipeParam().getReadPageSize());
 		return (DataPage) tmp.clone();
 	}
 

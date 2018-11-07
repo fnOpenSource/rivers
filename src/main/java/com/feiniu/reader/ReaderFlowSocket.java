@@ -31,14 +31,14 @@ public abstract class ReaderFlowSocket extends Flow{
 	public final Lock lock = new ReentrantLock();   
 	
 	@Override
-	public void INIT(HashMap<String, Object> connectParams) {
+	public void INIT(final HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams;
 		this.poolName = String.valueOf(connectParams.get("poolName")); 
 	} 
 	 
-	public abstract DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler);
+	public abstract DataPage getPageData(final HashMap<String, String> param,final Map<String, RiverField> transParams,Handler handler,int pageSize);
 
-	public abstract List<String> getPageSplit(HashMap<String, String> param);
+	public abstract List<String> getPageSplit(final HashMap<String, String> param,int pageSize);
 	
 	public void freeJobPage() {
 		this.dataPage.clear(); 
