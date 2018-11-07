@@ -36,13 +36,9 @@ public abstract class ReaderFlowSocket extends Flow{
 		this.poolName = String.valueOf(connectParams.get("poolName")); 
 	} 
 	 
-	public DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler) {
-		return null;
-	}
+	public abstract DataPage getPageData(HashMap<String, String> param,Map<String, RiverField> transParams,Handler handler);
 
-	public List<String> getPageSplit(HashMap<String, String> param) {
-		return null;
-	}
+	public abstract List<String> getPageSplit(HashMap<String, String> param);
 	
 	public void freeJobPage() {
 		this.dataPage.clear(); 

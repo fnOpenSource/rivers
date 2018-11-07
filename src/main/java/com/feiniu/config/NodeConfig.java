@@ -69,7 +69,7 @@ public class NodeConfig {
 			if(strs.length==2){
 				instanceType = Integer.parseInt(strs[1]); 
 			}
-			String filename = GlobalParam.CONFIG_PATH + "/" +  name  + "/" +  name + ".xml";
+			String filename = GlobalParam.INSTANCE_PATH + "/" +  name  + "/" +  name + ".xml";
 			InstanceConfig nconfig = new InstanceConfig(filename, instanceType);  
 			nconfig.init();
 			if(nconfig.getAlias().equals("")){

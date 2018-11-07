@@ -117,4 +117,28 @@ public class MysqlFlow extends WriterFlowSocket {
 		String tmp = sf.substring(0, sf.length() - 1);
 		return tmp + ");";
 	}
+
+	@Override
+	public void delete(String instance, String storeId, String keyColumn, String keyVal) throws FNException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeInstance(String instance, String storeId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setAlias(String instance, String storeId, String aliasName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void optimize(String instance, String storeId) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1,7 +1,6 @@
 package com.feiniu.node.startup;
 
 import java.io.FileInputStream;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -96,9 +95,8 @@ public final class Run {
 	}
 
 	public void startService() {
-		if ((GlobalParam.SERVICE_LEVEL & 1) > 0) {
-			searcherService.start();
-		}
+		if ((GlobalParam.SERVICE_LEVEL & 1) > 0) 
+			searcherService.start(); 
 		if ((GlobalParam.SERVICE_LEVEL & 2) > 0)
 			GlobalParam.FlOW_CENTER.buildRWFlow();
 		if ((GlobalParam.SERVICE_LEVEL & 4) > 0)
@@ -132,6 +130,7 @@ public final class Run {
 			Common.LOG.error("load Global Properties Config Exception", e);
 		}
 		GlobalParam.CONFIG_PATH = GlobalParam.StartConfig.getProperty("zkConfigPath");
+		GlobalParam.INSTANCE_PATH = GlobalParam.CONFIG_PATH+"/INSTANCES";
 		ZKUtil.setZkHost(GlobalParam.StartConfig.getProperty("zkhost"));
 	}
 
@@ -174,7 +173,7 @@ public final class Run {
 		}
 	}
 
-	public static void main(String[] args) throws URISyntaxException {
+	public static void main(String[] args) throws Exception {
 		GlobalParam.RIVERS = (Run) FNIoc.getBean("RIVERS");
 		GlobalParam.RIVERS.start();
 	}

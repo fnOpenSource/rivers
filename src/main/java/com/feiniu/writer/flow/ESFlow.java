@@ -132,7 +132,7 @@ public class ESFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws Exception {
+	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws FNException {
 		String name = Common.getStoreName(instance, storeId);
 		String type = instance;
 		getESC().getClient().prepareDelete(name, type, keyVal);

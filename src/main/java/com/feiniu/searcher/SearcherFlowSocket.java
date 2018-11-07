@@ -10,6 +10,7 @@ import com.feiniu.flow.Flow;
 import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.model.searcher.SearcherResult;
 import com.feiniu.searcher.handler.Handler;
+import com.feiniu.util.FNException;
 
 /** 
  * @author chengwen
@@ -32,9 +33,7 @@ public abstract class SearcherFlowSocket extends Flow{
 		return this.analyzer;
 	}
 	/**need rewrite*/
-	public SearcherResult Search(SearcherModel<?, ?, ?> query, String instance,Handler handler) throws Exception {
-		return null;
-	}
+	public abstract SearcherResult Search(SearcherModel<?, ?, ?> query, String instance,Handler handler) throws FNException;
 	
 	public DATA_TYPE getType() {
 		return (DATA_TYPE) connectParams.get("type");

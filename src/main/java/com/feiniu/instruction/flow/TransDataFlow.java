@@ -12,7 +12,6 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.correspond.ReportStatus;
 import com.feiniu.field.RiverField;
 import com.feiniu.instruction.Instruction;
 import com.feiniu.model.computer.SampleSets;
@@ -362,11 +361,7 @@ public final class TransDataFlow extends Instruction {
 							}
 						}
 						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq, String.valueOf(total),
-								dataBoundary, READER_LAST_STAMP, Common.getNow() - start, "complete", ""));
-						if (getInstanceConfig().getPipeParam().getNextJob() != null
-								&& getInstanceConfig().getPipeParam().getNextJob().length > 0) {
-							ReportStatus.report(instanceName, desc);
-						}
+								dataBoundary, READER_LAST_STAMP, Common.getNow() - start, "complete", "")); 
 					} else {
 						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq, "", dataBoundary,
 								READER_LAST_STAMP, 0, "start", " no data!"));

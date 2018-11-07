@@ -209,7 +209,7 @@ public final class Common {
 	 * @return
 	 */
 	public static String getTaskStorePath(String instanceName, String seq,String location) {
-		return GlobalParam.CONFIG_PATH + "/" + instanceName + "/" + ((seq != null && seq.length() > 0) ? seq + "/" : "")
+		return GlobalParam.INSTANCE_PATH + "/" + instanceName + "/" + ((seq != null && seq.length() > 0) ? seq + "/" : "")
 				+location;
 	}
 

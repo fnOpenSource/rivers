@@ -10,6 +10,7 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.util.FNException;
 
 /**
  * Flow into Pond Manage
@@ -30,29 +31,19 @@ public abstract class WriterFlowSocket extends Flow{
 		this.isBatch = GlobalParam.WRITE_BATCH; 
 	}   
 	
-	public boolean create(String instance, String batchId, Map<String,RiverField> transParams) {
-		return false;
-	}
+	public abstract boolean create(String instance, String storeId, Map<String,RiverField> transParams);
 	
-	public String getNewStoreId(String mainName,boolean isIncrement,InstanceConfig instanceConfig) {
-		return null;
-	}
+	public abstract String getNewStoreId(String mainName,boolean isIncrement,InstanceConfig instanceConfig);
 
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams,String instance, String batchId,boolean isUpdate) throws Exception {
-	}
+	public abstract void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams,String instance, String storeId,boolean isUpdate) throws FNException;
 
-	public void delete(String instance, String storeId,String keyColumn,String keyVal) throws Exception {
-	}
+	public abstract void delete(String instance, String storeId,String keyColumn,String keyVal) throws FNException;
   
-	public void removeInstance(String instance, String storeId) {
-	}
+	public abstract void removeInstance(String instance, String storeId);
 	
-	public void setAlias(String instance, String storeId, String aliasName) {
-	}
+	public abstract void setAlias(String instance, String storeId, String aliasName);
 
-	public void flush() throws Exception {
-	}
+	public abstract void flush() throws Exception;
 
-	public void optimize(String instance, String storeId) {
-	}  
+	public abstract void optimize(String instance, String storeId);
 }

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.util.FNException;
 import com.feiniu.writer.WriterFlowSocket;
 
 /**
@@ -57,7 +58,7 @@ public class HBaseFlow extends WriterFlowSocket {
 
 	 
 	@Override
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams, String instantcName, String storeId,boolean isUpdate) throws FNException { 
 		if (unit.getData().size() == 0){
 			log.info("Empty IndexUnit for " + instantcName + " " + storeId);
 			return;
@@ -92,7 +93,7 @@ public class HBaseFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws Exception {
+	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws FNException {
 		
 	}
 

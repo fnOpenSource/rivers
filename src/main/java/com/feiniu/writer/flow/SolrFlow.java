@@ -100,7 +100,7 @@ public class SolrFlow extends WriterFlowSocket{
 	} 
 	
 	@Override
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws Exception { 
+	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws FNException { 
 		String name = Common.getStoreName(instantcName,storeId);
 		if (unit.getData().size() == 0){
 			log.warn("Empty IndexUnit for " + name );
@@ -155,8 +155,12 @@ public class SolrFlow extends WriterFlowSocket{
 			} 
 		}  
 		if (!this.isBatch) {
-			getSolrConn().add(doc);
-			getSolrConn().commit(); 
+			try {
+				getSolrConn().add(doc);
+				getSolrConn().commit();
+			}catch (Exception e) {
+				throw new FNException(e);
+			} 
 		}else{
 			synchronized (docs) {
 				docs.add(doc); 
@@ -165,7 +169,7 @@ public class SolrFlow extends WriterFlowSocket{
 	}
 	 
 	@Override
-	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws Exception {  
+	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws FNException {  
 	 
 	} 
 

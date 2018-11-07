@@ -46,6 +46,8 @@ public class GlobalParam {
 	
 	public static String CONFIG_PATH;
 	
+	public static String INSTANCE_PATH;
+	
 	public static String IP;
 	
 	public static SocketCenter SOCKET_CENTER;
@@ -112,7 +114,6 @@ public class GlobalParam {
 	//searcher parameters
 	public final static int SEARCH_MAX_WINDOW=20000; 
 	public final static int SEARCH_MAX_PAGE=2000;
-	public final static String NOT_ANALYZED = "NOT_ANALYZED"; 
 	public final static float DISJUNCTION_QUERY_WEIGHT = 0.1f; 
 	public final static int FACET_DEFAULT_COUNT = 200;
 	public final static int FACET_DEAULT_SHOW_COUNT = 3;  

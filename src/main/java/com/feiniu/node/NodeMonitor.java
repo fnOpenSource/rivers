@@ -81,6 +81,7 @@ public final class NodeMonitor {
 			add("stopSearcherService");
 			add("startHttpReaderServiceService");
 			add("stopHttpReaderServiceService");
+			add("restartNode");
 			// instance manage
 			add("resetInstanceState");
 			add("getInstanceSeqs");
@@ -199,6 +200,10 @@ public final class NodeMonitor {
 		} else {
 			setResponse(0, "Config parameters k v or type not exists!");
 		}
+	}
+	
+	public void restartNode(Request rq) {
+		NodeUtil.runShell(GlobalParam.StartConfig.getProperty("restart_shell"));
 	}
 
 	public void stopHttpReaderServiceService(Request rq) {
@@ -468,7 +473,7 @@ public final class NodeMonitor {
 			}
 		}
 		setResponse(1, JSON.toJSONString(rs));
-	}
+	} 
 
 	public void runCode(Request rq) {
 		if (rq.getParameter("script") != null && rq.getParameter("script").contains("Track.cpuFree")) {
