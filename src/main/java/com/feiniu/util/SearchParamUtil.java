@@ -30,7 +30,7 @@ public class SearchParamUtil {
 
 	public static void normalParam(RiverRequest request, SearcherModel<?, ?, ?> fq,InstanceConfig instanceConfig) {
 		Object o = request.get(GlobalParam.KEY_PARAM.start.toString(),
-				instanceConfig.getSearchParam(KEY_PARAM.start.toString()),"java.lang.Integer");
+				instanceConfig.getSearcherParam(KEY_PARAM.start.toString()),"java.lang.Integer");
 		int start = 0;
 		int count = 1;
 		if (o != null) {
@@ -39,7 +39,7 @@ public class SearchParamUtil {
 				fq.setStart(start);
 		}
 		o = request.get(KEY_PARAM.count.toString(),
-				instanceConfig.getSearchParam(KEY_PARAM.count.toString()),"java.lang.Integer");
+				instanceConfig.getSearcherParam(KEY_PARAM.count.toString()),"java.lang.Integer");
 		if (o != null) {
 			count = (int) o;
 			if (count >= 1 && count <= GlobalParam.SEARCH_MAX_PAGE) {
@@ -104,7 +104,7 @@ public class SearchParamUtil {
 					if ((checked = instanceConfig.getWriteField(fieldname)) != null) { 
 						sortList.add(SortBuilders.fieldSort(checked.getAlias()).order(
 								reverse ? SortOrder.DESC : SortOrder.ASC));
-					}else if((sp = instanceConfig.getSearchParam(fieldname))!=null){
+					}else if((sp = instanceConfig.getSearcherParam(fieldname))!=null){
 						String fields = sp.getFields();
 						if(fields!=null) {
 							for(String k:fields.split(",")) {

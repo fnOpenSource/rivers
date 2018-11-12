@@ -18,10 +18,12 @@ import com.feiniu.field.RiverField;
 import com.feiniu.param.BasicParam;
 import com.feiniu.param.end.MessageParam;
 import com.feiniu.param.end.SearcherParam;
+import com.feiniu.param.end.WriterParam;
 import com.feiniu.param.ml.ComputeParam;
 import com.feiniu.param.pipe.PipeParam;
 import com.feiniu.param.warehouse.NoSQLParam;
 import com.feiniu.param.warehouse.SQLParam;
+import com.feiniu.param.warehouse.ScanParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
@@ -39,8 +41,10 @@ public class InstanceConfig {
 	private String name;
 	private volatile Map<String, RiverField> writeFields;
 	private volatile Map<String, RiverField> computeFields;
-	private volatile Map<String,SearcherParam> searchParams;
+	private volatile Map<String,SearcherParam> searcherParams;
+	private volatile WriterParam writerParams;
 	private volatile PipeParam pipeParams;
+	private volatile ScanParam readParams;
 	private volatile MessageParam messageParam ; 
 	private volatile ComputeParam computeParams;
 	private int instanceType = INSTANCE_TYPE.Blank.getVal();  
@@ -54,9 +58,10 @@ public class InstanceConfig {
 		this.pipeParams = new PipeParam();
 		this.writeFields = new HashMap<>();
 		this.computeFields = new HashMap<>();
-		this.searchParams = new HashMap<>();
+		this.searcherParams = new HashMap<>();
 		this.messageParam = new MessageParam();
 		this.computeParams = new ComputeParam();
+		this.writerParams = new WriterParam();
 		loadConfigFromZk();
 		Common.LOG.info(filename + " config loaded");
 	}
@@ -78,20 +83,30 @@ public class InstanceConfig {
 		return writeFields.get(key);
 	} 
 	
-	public SearcherParam getSearchParam(String key) {
-		return searchParams.get(key);
+	public SearcherParam getSearcherParam(String key) {
+		return searcherParams.get(key);
 	}
 	
 	public ComputeParam getComputeParams() {
 		return computeParams;
 	}
-	public PipeParam getPipeParam() {
+	
+	public WriterParam getWriterParams() {
+		return writerParams;
+	}
+	
+	public ScanParam getReadParams() {
+		return readParams;
+	}
+	
+	public PipeParam getPipeParams() {
 		return pipeParams;
 	}
 
 	public MessageParam getMessageParam() {
 		return messageParam;
 	} 
+	 
 
 	public Map<String, RiverField> getWriteFields() {
 		return writeFields;
@@ -198,7 +213,7 @@ public class InstanceConfig {
 						NoSQLParam.class);
 					params = (Element) params.getElementsByTagName("pageScan").item(0);
 					if(params!=null) {
-						pipeParams.getReadParam().setPageScan(params.getTextContent().trim());
+						readParams.setPageScan(params.getTextContent().trim());
 					}  
 				} 
 				
@@ -211,7 +226,12 @@ public class InstanceConfig {
 				}
 				
 				params = (Element) dataflow.getElementsByTagName("WriteParam").item(0);   
-				if (params!=null) {
+				if (params!=null) { 
+					parseNode(params.getElementsByTagName("param"), "writerParam", BasicParam.class);
+					if(writerParams.getWriteKey()!=null) {
+						WriterParam.setKeyValue(writerParams,"writekey",readParams.getKeyColumn());
+						WriterParam.setKeyValue(writerParams,"keytype","unique");
+					}
 					params = (Element) params.getElementsByTagName("fields").item(0);
 					paramlist = params.getElementsByTagName("field");
 					parseNode(paramlist, "writeFields", RiverField.class); 
@@ -249,17 +269,21 @@ public class InstanceConfig {
 						break;
 					case "computeParam":
 						BasicParam cbp = (BasicParam) o; 
-						computeParams.setKeyValue(cbp.getName(), cbp.getValue());
+						ComputeParam.setKeyValue(computeParams,cbp.getName(), cbp.getValue());
+						break;
+					case "writerParam":
+						BasicParam wpp = (BasicParam) o; 
+						WriterParam.setKeyValue(writerParams,wpp.getName(), wpp.getValue());
 						break;
 					case "pipeParam":
 						BasicParam pbp = (BasicParam) o;
 						PipeParam.setKeyValue(pipeParams,pbp.getName(), pbp.getValue());
 						break;
 					case "readParamNoSql":
-						pipeParams.setReadParam((NoSQLParam) o);
+						readParams = (NoSQLParam) o;
 						break;
 					case "readParamSql":
-						pipeParams.setReadParam((SQLParam) o);
+						readParams = (SQLParam) o; 
 						break; 
 					case "MessageParam":
 						messageParam = (MessageParam) o;
@@ -269,7 +293,7 @@ public class InstanceConfig {
 						break;
 					case "SearchParam":
 						SearcherParam v  = (SearcherParam) o;
-						searchParams.put(v.getName(), v);
+						searcherParams.put(v.getName(), v);
 						break;   
 					}
 				}

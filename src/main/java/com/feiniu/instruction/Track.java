@@ -38,10 +38,10 @@ public class Track extends Instruction {
 		}
 		CPU.prepare(id, GlobalParam.nodeConfig.getInstanceConfigs().get(instance),
 				GlobalParam.SOCKET_CENTER.getWriterSocket(
-						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTo(), instance,
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(), instance,
 						seq, ""),
 				GlobalParam.SOCKET_CENTER.getReaderSocket(
-						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getReadFrom(), instance,
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadFrom(), instance,
 						seq, ""));
 		return true;
 

@@ -117,7 +117,7 @@ public class HttpReaderService {
 								isUpdate = true;  
 							
 							try {
-								String writeTo = transDataFlow.getInstanceConfig().getPipeParam().getInstanceName();
+								String writeTo = transDataFlow.getInstanceConfig().getPipeParams().getInstanceName();
 								if(writeTo==null) {
 									writeTo = Common.getInstanceName(instance, seq);
 								}
@@ -169,7 +169,7 @@ public class HttpReaderService {
 								CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition",true,instance, storeid);    
 							} 
 							CPU.RUN(transDataFlow.getID(), "Pond", "switchInstance",true, instance,seq,storeid);
-							transDataFlow.run(instance, storeid, "-1", seq, true,transDataFlow.getInstanceConfig().getPipeParam().getInstanceName()==null?false:true);
+							transDataFlow.run(instance, storeid, "-1", seq, true,transDataFlow.getInstanceConfig().getPipeParams().getInstanceName()==null?false:true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"切换索引失败!\"}");
@@ -187,7 +187,7 @@ public class HttpReaderService {
 								break;
 							}
 							String storeid = Common.getStoreId(instance,seq, transFlow, true, true);
-							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParam().getWriteTo());
+							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParams().getWriteTo());
 							switch (param.getType()) {
 							case ES:
 								query = SearcherESModel.getInstance(Common.getRequest(rq),transFlow.getInstanceConfig());

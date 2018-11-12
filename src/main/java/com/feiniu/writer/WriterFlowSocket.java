@@ -10,6 +10,7 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.flow.Flow;
 import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.param.end.WriterParam;
 import com.feiniu.util.FNException;
 
 /**
@@ -35,7 +36,7 @@ public abstract class WriterFlowSocket extends Flow{
 	
 	public abstract String getNewStoreId(String mainName,boolean isIncrement,InstanceConfig instanceConfig);
 
-	public abstract void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> transParams,String instance, String storeId,boolean isUpdate) throws FNException;
+	public abstract void write(WriterParam writerParam,PipeDataUnit unit,Map<String, RiverField> transParams,String instance, String storeId,boolean isUpdate) throws FNException;
 
 	public abstract void delete(String instance, String storeId,String keyColumn,String keyVal) throws FNException;
   

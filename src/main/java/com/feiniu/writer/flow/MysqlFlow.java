@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.param.end.WriterParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.SqlUtil;
@@ -28,7 +29,7 @@ public class MysqlFlow extends WriterFlowSocket {
 	}
 
 	@Override
-	public void write(String keyColumn, PipeDataUnit unit, Map<String, RiverField> transParams, String instance,
+	public void write(WriterParam writerParam, PipeDataUnit unit, Map<String, RiverField> transParams, String instance,
 			String storeId, boolean isUpdate) throws FNException {
 		String table = Common.getStoreName(instance, storeId);
 		boolean releaseConn = false;

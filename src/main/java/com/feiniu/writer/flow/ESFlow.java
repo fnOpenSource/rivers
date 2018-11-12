@@ -24,6 +24,10 @@ import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.UpdateByQueryAction;
+import org.elasticsearch.index.reindex.UpdateByQueryRequestBuilder;
+import org.elasticsearch.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +36,7 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.param.end.WriterParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.writer.WriterFlowSocket;
@@ -58,16 +63,49 @@ public class ESFlow extends WriterFlowSocket {
 	} 
 
 	@Override
-	public void write(String keyColumn, PipeDataUnit unit, Map<String, RiverField> transParams, String instance,
-			String storeId, boolean isUpdate) throws FNException {
-		try {
-			String name = Common.getStoreName(instance, storeId);
-			String type = instance;
-			if (unit==null || unit.getData().size() == 0) {
-				log.info(instance+" WriteUnit contain Dirty data!");
-				return;
-			}
-			String id = unit.getKeyColumnVal();
+	public void write(WriterParam writerParam, PipeDataUnit unit, Map<String, RiverField> transParams, String instance,
+			String storeId, boolean isUpdate) throws FNException { 
+		String name = Common.getStoreName(instance, storeId);
+		String type = instance;
+		if (unit==null || unit.getData().size() == 0) {
+			log.info(instance+" WriteUnit contain Dirty data!");
+			return;
+		} 
+		if(writerParam.getKeyType().equals("scan")) {
+			this.updateByScan(writerParam,unit, transParams, name, type, storeId, isUpdate);
+		}else {
+			this.updateByKey(unit, transParams, name, type, storeId, isUpdate);
+		} 
+	}
+	
+	private void updateByScan(WriterParam writerParam,PipeDataUnit unit, Map<String, RiverField> transParams, String instance,String alias,
+			String storeId, boolean isUpdate) throws FNException{  
+		Script script = null;
+		StringBuffer sf = new StringBuffer();
+		for (Entry<String, Object> r : unit.getData().entrySet()) {
+			String field = r.getKey();
+			if (r.getValue() == null)
+				continue;
+			RiverField transParam = transParams.get(field);
+			if (transParam == null)
+				transParam = transParams.get(field.toLowerCase());
+			if (transParam == null)
+				continue;
+			String value = String.valueOf(r.getValue());
+			sf.append("ctx._source."+transParam.getAlias()+" = "+value+","); 
+		} 
+		script = new Script(sf.append(GlobalParam.DEFAULT_FIELD+" = "+unit.getUpdateTime()).toString()); 
+		try { 
+			UpdateByQueryRequestBuilder _UR = UpdateByQueryAction.INSTANCE.newRequestBuilder(getESC().getClient());
+			_UR.source(instance).script(script).filter(QueryBuilders.termQuery(writerParam.getWriteKey(),unit.getKeyColumnVal())).execute().get();
+		} catch (Exception e) {
+			throw new FNException(e);
+		} 
+	}
+	
+	private void updateByKey(PipeDataUnit unit, Map<String, RiverField> transParams, String instance,String alias,
+			String storeId, boolean isUpdate) throws FNException{
+		try { 
 			XContentBuilder cbuilder = jsonBuilder().startObject();
 			StringBuilder routing = new StringBuilder();
 			for (Entry<String, Object> r : unit.getData().entrySet()) {
@@ -100,8 +138,10 @@ public class ESFlow extends WriterFlowSocket {
 			}
 			cbuilder.field(GlobalParam.DEFAULT_FIELD, unit.getUpdateTime());
 			cbuilder.endObject();
+			
+			String id = unit.getKeyColumnVal();
 			if (isUpdate) {
-				UpdateRequest _UR = new UpdateRequest(name, type, id);
+				UpdateRequest _UR = new UpdateRequest(instance, alias, id);
 				_UR.doc(cbuilder).upsert(cbuilder);
 				if (routing.length() > 0)
 					_UR.routing(routing.toString());
@@ -111,7 +151,7 @@ public class ESFlow extends WriterFlowSocket {
 					getESC().getClient().update(_UR).get();
 				}
 			} else {
-				IndexRequestBuilder _IB = getESC().getClient().prepareIndex(name, type, id);
+				IndexRequestBuilder _IB = getESC().getClient().prepareIndex(instance, alias, id);
 				_IB.setSource(cbuilder);
 				if (routing.length() > 0)
 					_IB.setRouting(routing.toString());
@@ -129,7 +169,7 @@ public class ESFlow extends WriterFlowSocket {
 				throw new FNException(e);
 			}
 		}
-	}
+	} 
 
 	@Override
 	public void delete(String instance, String storeId,String keyColumn, String keyVal) throws FNException {

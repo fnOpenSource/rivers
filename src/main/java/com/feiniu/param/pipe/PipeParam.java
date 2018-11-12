@@ -1,7 +1,6 @@
 package com.feiniu.param.pipe;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.param.warehouse.ScanParam;
 
 /**
  * data-flow trans parameters
@@ -9,8 +8,7 @@ import com.feiniu.param.warehouse.ScanParam;
  * @version 4.0
  * @date 2018-10-25 16:14
  */
-public class PipeParam {
-	private ScanParam readParam;
+public class PipeParam { 
 	private int readPageSize = GlobalParam.READ_PAGE_SIZE;
 	private String writeTo;
 	private String modelFrom;
@@ -29,16 +27,10 @@ public class PipeParam {
 	private String[] nextJob;
 	/** default is slave pipe,if is master will only manage pipe with no detail transfer job! */
 	private boolean isMaster = false;
-	/**data write into type,full complete data,increment part of data*/
+	/**data write into type,full create new record,increment update part of data*/
 	private String writeType="full";
 	
-	public ScanParam getReadParam() {
-		return this.readParam;
-	}
- 
-	public void setReadParam(ScanParam readParam) {
-		this.readParam = readParam;
-	}
+	 
 	public String getWriteTo() {
 		return writeTo;
 	}

@@ -44,7 +44,7 @@ public class FlowTask {
 		this.instanceName = instanceName;
 		this.transDataFlow = transDataFlow;
 		this.seq = seq;
-		if (transDataFlow.getInstanceConfig().getPipeParam().getInstanceName() != null)
+		if (transDataFlow.getInstanceConfig().getPipeParams().getInstanceName() != null)
 			masterControl = true;
 	}
 
@@ -67,7 +67,7 @@ public class FlowTask {
 				String storeId;
 				if (masterControl) {
 					storeId = GlobalParam.FLOW_INFOS
-							.get(transDataFlow.getInstanceConfig().getPipeParam().getInstanceName(),
+							.get(transDataFlow.getInstanceConfig().getPipeParams().getInstanceName(),
 									GlobalParam.FLOWINFO.MASTER.name())
 							.get(GlobalParam.FLOWINFO.FULL_STOREID.name());
 				} else {
@@ -105,9 +105,9 @@ public class FlowTask {
 
 				GlobalParam.FLOW_INFOS.get(instanceName, GlobalParam.FLOWINFO.MASTER.name()).put(
 						GlobalParam.FLOWINFO.FULL_JOBS.name(),
-						getNextJobs(transDataFlow.getInstanceConfig().getPipeParam().getNextJob()));
+						getNextJobs(transDataFlow.getInstanceConfig().getPipeParams().getNextJob()));
 
-				for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
+				for (String slave : transDataFlow.getInstanceConfig().getPipeParams().getNextJob()) {
 					GlobalParam.FlOW_CENTER.runInstanceNow(slave, "full");
 				}
 			} catch (Exception e) {
@@ -128,7 +128,7 @@ public class FlowTask {
 			GlobalParam.FLOW_INFOS.get(instanceName, GlobalParam.FLOWINFO.MASTER.name())
 					.put(GlobalParam.FLOWINFO.INCRE_STOREID.name(), storeId);
 			try {
-				for (String slave : transDataFlow.getInstanceConfig().getPipeParam().getNextJob()) {
+				for (String slave : transDataFlow.getInstanceConfig().getPipeParams().getNextJob()) {
 					GlobalParam.FlOW_CENTER.runInstanceNow(slave, "increment");
 				}
 			} finally {
@@ -147,7 +147,7 @@ public class FlowTask {
 		if (Common.setFlowStatus(instanceName,seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready,STATUS.Running)) {
 			String storeId;
 			if (masterControl) {
-				storeId = GlobalParam.FLOW_INFOS.get(transDataFlow.getInstanceConfig().getPipeParam().getInstanceName(),
+				storeId = GlobalParam.FLOW_INFOS.get(transDataFlow.getInstanceConfig().getPipeParams().getInstanceName(),
 						GlobalParam.FLOWINFO.MASTER.name()).get(GlobalParam.FLOWINFO.INCRE_STOREID.name());
 				Common.setAndGetLastUpdateTime(instanceName, seq, storeId);
 			} else {

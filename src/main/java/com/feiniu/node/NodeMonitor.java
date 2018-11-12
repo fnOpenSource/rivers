@@ -272,9 +272,9 @@ public final class NodeMonitor {
 				String instance = rq.getParameter("instance");
 				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
 				WarehouseParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse()
-						.get(instanceConfig.getPipeParam().getReadFrom());
+						.get(instanceConfig.getPipeParams().getReadFrom());
 				if (dataMap == null) {
-					dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParam().getReadFrom());
+					dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
 				}
 				setResponse(1, StringUtils.join(dataMap.getSeq(), ","));
 			} catch (Exception e) {
@@ -312,42 +312,42 @@ public final class NodeMonitor {
 			String instance = rq.getParameter("instance");
 			StringBuffer sb = new StringBuffer();
 			InstanceConfig config = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
-			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParam().getReadFrom()) != null) {
-				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParam().getReadFrom())
+			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
+				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom())
 						.getPoolName(null);
 				sb.append(",[DataFrom Pool Status] " + FnConnectionPool.getStatus(poolname));
-			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParam().getReadFrom()) != null) {
+			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
 				WarehouseSqlParam ws = GlobalParam.nodeConfig.getSqlWarehouse()
-						.get(config.getPipeParam().getReadFrom());
+						.get(config.getPipeParams().getReadFrom());
 				String poolname = "";
 				if (ws.getSeq() != null && ws.getSeq().length > 0) {
 					for (String seq : ws.getSeq()) {
-						poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParam().getReadFrom())
+						poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
 								.getPoolName(seq);
 						sb.append(",[Seq(" + seq + ") Reader Pool Status] " + FnConnectionPool.getStatus(poolname));
 					}
 				} else {
-					poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParam().getReadFrom())
+					poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
 							.getPoolName(null);
 					sb.append(",[Reader Pool Status] " + FnConnectionPool.getStatus(poolname));
 				}
 			}
 
-			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParam().getWriteTo()) != null) {
-				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParam().getWriteTo())
+			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getWriteTo()) != null) {
+				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getWriteTo())
 						.getPoolName(null);
 				sb.append(",[Writer Pool Status] " + FnConnectionPool.getStatus(poolname));
-			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParam().getWriteTo()) != null) {
-				String poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParam().getWriteTo())
+			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getWriteTo()) != null) {
+				String poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getWriteTo())
 						.getPoolName(null);
 				sb.append(",[Writer Pool Status] " + FnConnectionPool.getStatus(poolname));
 			}
 
 			if ((GlobalParam.SERVICE_LEVEL & 1) > 0) {
-				String searchFrom = config.getPipeParam().getSearchFrom();
+				String searchFrom = config.getPipeParams().getSearchFrom();
 				String searcher_info;
-				if (config.getPipeParam().getWriteTo() != null
-						&& config.getPipeParam().getWriteTo().equals(searchFrom)) {
+				if (config.getPipeParams().getWriteTo() != null
+						&& config.getPipeParams().getWriteTo().equals(searchFrom)) {
 					searcher_info = ",[Searcher Pool (Share With Writer) Status] ";
 				} else {
 					searcher_info = ",[Searcher Pool Status] ";
@@ -364,7 +364,7 @@ public final class NodeMonitor {
 
 			if (config.openTrans()) {
 				WarehouseSqlParam wsp = GlobalParam.nodeConfig.getSqlWarehouse()
-						.get(config.getPipeParam().getReadFrom());
+						.get(config.getPipeParams().getReadFrom());
 				if (wsp.getSeq().length > 0) {
 					sb.append(",[增量存储状态]");
 					StringBuffer fullstate = new StringBuffer();
@@ -449,19 +449,19 @@ public final class NodeMonitor {
 			InstanceConfig config = entry.getValue();
 			StringBuffer sb = new StringBuffer();
 			sb.append(entry.getKey() + ":[Alias]" + config.getAlias());
-			sb.append(":[OptimizeCron]" + config.getPipeParam().getOptimizeCron());
-			sb.append(":[DeltaCron]" + config.getPipeParam().getDeltaCron());
-			if (config.getPipeParam().getFullCron() == null && config.getPipeParam().getReadFrom() != null
-					&& config.getPipeParam().getWriteTo() != null) {
+			sb.append(":[OptimizeCron]" + config.getPipeParams().getOptimizeCron());
+			sb.append(":[DeltaCron]" + config.getPipeParams().getDeltaCron());
+			if (config.getPipeParams().getFullCron() == null && config.getPipeParams().getReadFrom() != null
+					&& config.getPipeParams().getWriteTo() != null) {
 				sb.append(":[FullCron] 0 0 0 1 1 ? 2099");
 			} else {
-				sb.append(":[FullCron]" + config.getPipeParam().getFullCron());
+				sb.append(":[FullCron]" + config.getPipeParams().getFullCron());
 			}
-			sb.append(":[SearchFrom]" + config.getPipeParam().getSearchFrom());
-			sb.append(":[ReadFrom]" + config.getPipeParam().getReadFrom());
-			sb.append(":[WriteTo]" + config.getPipeParam().getWriteTo());
+			sb.append(":[SearchFrom]" + config.getPipeParams().getSearchFrom());
+			sb.append(":[ReadFrom]" + config.getPipeParams().getReadFrom());
+			sb.append(":[WriteTo]" + config.getPipeParams().getWriteTo());
 			sb.append(":[openTrans]" + config.openTrans());
-			sb.append(":[IsMaster]" + config.getPipeParam().isMaster() + ",");
+			sb.append(":[IsMaster]" + config.getPipeParams().isMaster() + ",");
 			sb.append(":[InstanceType]" + config.getInstanceType() + ",");
 			if (rs.containsKey(config.getAlias())) {
 				rs.get(config.getAlias()).add(sb.toString());
@@ -629,7 +629,7 @@ public final class NodeMonitor {
 						GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
 						String tags = Common.getResourceTag(instance, seq, GlobalParam.FLOW_TAG._DEFAULT.name(), false);
 						WriterFlowSocket wfs = GlobalParam.SOCKET_CENTER.getWriterSocket(
-								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTo(),
+								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
 								instance, seq, tags); 
 						wfs.PREPARE(false, false);
 						if(wfs.ISLINK()) {
@@ -740,9 +740,9 @@ public final class NodeMonitor {
 	private String[] getInstanceSeqs(String instance) {
 		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
 		WarehouseParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse()
-				.get(instanceConfig.getPipeParam().getReadFrom());
+				.get(instanceConfig.getPipeParams().getReadFrom());
 		if (dataMap == null) {
-			dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParam().getReadFrom());
+			dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
 		}
 		String[] seqs;
 		if (dataMap == null) {
@@ -779,7 +779,7 @@ public final class NodeMonitor {
 
 	private void freeInstanceConnectPool(String instanceName) {
 		InstanceConfig paramConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName);
-		String[] dataSource = { paramConfig.getPipeParam().getReadFrom(), paramConfig.getPipeParam().getWriteTo() };
+		String[] dataSource = { paramConfig.getPipeParams().getReadFrom(), paramConfig.getPipeParams().getWriteTo() };
 		for (String dt : dataSource) {
 			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(dt) != null) {
 				WarehouseNosqlParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse().get(dt);

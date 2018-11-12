@@ -150,13 +150,13 @@ public class FlowCenter{
  
 	private boolean removeFlowScheduleJob(String instance,InstanceConfig instanceConfig)throws SchedulerException {
 		boolean state = true;
-		if (instanceConfig.getPipeParam().getFullCron() != null) { 
+		if (instanceConfig.getPipeParams().getFullCron() != null) { 
 			state= jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove") && state;
 		}
-		if(instanceConfig.getPipeParam().getFullCron() == null || instanceConfig.getPipeParam().getOptimizeCron()!=null){
+		if(instanceConfig.getPipeParams().getFullCron() == null || instanceConfig.getPipeParams().getOptimizeCron()!=null){
 			state = jobAction(instance, GlobalParam.JOB_TYPE.OPTIMIZE.name(), "remove") && state;
 		}
-		if(instanceConfig.getPipeParam().getDeltaCron() != null){
+		if(instanceConfig.getPipeParams().getDeltaCron() != null){
 			state = jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove") && state;
 		}
 		return state;
@@ -178,19 +178,19 @@ public class FlowCenter{
 			throws SchedulerException {
 		String fullFun="runFull";
 		String incrementFun="runIncrement";
-		if(instanceConfig.getPipeParam().isMaster()) {
+		if(instanceConfig.getPipeParams().isMaster()) {
 			fullFun="runMasterFull";
 			incrementFun="runMasterIncrement";
 		} 
 		
-		if (instanceConfig.getPipeParam().getFullCron() != null) { 
+		if (instanceConfig.getPipeParams().getFullCron() != null) { 
 			if(needclear)
 				jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove"); 
 			JobModel _sj = new JobModel(
-					getJobName(instance, GlobalParam.JOB_TYPE.FULL.name()), instanceConfig.getPipeParam().getFullCron(),
+					getJobName(instance, GlobalParam.JOB_TYPE.FULL.name()), instanceConfig.getPipeParams().getFullCron(),
 					"com.feiniu.task.FlowTask", fullFun, task); 
 			taskJobCenter.addJob(_sj); 
-		}else if(instanceConfig.getPipeParam().getReadFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) { 
+		}else if(instanceConfig.getPipeParams().getReadFrom()!= null && instanceConfig.getPipeParams().getWriteTo()!=null) { 
 			if(needclear)
 				jobAction(instance, GlobalParam.JOB_TYPE.FULL.name(), "remove");
 			JobModel _sj = new JobModel(
@@ -199,11 +199,11 @@ public class FlowCenter{
 			taskJobCenter.addJob(_sj); 
 		}  
 		
-		if (instanceConfig.getPipeParam().getDeltaCron() != null) { 
+		if (instanceConfig.getPipeParams().getDeltaCron() != null) { 
 			if(needclear)
 				jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove");
 			
-			String cron = instanceConfig.getPipeParam().getDeltaCron();
+			String cron = instanceConfig.getPipeParams().getDeltaCron();
 			if(this.cron_exists.contains(cron)){
 				String[] strs = cron.trim().split(" ");
 				strs[0] = String.valueOf((int)(Math.random()*60));
@@ -217,10 +217,10 @@ public class FlowCenter{
 			}
 			JobModel _sj = new JobModel(
 					getJobName(instance, GlobalParam.JOB_TYPE.INCREMENT.name()),
-					instanceConfig.getPipeParam().getDeltaCron(), "com.feiniu.task.FlowTask",
+					instanceConfig.getPipeParams().getDeltaCron(), "com.feiniu.task.FlowTask",
 					incrementFun, task); 
 			taskJobCenter.addJob(_sj);
-		}else if(instanceConfig.getPipeParam().getReadFrom()!= null && instanceConfig.getPipeParam().getWriteTo()!=null) {
+		}else if(instanceConfig.getPipeParams().getReadFrom()!= null && instanceConfig.getPipeParams().getWriteTo()!=null) {
 			if(needclear)
 				jobAction(instance, GlobalParam.JOB_TYPE.INCREMENT.name(), "remove");
 			JobModel _sj = new JobModel(
@@ -230,13 +230,13 @@ public class FlowCenter{
 			taskJobCenter.addJob(_sj);
 		}
 		
-		if(instanceConfig.getPipeParam().getFullCron() == null || instanceConfig.getPipeParam().getOptimizeCron()!=null){
+		if(instanceConfig.getPipeParams().getFullCron() == null || instanceConfig.getPipeParams().getOptimizeCron()!=null){
 			if(needclear)
 				jobAction(instance,GlobalParam.JOB_TYPE.OPTIMIZE.name(), "remove");
 		
-			String cron = instanceConfig.getPipeParam().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):instanceConfig.getPipeParam().getOptimizeCron();
-			instanceConfig.getPipeParam().setOptimizeCron(cron);
-			if(instanceConfig.getPipeParam().getInstanceName()==null) {
+			String cron = instanceConfig.getPipeParams().getOptimizeCron()==null?default_cron.replace("PARAM",String.valueOf((int)(Math.random()*60))):instanceConfig.getPipeParams().getOptimizeCron();
+			instanceConfig.getPipeParams().setOptimizeCron(cron);
+			if(instanceConfig.getPipeParams().getInstanceName()==null) {
 				createOptimizeJob(instance, task,cron); 
 			} 
 		}

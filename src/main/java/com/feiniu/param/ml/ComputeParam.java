@@ -27,22 +27,22 @@ public class ComputeParam {
 		return threshold;
 	} 
 	
-	public void setKeyValue(String k, String v) {
+	public static void setKeyValue(ComputeParam cp,String k, String v) {
 		switch (k.toLowerCase()) {
 			case "features":
-				this.features = v;
+				cp.features = v;
 				break;
 			case "value":
-				this.value = v;
+				cp.value = v;
 				break;
 			case "algorithm":
-				this.algorithm = v;
+				cp.algorithm = v;
 				break; 
 			case "learn_rate":
-				this.learn_rate = Double.parseDouble(v);
+				cp.learn_rate = Double.parseDouble(v);
 				break; 
 			case "threshold":
-				this.threshold = Double.parseDouble(v);
+				cp.threshold = Double.parseDouble(v);
 				break; 
 		}
 	}

@@ -35,6 +35,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
+import com.feiniu.param.end.WriterParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.FNIoc;
@@ -100,7 +101,7 @@ public class SolrFlow extends WriterFlowSocket{
 	} 
 	
 	@Override
-	public void write(String keyColumn,PipeDataUnit unit,Map<String, RiverField> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws FNException { 
+	public void write(WriterParam writerParam,PipeDataUnit unit,Map<String, RiverField> writeParamMap, String instantcName, String storeId,boolean isUpdate) throws FNException { 
 		String name = Common.getStoreName(instantcName,storeId);
 		if (unit.getData().size() == 0){
 			log.warn("Empty IndexUnit for " + name );
@@ -128,7 +129,7 @@ public class SolrFlow extends WriterFlowSocket{
 						doc.setField(transParam.getAlias(), fm);
 					}
 					else{
-						if(keyColumn.equals(field)){
+						if(writerParam.getWriteKey().equals(field)){
 							doc.setField(transParam.getAlias(), value);
 						}else{
 							Map<String, String> fm = new HashMap<>(1);

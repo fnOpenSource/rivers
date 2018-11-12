@@ -22,7 +22,7 @@ import com.feiniu.config.GlobalParam.DATA_TYPE;
 @ThreadSafe
 public final class FnConnectionPool {
 	
-	private static FnConnectionPool FnCPool;
+	private final static FnConnectionPool FnCPool;
 
 	private ConcurrentHashMap<String, ConnectionPool> pools = new ConcurrentHashMap<String, ConnectionPool>();
   

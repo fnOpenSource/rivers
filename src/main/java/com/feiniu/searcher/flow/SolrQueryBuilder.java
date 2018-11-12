@@ -63,7 +63,7 @@ public class SolrQueryBuilder {
 			}
 			
 			RiverField tp = prs.getWriteField(k);
-			SearcherParam sp = prs.getSearchParam(k);
+			SearcherParam sp = prs.getSearcherParam(k);
 			if (tp == null && sp==null){
 				continue; 
 			}  

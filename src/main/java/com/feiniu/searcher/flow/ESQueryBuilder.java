@@ -105,7 +105,7 @@ public class ESQueryBuilder {
 				}
 
 				RiverField tp = instanceConfig.getWriteField(key);
-				SearcherParam sp = instanceConfig.getSearchParam(key);
+				SearcherParam sp = instanceConfig.getSearcherParam(key);
 				if ((tp == null && sp == null) || Common.isDefaultParam(key)) {
 					continue;
 				}
@@ -212,7 +212,7 @@ public class ESQueryBuilder {
 
 		if (keys.length == 1) {
 			RiverField tp = instanceConfig.getWriteField(keys[0]);
-			return buildSingleQuery(tp.getAlias(), value, tp, instanceConfig.getSearchParam(keys[0]), request,
+			return buildSingleQuery(tp.getAlias(), value, tp, instanceConfig.getSearcherParam(keys[0]), request,
 					paramKey, fuzzy);
 		}
 
@@ -227,7 +227,7 @@ public class ESQueryBuilder {
 					RiverField _tp = instanceConfig.getWriteField(key2);
 					QueryBuilder query = buildSingleQuery(_tp.getAlias(),
 							_tp.getAnalyzer().equals("NOT_ANALYZED") ? word : val, _tp,
-							instanceConfig.getSearchParam(key2), request, paramKey, fuzzy);
+							instanceConfig.getSearcherParam(key2), request, paramKey, fuzzy);
 					if (query != null) {
 						if (parsedDisMaxQuery == null)
 							parsedDisMaxQuery = QueryBuilders.disMaxQuery()

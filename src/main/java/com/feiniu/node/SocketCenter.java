@@ -57,10 +57,10 @@ public final class SocketCenter {
 			if (!transDataFlowMap.containsKey(tags) || needClear) {
 				TransDataFlow transDataFlow = TransDataFlow.getInstance(
 						getReaderSocket(
-								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getReadFrom(),
+								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadFrom(),
 								instance, seq, tag),
 						getWriterSocket(
-								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteTo(),
+								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
 								instance, seq, tag),
 						GlobalParam.nodeConfig.getInstanceConfigs().get(instance));
 				transDataFlowMap.put(tags, transDataFlow);
@@ -77,7 +77,7 @@ public final class SocketCenter {
 				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
 				Computer computer = Computer.getInstance(instance, instanceConfig,
 						getReaderSocket(
-								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getModelFrom(),
+								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getModelFrom(),
 								instance, seq, tag));
 				computerMap.put(instance, computer);
 			}
@@ -93,7 +93,7 @@ public final class SocketCenter {
 				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getSearchConfigs().get(instance);
 				Searcher searcher = Searcher.getInstance(instance, instanceConfig,
 						getSearcherSocket(
-								GlobalParam.nodeConfig.getSearchConfigs().get(instance).getPipeParam().getSearchFrom(),
+								GlobalParam.nodeConfig.getSearchConfigs().get(instance).getPipeParams().getSearchFrom(),
 								instance, seq, tag));
 				searcherMap.put(instance, searcher);
 			}
@@ -109,7 +109,7 @@ public final class SocketCenter {
 
 				boolean ignoreSeqUseAlias = false;
 				if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance) != null)
-					ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam()
+					ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams()
 							.isReaderPoolShareAlias();
 				String tagInstance = instance;
 				if (ignoreSeqUseAlias)
@@ -125,7 +125,7 @@ public final class SocketCenter {
 		synchronized (readerSocketMap) {
 			boolean ignoreSeqUseAlias = false;
 			if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance) != null)
-				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam()
+				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams()
 						.isReaderPoolShareAlias();
 			String tagInstance = instance;
 			if (ignoreSeqUseAlias)
@@ -137,7 +137,7 @@ public final class SocketCenter {
 				if (param == null)
 					return null;
 				readerSocketMap.put(tags, ReaderFlowSocketFactory.getInstance(param, seq,
-						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getReadHandler()));
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadHandler()));
 			}
 			return readerSocketMap.get(tags);
 		}
@@ -147,7 +147,7 @@ public final class SocketCenter {
 		synchronized (writerSocketMap) {
 			boolean ignoreSeqUseAlias = false;
 			if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance) != null)
-				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam()
+				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams()
 						.isWriterPoolShareAlias();
 			String tagInstance = instance;
 			if (ignoreSeqUseAlias)
@@ -159,7 +159,7 @@ public final class SocketCenter {
 				if (param == null)
 					return null;
 				writerSocketMap.put(tags, WriterSocketFactory.getInstance(param, seq,
-						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam().getWriteHandler()));
+						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteHandler()));
 			}
 			return writerSocketMap.get(tags);
 		}
@@ -169,7 +169,7 @@ public final class SocketCenter {
 		synchronized (searcherSocketMap) {
 			boolean ignoreSeqUseAlias = false;
 			if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance) != null)
-				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParam()
+				ignoreSeqUseAlias = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams()
 						.isSearcherShareAlias();
 			String tagInstance = instance;
 			if (ignoreSeqUseAlias)

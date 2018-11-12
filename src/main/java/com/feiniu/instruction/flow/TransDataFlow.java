@@ -49,8 +49,8 @@ public final class TransDataFlow extends Instruction {
 	private TransDataFlow(ReaderFlowSocket reader, WriterFlowSocket writer, InstanceConfig instanceConfig) {
 		CPU.prepare(getID(), instanceConfig, writer, reader);
 		try {
-			if (instanceConfig.getPipeParam().getReadHandler() != null) {
-				this.readHandler = (Handler) Class.forName(instanceConfig.getPipeParam().getReadHandler())
+			if (instanceConfig.getPipeParams().getReadHandler() != null) {
+				this.readHandler = (Handler) Class.forName(instanceConfig.getPipeParams().getReadHandler())
 						.newInstance();
 			}
 		} catch (Exception e) {
@@ -60,7 +60,7 @@ public final class TransDataFlow extends Instruction {
 
 	public String run(String instanceName, String storeId, String lastTime, String DataSeq, boolean isFull,
 			boolean masterControl) throws FNException {
-		if (getInstanceConfig().getPipeParam().getReadParam().isSqlType()) {
+		if (getInstanceConfig().getReadParams().isSqlType()) {
 			return doSqlWrite(instanceName, storeId, lastTime, DataSeq, isFull, masterControl);
 		} else {
 			return doNosqlWrite(instanceName, storeId, lastTime, DataSeq, isFull, masterControl);
@@ -150,7 +150,7 @@ public final class TransDataFlow extends Instruction {
 			boolean freeConn = false;
 			try {
 				while (DSReader.nextLine()) {
-					getWriter().write(DSReader.getkeyColumn(), DSReader.getLineData(),
+					getWriter().write(getInstanceConfig().getWriterParams(), DSReader.getLineData(),
 							getInstanceConfig().getWriteFields(), instance, storeId, isUpdate);
 					num++;
 				}
@@ -189,7 +189,7 @@ public final class TransDataFlow extends Instruction {
 		String desc = "increment";
 		String destName = Common.getInstanceName(instanceName, DataSeq);
 		try {
-			NoSQLParam noSqlParam = (NoSQLParam) getInstanceConfig().getPipeParam().getReadParam();
+			NoSQLParam noSqlParam = (NoSQLParam) getInstanceConfig().getReadParams();
 
 			if (lastTime == null || lastTime.equals(""))
 				lastTime = "0";
@@ -198,7 +198,7 @@ public final class TransDataFlow extends Instruction {
 			param.put("column", noSqlParam.getKeyColumn());
 			param.put("startTime", lastTime);
 			param.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
-			List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParam().getReadPageSize());
+			List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParams().getReadPageSize());
 			if (pageList.size() > 0) {
 				log.info(Common.formatLog("start " + desc, destName, storeId, "", "", "", lastTime, 0, "start",
 						",totalpage:" + pageList.size()));
@@ -218,7 +218,7 @@ public final class TransDataFlow extends Instruction {
 					pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
 
 					rstate = writeDataSet(desc, destName, storeId, "",
-							getReader().getPageData(pageParams, getInstanceConfig().getWriteFields(), this.readHandler,getInstanceConfig().getPipeParam().getReadPageSize()),
+							getReader().getPageData(pageParams, getInstanceConfig().getWriteFields(), this.readHandler,getInstanceConfig().getPipeParams().getReadPageSize()),
 							",process:" + processPos + "/" + pageList.size(), false, false);
 
 					total += rstate.getCount();
@@ -249,15 +249,15 @@ public final class TransDataFlow extends Instruction {
 	private String doSqlWrite(String instanceName, String storeId, String lastTime, String DataSeq, boolean isFull,
 			boolean masterControl) throws FNException {
 		String desc;
-		boolean isUpdate = getInstanceConfig().getPipeParam().getWriteType().equals("increment") ? true : false;
+		boolean isUpdate = getInstanceConfig().getPipeParams().getWriteType().equals("increment") ? true : false;
 		String destName = Common.getInstanceName(instanceName, DataSeq);
-		String writeTo = masterControl ? getInstanceConfig().getPipeParam().getInstanceName() : destName;
+		String writeTo = masterControl ? getInstanceConfig().getPipeParams().getInstanceName() : destName;
 		if (isFull) {
 			desc = JOB_TYPE.FULL.name();
 		} else {
 			desc = JOB_TYPE.INCREMENT.name();
 		}
-		SQLParam sqlParam = (SQLParam) getInstanceConfig().getPipeParam().getReadParam();
+		SQLParam sqlParam = (SQLParam) getInstanceConfig().getReadParams();
 		List<String> table_seqs = sqlParam.getSeq().size() > 0 ? sqlParam.getSeq() : Arrays.asList("");
 		String originalSql = sqlParam.getSql();
 		String incrementField = sqlParam.getIncrementField();
@@ -307,7 +307,7 @@ public final class TransDataFlow extends Instruction {
 				do { 
 					GlobalParam.FLOW_INFOS.get(instanceName, desc).put(instanceName + tseq, "start count page..."); 
 					getReader().lock.lock();
-					List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParam().getReadPageSize());
+					List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParams().getReadPageSize());
 					getReader().lock.unlock();
 					if (pageList == null)
 						throw new FNException("read data get page split exception!");
@@ -397,7 +397,7 @@ public final class TransDataFlow extends Instruction {
 
 		if (isFull) {
 			if (masterControl) {
-				String _dest = getInstanceConfig().getPipeParam().getInstanceName();
+				String _dest = getInstanceConfig().getPipeParams().getInstanceName();
 				synchronized (GlobalParam.FLOW_INFOS.get(_dest, GlobalParam.FLOWINFO.MASTER.name())) {
 					String remainJobs = GlobalParam.FLOW_INFOS.get(_dest, GlobalParam.FLOWINFO.MASTER.name())
 							.get(GlobalParam.FLOWINFO.FULL_JOBS.name());
@@ -432,7 +432,7 @@ public final class TransDataFlow extends Instruction {
 		params.put("sql", sql);
 		params.put(GlobalParam.READER_SCAN_KEY, incrementField);
 		params.put(GlobalParam.READER_KEY, keyColumn);
-		DataPage tmp = (DataPage) getReader().getPageData(params, transField, this.readHandler,getInstanceConfig().getPipeParam().getReadPageSize());
+		DataPage tmp = (DataPage) getReader().getPageData(params, transField, this.readHandler,getInstanceConfig().getPipeParams().getReadPageSize());
 		return (DataPage) tmp.clone();
 	}
 

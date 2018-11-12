@@ -377,12 +377,12 @@ public final class Common {
 	public static String[] getSeqs(InstanceConfig instanceConfig,boolean fillDefault){
 		String[] seqs = {};
 		WarehouseParam whParam;
-		if(GlobalParam.nodeConfig.getNoSqlWarehouse().get(instanceConfig.getPipeParam().getReadFrom())!=null){
+		if(GlobalParam.nodeConfig.getNoSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom())!=null){
 			whParam = GlobalParam.nodeConfig.getNoSqlWarehouse().get(
-					instanceConfig.getPipeParam().getReadFrom());
+					instanceConfig.getPipeParams().getReadFrom());
 		}else{
 			whParam = GlobalParam.nodeConfig.getSqlWarehouse().get(
-					instanceConfig.getPipeParam().getReadFrom());
+					instanceConfig.getPipeParams().getReadFrom());
 		}
 		if (null != whParam) {
 			seqs = whParam.getSeq();
