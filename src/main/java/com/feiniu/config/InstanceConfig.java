@@ -228,7 +228,7 @@ public class InstanceConfig {
 				params = (Element) dataflow.getElementsByTagName("WriteParam").item(0);   
 				if (params!=null) { 
 					parseNode(params.getElementsByTagName("param"), "writerParam", BasicParam.class);
-					if(writerParams.getWriteKey()!=null) {
+					if(writerParams.getWriteKey()==null) {
 						WriterParam.setKeyValue(writerParams,"writekey",readParams.getKeyColumn());
 						WriterParam.setKeyValue(writerParams,"keytype","unique");
 					}
