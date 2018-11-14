@@ -12,12 +12,12 @@ import com.feiniu.flow.Flow;
 import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.param.end.WriterParam;
 import com.feiniu.util.FNException;
-
+ 
 /**
  * Flow into Pond Manage
- * create with a/b switch mechanism
  * @author chengwen
- * @version 2.0
+ * @version 4.0
+ * @date 2018-11-14 16:54
  */
 @NotThreadSafe
 public abstract class WriterFlowSocket extends Flow{
