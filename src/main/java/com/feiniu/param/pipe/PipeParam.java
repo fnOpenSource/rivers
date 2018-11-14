@@ -1,6 +1,7 @@
 package com.feiniu.param.pipe;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.Mechanism;
 
 /**
  * data-flow trans parameters
@@ -29,6 +30,7 @@ public class PipeParam {
 	private boolean isMaster = false;
 	/**data write into type,full create new record,increment update part of data*/
 	private String writeType="full";
+	private Mechanism writeMechanism = Mechanism.AB;
 	
 	 
 	public String getWriteTo() {
@@ -39,6 +41,9 @@ public class PipeParam {
 	}
 	public String getModelFrom() {
 		return modelFrom;
+	}
+	public Mechanism getWriteMechanism() {
+		return writeMechanism;
 	}
 	public void setWriteTo(String writeTo) {
 		this.writeTo = writeTo;
@@ -168,6 +173,11 @@ public class PipeParam {
 		case "writetype":
 			if(v.length()>0 && (v.equals("full") || v.equals("increment")))
 				PP.writeType = v;
+			break;
+		case "writemechanism":
+			if(!v.toLowerCase().equals("ab")) {
+				PP.writeMechanism = Mechanism.Time;
+			}
 			break;
 		}
 	}

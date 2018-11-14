@@ -11,12 +11,12 @@ import com.feiniu.model.computer.SampleSets;
 
 public abstract class Regression implements Algorithm{
 	
-    double[] theta; //parameters
-    int paraNum; //the number of parameters
-    double rate; //learning rate
-    SamplePoint[] samples; // samples
-    int samNum; // the number of samples
-    double th; // threshold value
+    double[] theta;  
+    int featureSize; 
+    double learning_rate;  
+    SamplePoint[] samples;  
+    int samNum;  
+    double threshold; 
     protected final static Logger log = LoggerFactory.getLogger("Regression");
     
     /**
@@ -51,11 +51,11 @@ public abstract class Regression implements Algorithm{
      * @param learning_rate 
      * @param threshold 
      */
-    public void setPara(double[] para, double learning_rate, double threshold) {
-        paraNum = para.length;
-        theta = para;
-        rate = learning_rate;
-        th = threshold;
+    public void setPara(double[] theta, double learning_rate, double threshold) {
+    	featureSize = theta.length;
+        this.theta = theta;
+        this.learning_rate = learning_rate;
+        this.threshold = threshold;
     }
     
     /**
@@ -71,14 +71,14 @@ public abstract class Regression implements Algorithm{
     
     public String getModel() {
     	StringBuffer sf = new StringBuffer();
-    	for(int i = 0; i < paraNum; i++) {
+    	for(int i = 0; i < featureSize; i++) {
     		sf.append(theta[i] + ","); 
         }
     	return sf.toString();
     }
     public void OutputTheta() {
         System.out.println("The parameters are:");
-        for(int i = 0; i < paraNum; i++) {
+        for(int i = 0; i < featureSize; i++) {
             System.out.print(theta[i] + " ");
         }
         System.out.println(CostFun());

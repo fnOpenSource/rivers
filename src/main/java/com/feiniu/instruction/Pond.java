@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.Mechanism;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.util.Common;
 
@@ -32,7 +33,12 @@ public class Pond extends Instruction {
 			try { 
 				String mainName = (String) args[0]; 
 				String storeId = (String) args[1];  
-				state = context.getWriter().create(mainName, storeId, context.getInstanceConfig().getWriteFields());    
+				if(context.getInstanceConfig().getPipeParams().getWriteMechanism()==Mechanism.AB) {
+					state = context.getWriter().create(mainName, storeId, context.getInstanceConfig().getWriteFields());    
+				}else {
+					context.getWriter().removeInstance(mainName, storeId);
+					state = context.getWriter().create(mainName, storeId, context.getInstanceConfig().getWriteFields());    
+				} 
 			}finally {
 				context.getWriter().REALEASE(false,state?false:true);
 			}
@@ -119,14 +125,16 @@ public class Pond extends Instruction {
 		context.getWriter().PREPARE(false, false);  
 		if (context.getWriter().ISLINK()) {
 			try {
-				if (storeId.equals("a")) {
-					context.getWriter().optimize(mainName, "a");
-					removeId = "b";
-				} else {
-					context.getWriter().optimize(mainName, "b");
-					removeId = "a";
-				}
-				context.getWriter().removeInstance(mainName, removeId);
+				if(context.getInstanceConfig().getPipeParams().getWriteMechanism()==Mechanism.AB) {
+					if (storeId.equals("a")) {
+						context.getWriter().optimize(mainName, "a");
+						removeId = "b";
+					} else {
+						context.getWriter().optimize(mainName, "b");
+						removeId = "a";
+					}
+					context.getWriter().removeInstance(mainName, removeId);
+				} 
 				context.getWriter().setAlias(mainName, storeId, context.getInstanceConfig().getAlias());
 				return true;
 			} catch (Exception e) {

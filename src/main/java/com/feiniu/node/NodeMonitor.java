@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
+import com.feiniu.config.GlobalParam.Mechanism;
 import com.feiniu.config.GlobalParam.RESOURCE_TYPE;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
@@ -618,6 +619,10 @@ public final class NodeMonitor {
 			for (Map.Entry<String, InstanceConfig> ents : configMap.entrySet()) {
 				String instance = ents.getKey();
 				InstanceConfig instanceConfig = ents.getValue();
+				if(instanceConfig.getPipeParams().getWriteMechanism()!=Mechanism.AB) {
+					setResponse(1, "delete " + _instance + " Success!");
+					return;
+				}
 				if (instance.equals(_instance) || instanceConfig.getAlias().equals(_instance)) {
 					String[] seqs = getInstanceSeqs(instance);
 					if (seqs.length == 0) {

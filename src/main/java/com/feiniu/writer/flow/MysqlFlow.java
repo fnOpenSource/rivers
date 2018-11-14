@@ -5,11 +5,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.config.GlobalParam.Mechanism;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.param.end.WriterParam;
@@ -57,27 +59,11 @@ public class MysqlFlow extends WriterFlowSocket {
 
 	@Override
 	public String getNewStoreId(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
-		String select = "b";
-		boolean releaseConn = false;
-		PREPARE(false, false);
-		if (!ISLINK())
-			return select;
-		Connection conn = (Connection) GETSOCKET().getConnection(false);
-		String checkSql = "SELECT table_name FROM information_schema.TABLES WHERE table_name ='"
-				+ Common.getStoreName(mainName, "a") + "';";
-		try (PreparedStatement statement = conn.prepareStatement(checkSql);) {
-			try (ResultSet rs = statement.executeQuery();) {
-				if (rs.getRow() == 0)
-					select = "a";
-			} catch (Exception e) {
-				log.error("ResultSet Exception", e);
-			}
-		} catch (Exception e) {
-			log.error("PreparedStatement Exception", e);
-		} finally {
-			REALEASE(false, releaseConn);
-		}
-		return select;
+		if(instanceConfig.getPipeParams().getWriteMechanism()==Mechanism.AB) {
+			return abMechanism(mainName,isIncrement,instanceConfig);
+		}else {
+			return timeMechanism(mainName,isIncrement,instanceConfig);
+		} 
 	}
 
 	@Override
@@ -99,25 +85,7 @@ public class MysqlFlow extends WriterFlowSocket {
 		} finally {
 			REALEASE(false, releaseConn);
 		}
-	}
-
-	private String getTableSql(String instance, Map<String, RiverField> transParams) {
-		StringBuffer sf = new StringBuffer();
-		sf.append("create table " + instance + " (");
-		for (Map.Entry<String, RiverField> e : transParams.entrySet()) {
-			RiverField p = e.getValue();
-			if (p.getName() == null)
-				continue;
-			sf.append(p.getAlias());
-			sf.append(" " + p.getIndextype());
-			sf.append(" ,");
-			if (p.getIndexed() == "true") {
-				sf.append("KEY `" + p.getName() + "` (`" + p.getName() + "`) USING BTREE ");
-			}
-		}
-		String tmp = sf.substring(0, sf.length() - 1);
-		return tmp + ");";
-	}
+	} 
 
 	@Override
 	public void delete(String instance, String storeId, String keyColumn, String keyVal) throws FNException {
@@ -141,5 +109,52 @@ public class MysqlFlow extends WriterFlowSocket {
 	public void optimize(String instance, String storeId) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private String abMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
+		String select = "b";
+		boolean releaseConn = false;
+		PREPARE(false, false);
+		if (!ISLINK())
+			return select;
+		Connection conn = (Connection) GETSOCKET().getConnection(false);
+		String checkSql = "SELECT table_name FROM information_schema.TABLES WHERE table_name ='"
+				+ Common.getStoreName(mainName, "a") + "';";
+		try (PreparedStatement statement = conn.prepareStatement(checkSql);) {
+			try (ResultSet rs = statement.executeQuery();) {
+				if (rs.getRow() == 0)
+					select = "a";
+			} catch (Exception e) {
+				log.error("ResultSet Exception", e);
+			}
+		} catch (Exception e) {
+			log.error("PreparedStatement Exception", e);
+		} finally {
+			REALEASE(false, releaseConn);
+		}
+		return select;
+	}
+	
+	private String timeMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
+		long current=System.currentTimeMillis(); 
+		return String.valueOf(current/(1000*3600*24)*(1000*3600*24)-TimeZone.getDefault().getRawOffset()); 
+	}
+	
+	private String getTableSql(String instance, Map<String, RiverField> transParams) {
+		StringBuffer sf = new StringBuffer();
+		sf.append("create table " + instance + " (");
+		for (Map.Entry<String, RiverField> e : transParams.entrySet()) {
+			RiverField p = e.getValue();
+			if (p.getName() == null)
+				continue;
+			sf.append(p.getAlias());
+			sf.append(" " + p.getIndextype());
+			sf.append(" ,");
+			if (p.getIndexed() == "true") {
+				sf.append("KEY `" + p.getName() + "` (`" + p.getName() + "`) USING BTREE ");
+			}
+		}
+		String tmp = sf.substring(0, sf.length() - 1);
+		return tmp + ");";
 	}
 }

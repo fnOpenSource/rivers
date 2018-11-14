@@ -80,6 +80,9 @@ public class GlobalParam {
 	};
 	 
 	//writer parameters
+	public static enum Mechanism{
+		AB,Time
+	};
 	public static enum INSTANCE_TYPE {  
 		Blank(0),Trans(1),WithCompute(2);
 		private int v;

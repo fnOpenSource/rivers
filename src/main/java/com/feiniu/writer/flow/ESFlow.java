@@ -5,6 +5,7 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.Mechanism;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.field.RiverField;
@@ -271,6 +273,79 @@ public class ESFlow extends WriterFlowSocket {
 
 	@Override
 	public String getNewStoreId(String mainName, boolean isIncrement, InstanceConfig instanceConfig) { 
+		if(instanceConfig.getPipeParams().getWriteMechanism()==Mechanism.AB) {
+			return abMechanism(mainName,isIncrement,instanceConfig);
+		}else {
+			return timeMechanism(mainName,isIncrement,instanceConfig);
+		}
+	} 
+
+	@Override
+	public void setAlias(String instanceName, String storeId, String aliasName) {
+		String name = Common.getStoreName(instanceName, storeId);
+		try {
+			log.info("trying to setting Alias " + aliasName + " to index " + name);
+			IndicesAliasesResponse response = getESC().getClient().admin().indices().prepareAliases().addAlias(name,
+					aliasName).execute().actionGet();
+			if (response.isAcknowledged()) {
+				log.info("alias " + aliasName + " setted to " + name);
+			}
+		} catch (Exception e) {
+			log.error("alias " + aliasName + " set to " + name + " Exception.", e);
+		}
+	} 
+	
+	private Map<String, Object> getSettingMap(Map<String, RiverField> transParams) {
+		Map<String, Object> settingMap = new HashMap<String, Object>();
+		Map<String, Object> root_map = new HashMap<String, Object>();
+		try { 
+			for (Map.Entry<String, RiverField> e : transParams.entrySet()) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				RiverField p = e.getValue();
+				if (p.getName() == null)
+					continue;
+				map.put("type", p.getIndextype()); // type is must
+				if (p.getStored().toLowerCase().equals("false")) {
+					map.put("store", false);
+				}else {
+					map.put("store", true);
+				}
+				if(p.getDsl()!=null) {
+					for(String r:p.getDsl().split(",")) {
+						String[] _dsl = r.split(":");
+						map.put(_dsl[0], _dsl[1]);
+					}
+				}
+				if (p.getIndexed().toLowerCase().equals("true")) { 
+					if (p.getAnalyzer().length()>0) {
+						map.put("analyzer", p.getAnalyzer());
+					}
+				} else {
+					//map.put("analyzed", false);
+				} 
+				settingMap.put(p.getAlias(), map);
+			}
+			settingMap.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){
+				private static final long serialVersionUID = 1L;{put("type", "long");}});
+			root_map.put("properties", settingMap);
+		} catch (Exception e) {
+			log.error("getSettingMap Exception",e);
+		}   
+		Map<String, Object> _source_map = new HashMap<String, Object>();
+		_source_map.put("enabled", "true");
+		root_map.put("_source", _source_map);
+		Map<String, Object> _all_map = new HashMap<String, Object>();
+		_all_map.put("enabled", "false");
+		root_map.put("_all", _all_map);
+		return root_map;
+	}
+    
+	private String timeMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
+		long current=System.currentTimeMillis(); 
+		return String.valueOf(current/(1000*3600*24)*(1000*3600*24)-TimeZone.getDefault().getRawOffset()); 
+	}
+	
+	private String abMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
 		boolean a_alias = false;
 		boolean b_alias = false;
 		boolean a = getESC().getClient().admin().indices()
@@ -340,67 +415,7 @@ public class ESFlow extends WriterFlowSocket {
 		}
 		return select;
 	}
-
-	@Override
-	public void setAlias(String instanceName, String storeId, String aliasName) {
-		String name = Common.getStoreName(instanceName, storeId);
-		try {
-			log.info("trying to setting Alias " + aliasName + " to index " + name);
-			IndicesAliasesResponse response = getESC().getClient().admin().indices().prepareAliases().addAlias(name,
-					aliasName).execute().actionGet();
-			if (response.isAcknowledged()) {
-				log.info("alias " + aliasName + " setted to " + name);
-			}
-		} catch (Exception e) {
-			log.error("alias " + aliasName + " set to " + name + " Exception.", e);
-		}
-	} 
 	
-	private Map<String, Object> getSettingMap(Map<String, RiverField> transParams) {
-		Map<String, Object> settingMap = new HashMap<String, Object>();
-		Map<String, Object> root_map = new HashMap<String, Object>();
-		try { 
-			for (Map.Entry<String, RiverField> e : transParams.entrySet()) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				RiverField p = e.getValue();
-				if (p.getName() == null)
-					continue;
-				map.put("type", p.getIndextype()); // type is must
-				if (p.getStored().toLowerCase().equals("false")) {
-					map.put("store", false);
-				}else {
-					map.put("store", true);
-				}
-				if(p.getDsl()!=null) {
-					for(String r:p.getDsl().split(",")) {
-						String[] _dsl = r.split(":");
-						map.put(_dsl[0], _dsl[1]);
-					}
-				}
-				if (p.getIndexed().toLowerCase().equals("true")) { 
-					if (p.getAnalyzer().length()>0) {
-						map.put("analyzer", p.getAnalyzer());
-					}
-				} else {
-					//map.put("analyzed", false);
-				} 
-				settingMap.put(p.getAlias(), map);
-			}
-			settingMap.put(GlobalParam.DEFAULT_FIELD, new HashMap<String, Object>(){
-				private static final long serialVersionUID = 1L;{put("type", "long");}});
-			root_map.put("properties", settingMap);
-		} catch (Exception e) {
-			log.error("getSettingMap Exception",e);
-		}   
-		Map<String, Object> _source_map = new HashMap<String, Object>();
-		_source_map.put("enabled", "true");
-		root_map.put("_source", _source_map);
-		Map<String, Object> _all_map = new HashMap<String, Object>();
-		_all_map.put("enabled", "false");
-		root_map.put("_all", _all_map);
-		return root_map;
-	}
-
 	private long getDocumentNums(String instanceName, String storeId) {
 		String name = Common.getStoreName(instanceName, storeId);
 		IndicesStatsResponse response = getESC().getClient().admin().indices().prepareStats(name).all().get();

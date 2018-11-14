@@ -333,7 +333,7 @@ public final class Common {
 			String str = new String(b);
 			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
 			if (strs.length > 0) {
-				if (strs[0].equals("a") || strs[0].equals("b")) {
+				if (!strs[0].equals("null")) {
 					storeId = strs[0];
 				} else {
 					storeId = "";
@@ -349,7 +349,7 @@ public final class Common {
 	/**
 	 * get store tag name
 	 * @param instanceName
-	 * @param seq
+	 * @param seq 
 	 * @return String
 	 */
 	public static String getStoreId(String instance, String seq) {
@@ -360,7 +360,7 @@ public final class Common {
 			String str = new String(b);
 			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
 			if (strs.length > 0) {
-				if (strs[0].equals("a") || strs[0].equals("b")) {
+				if (!strs[0].equals("null")) {
 					storeId = strs[0];
 				}
 			}

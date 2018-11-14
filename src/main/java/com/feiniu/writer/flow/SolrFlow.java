@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.config.GlobalParam.Mechanism;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.param.end.WriterParam;
@@ -243,6 +245,14 @@ public class SolrFlow extends WriterFlowSocket{
 
 	@Override
 	public String getNewStoreId(String mainName,boolean isIncrement,final InstanceConfig instanceConfig) {  
+		if(instanceConfig.getPipeParams().getWriteMechanism()==Mechanism.AB) {
+			return abMechanism(mainName,isIncrement,instanceConfig);
+		}else {
+			return timeMechanism(mainName,isIncrement,instanceConfig);
+		} 
+	} 
+	
+	private String abMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
 		String b = Common.getStoreName(mainName, "b");
 		String a = Common.getStoreName(mainName, "a");
 		String select="";  
@@ -264,7 +274,12 @@ public class SolrFlow extends WriterFlowSocket{
 			create(mainName,select, instanceConfig.getWriteFields());
 		} 
 		return select;
-	} 
+	}
+	
+	private String timeMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
+		long current=System.currentTimeMillis(); 
+		return String.valueOf(current/(1000*3600*24)*(1000*3600*24)-TimeZone.getDefault().getRawOffset()); 
+	}
  
 	private void getSchemaFile(Map<String,RiverField> paramMap,String instantcName, String storeId,String zkHost) {
 		BufferedReader head_reader = null;

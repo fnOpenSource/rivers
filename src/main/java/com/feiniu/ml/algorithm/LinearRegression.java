@@ -10,6 +10,12 @@ import com.feiniu.model.computer.SampleSets;
 import com.feiniu.model.reader.DataPage;
 import com.feiniu.model.reader.PipeDataUnit;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-11-13 09:21
+ */
 public class LinearRegression extends Regression {
 
 	public static DataPage train(Context context, SampleSets samples, Map<String, RiverField> transParam) {
@@ -36,13 +42,13 @@ public class LinearRegression extends Regression {
 
 	@Override
 	public Object predict(SamplePoint point) { 
-		paraNum = point.features.length;
+		featureSize = point.features.length;
 		return PreVal(point);
 	}
 
 	public double PreVal(SamplePoint s) {
 		double val = 0;
-		for (int i = 0; i < paraNum; i++) {
+		for (int i = 0; i < featureSize; i++) {
 			val += theta[i] * s.features[i];
 		}
 		return val;
@@ -54,14 +60,14 @@ public class LinearRegression extends Regression {
 		double latter = CostFun();
 		double d = 0;
 		int trainTime = 1000;
-		double[] p = new double[paraNum];
+		double[] p = new double[featureSize];
 		do {
 			former = latter;
-			for (int i = 0; i < paraNum; i++) {
+			for (int i = 0; i < featureSize; i++) {
 				for (int j = 0; j < samNum; j++) {
 					d += (PreVal(samples[j]) - samples[j].value) * samples[j].features[i];
 				}
-				p[i] -= (rate * d) / samNum;
+				p[i] -= (learning_rate * d) / samNum;
 			}
 			latter = CostFun();
 			if (former - latter < 0) {
@@ -69,7 +75,7 @@ public class LinearRegression extends Regression {
 				break;
 			}
 			trainTime--;
-		} while (trainTime == 0 || former - latter > th);
+		} while (trainTime == 0 || former - latter > learning_rate);
 		theta = p;
 	}
 
