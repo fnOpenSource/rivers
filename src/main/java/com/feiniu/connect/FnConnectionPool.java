@@ -114,8 +114,8 @@ public final class FnConnectionPool {
 	private class ConnectionPool {
 		private AtomicInteger activeNum = new AtomicInteger(0);
 		private int maxConn = 0;
-		private String poolName = null;
-		private HashMap<String, Object> params = null;
+		private final String poolName;
+		private final HashMap<String, Object> params;
 		private ConcurrentLinkedQueue<FnConnection<?>> freeConnections = new ConcurrentLinkedQueue<FnConnection<?>>();
 		private FnConnection<?> shareConn;
 		
