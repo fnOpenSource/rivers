@@ -30,10 +30,10 @@ import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
 
 /**
- * app entry startup file
- * 
+ * Application startup position
  * @author chengwen
- * @version 3.1
+ * @version 4.0
+ * @date 2018-11-19 15:33
  */
 public final class Run {
 	@Autowired
