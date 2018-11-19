@@ -130,7 +130,7 @@ public final class Run {
 			Common.LOG.error("load Global Properties Config Exception", e);
 		}
 		GlobalParam.CONFIG_PATH = GlobalParam.StartConfig.getProperty("zkConfigPath");
-		GlobalParam.INSTANCE_PATH = GlobalParam.CONFIG_PATH+"/INSTANCES";
+		GlobalParam.INSTANCE_PATH = (GlobalParam.CONFIG_PATH+"/INSTANCES").intern();
 		ZKUtil.setZkHost(GlobalParam.StartConfig.getProperty("zkhost"));
 	}
 
