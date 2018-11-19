@@ -154,16 +154,12 @@ public class ESQueryBuilder {
 			QueryBuilder query = null;
 			if (!not_analyzed) {
 				query = fieldParserQuery(key, String.valueOf(v), fuzzy);
-			} else if (tp.getIndextype().equalsIgnoreCase("long") || tp.getIndextype().equalsIgnoreCase("double")
-					|| tp.getIndextype().equalsIgnoreCase("int")) {
+			} else if (tp.getParamtype().equals("com.feiniu.field.handler.LongRange")) {
 				Object _v = Common.parseFieldValue(v, tp);
-				if (_v instanceof LongRange) {
-					LongRange val = (LongRange) _v; 
-					query = QueryBuilders.rangeQuery(key).from(val.getMin()).to(val.getMax())
-							.includeLower(sp == null ? true : sp.isIncludeLower())
-							.includeUpper(sp == null ? true : sp.isIncludeUpper());
-				} else
-					query = QueryBuilders.termQuery(key, String.valueOf(v));
+				LongRange val = (LongRange) _v; 
+				query = QueryBuilders.rangeQuery(key).from(val.getMin()).to(val.getMax())
+						.includeLower(sp == null ? true : sp.isIncludeLower())
+						.includeUpper(sp == null ? true : sp.isIncludeUpper());
 			}  else { 
 				query = QueryBuilders.termQuery(key, String.valueOf(v));
 				QueryBoost(query, tp, request);
@@ -226,7 +222,7 @@ public class ESQueryBuilder {
 				for (String key2 : keys) {
 					RiverField _tp = instanceConfig.getWriteField(key2);
 					QueryBuilder query = buildSingleQuery(_tp.getAlias(),
-							_tp.getAnalyzer().equals("NOT_ANALYZED") ? word : val, _tp,
+							_tp.getAnalyzer()!="" ? word : val, _tp,
 							instanceConfig.getSearcherParam(key2), request, paramKey, fuzzy);
 					if (query != null) {
 						if (parsedDisMaxQuery == null)

@@ -158,11 +158,11 @@ public class ZookeeperUpload {
 	public static void main(String[] args) { 
 		String zkhost = null, add = null;
 		boolean batch = false;
-		zkhost = "10.10.10.10:2288";
-		add = "E:\\config\\rivers_data\\instances";
+		zkhost = "10.10.10.10:2181";
+		add = "E:\\svn\\config\\beta\\InstanceData\\robot";
 
 		if (add != null && zkhost != null) {
-			String zkpath = "/rivers";
+			String zkpath = "/platform/config/INSTANCES";
 			if (batch) {
 				runBatch(zkhost, add, "instances");
 			} else {

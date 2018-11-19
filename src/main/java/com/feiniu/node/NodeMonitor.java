@@ -83,6 +83,7 @@ public final class NodeMonitor {
 			add("startHttpReaderServiceService");
 			add("stopHttpReaderServiceService");
 			add("restartNode");
+			add("loadHandler");
 			// instance manage
 			add("resetInstanceState");
 			add("getInstanceSeqs");
@@ -205,6 +206,20 @@ public final class NodeMonitor {
 	
 	public void restartNode(Request rq) {
 		NodeUtil.runShell(GlobalParam.StartConfig.getProperty("restart_shell"));
+	}
+	
+	public void loadHandler(Request rq) {
+		if(rq.getParameter("path") != null) {
+			try {
+				ClassLoader.getSystemClassLoader().loadClass(rq.getParameter("path"));
+				setResponse(1, "Load Handler success!");
+			}catch (Exception e) {
+				setResponse(0, "Load Handler Exception " + e.getMessage());
+			} 
+		}else {
+			setResponse(0, "Parameters path not exists!");
+		}
+		
 	}
 
 	public void stopHttpReaderServiceService(Request rq) {

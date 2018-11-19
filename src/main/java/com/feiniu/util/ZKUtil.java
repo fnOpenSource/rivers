@@ -52,7 +52,7 @@ public class ZKUtil {
 	}
 
 	public static void setZkHost(String zkString) {
-		zkHost = zkString;
+		zkHost = zkString.intern();
 	} 
 	
 	public static String createPath(String path,boolean PERSISTENT){
