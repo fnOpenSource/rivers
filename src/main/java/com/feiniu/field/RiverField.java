@@ -2,6 +2,12 @@ package com.feiniu.field;
 
 import com.feiniu.writerUnit.handler.Handler;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-11-20 09:48
+ */
 public class RiverField { 
 	/**read name*/
 	private String name;
@@ -118,7 +124,11 @@ public class RiverField {
 	public Handler getHandler() {
 		return this.handler;
 	}
-
+	/**
+	 * if use dynamic class loader,load class first and then reload instance configs
+	 * @param handler
+	 * @throws Exception
+	 */
 	public void setHandler(String handler) throws Exception {
 		if(handler!=null && handler.length()>1){
 			this.handler = (Handler) Class.forName(handler).newInstance();

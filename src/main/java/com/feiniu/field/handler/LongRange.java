@@ -3,6 +3,12 @@ package com.feiniu.field.handler;
 import com.feiniu.field.FieldHandler;
 import com.feiniu.util.FNException;
 
+/**
+ * 
+ * @author chengwen
+ * @version 2.0
+ * @date 2018-11-20 10:47
+ */
 public class LongRange implements FieldHandler{
 	
 	protected Long min;

@@ -208,10 +208,17 @@ public final class NodeMonitor {
 		NodeUtil.runShell(GlobalParam.StartConfig.getProperty("restart_shell"));
 	}
 	
+	/**
+	 * only support no dependency handler
+	 * com.feiniu.writerUnit.handler
+	 * com.feiniu.reader.handler
+	 * com.feiniu.searcher.handler
+	 * @param rq
+	 */
 	public void loadHandler(Request rq) {
 		if(rq.getParameter("path") != null) {
 			try {
-				ClassLoader.getSystemClassLoader().loadClass(rq.getParameter("path"));
+				ClassLoader.getSystemClassLoader().loadClass(rq.getParameter("path")+".class"); 
 				setResponse(1, "Load Handler success!");
 			}catch (Exception e) {
 				setResponse(0, "Load Handler Exception " + e.getMessage());

@@ -7,6 +7,7 @@ import com.feiniu.model.reader.PipeDataUnit;
 
 /**
  * user defined data unit process function
+ * store common function handler
  * @author chengwen
  * @version 1.0 
  */
