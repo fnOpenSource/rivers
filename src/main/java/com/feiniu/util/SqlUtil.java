@@ -63,8 +63,8 @@ public final class SqlUtil {
  
 	public static String getWriteSql(String table,PipeDataUnit unit,Map<String, RiverField> transParams) {
 		String sql = "INSERT INTO " + table;
-		StringBuffer values = new StringBuffer();
-		StringBuffer columns = new StringBuffer();
+		StringBuilder values = new StringBuilder();
+		StringBuilder columns = new StringBuilder();
 		for (Entry<String, Object> r : unit.getData().entrySet()) {
 			String field = r.getKey();
 			if (r.getValue() == null)

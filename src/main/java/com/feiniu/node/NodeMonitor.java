@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Request;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,7 @@ import com.feiniu.writer.WriterFlowSocket;
  * @date 2018-10-25 09:08
  */
 @Component
+@NotThreadSafe
 public final class NodeMonitor {
 
 	@Autowired
@@ -332,8 +335,8 @@ public final class NodeMonitor {
 
 	public void getInstanceInfo(Request rq) {
 		if (GlobalParam.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance"))) {
-			String instance = rq.getParameter("instance");
-			StringBuffer sb = new StringBuffer();
+			String instance = rq.getParameter("instance"); 
+			StringBuilder sb = new StringBuilder();
 			InstanceConfig config = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
 			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
 				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom())
@@ -390,7 +393,7 @@ public final class NodeMonitor {
 						.get(config.getPipeParams().getReadFrom());
 				if (wsp.getSeq().length > 0) {
 					sb.append(",[增量存储状态]");
-					StringBuffer fullstate = new StringBuffer();
+					StringBuilder fullstate = new StringBuilder();
 					for (String seriesDataSeq : wsp.getSeq()) {
 						String strs = getZkData(
 								Common.getTaskStorePath(instance, seriesDataSeq, GlobalParam.JOB_INCREMENTINFO_PATH));
@@ -419,7 +422,7 @@ public final class NodeMonitor {
 				} else {
 					String strs = getZkData(
 							Common.getTaskStorePath(instance, null, GlobalParam.JOB_INCREMENTINFO_PATH));
-					StringBuffer stateStr = new StringBuffer();
+					StringBuilder stateStr = new StringBuilder();
 					if (strs.split(GlobalParam.JOB_STATE_SPERATOR).length > 1) {
 						for (String tm : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
 							if (tm.length() > 9 && tm.matches("[0-9]+")) {
@@ -470,7 +473,7 @@ public final class NodeMonitor {
 		HashMap<String, List<String>> rs = new HashMap<String, List<String>>();
 		for (Map.Entry<String, InstanceConfig> entry : nodes.entrySet()) {
 			InstanceConfig config = entry.getValue();
-			StringBuffer sb = new StringBuffer();
+			StringBuilder sb = new StringBuilder();
 			sb.append(entry.getKey() + ":[Alias]" + config.getAlias());
 			sb.append(":[OptimizeCron]" + config.getPipeParams().getOptimizeCron());
 			sb.append(":[DeltaCron]" + config.getPipeParams().getDeltaCron());
@@ -748,7 +751,7 @@ public final class NodeMonitor {
 
 	private String threadStateInfo(String instance, String tag) {
 		String[] seqs = getInstanceSeqs(instance);
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (String seq : seqs) {
 			sb.append(seq + ":");
 			if (Common.checkFlowStatus(instance, seq, tag, STATUS.Stop))

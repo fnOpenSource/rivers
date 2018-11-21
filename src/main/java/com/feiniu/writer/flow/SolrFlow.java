@@ -289,7 +289,7 @@ public class SolrFlow extends WriterFlowSocket{
 		ZooKeeper zk = null;
 		Stat stat = null;
 		final CountDownLatch connectedSemaphore = new CountDownLatch( 1 ); //防止出现ConnectionLossException
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		try { 
 			Watcher watcher = new Watcher() { 
 				public void process(WatchedEvent event) {
@@ -384,7 +384,7 @@ public class SolrFlow extends WriterFlowSocket{
 				if (null == stat) {
 					zk.create(remoteAdd, "".getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 				}
-				StringBuffer sb = new StringBuffer();
+				StringBuilder sb = new StringBuilder();
 				byte[] buffer = new byte[BUFFER_LEN];
 				while (true) {
 					int byteRead = in.read(buffer);
@@ -414,7 +414,7 @@ public class SolrFlow extends WriterFlowSocket{
 						if (null == stat) {
 							zk.create(remoteAdd, "".getBytes(),Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 						} 
-						StringBuffer sb = new StringBuffer();
+						StringBuilder sb = new StringBuilder();
 						byte[] buffer = new byte[BUFFER_LEN];
 						while (true) {
 							int byteRead = in.read(buffer);

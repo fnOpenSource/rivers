@@ -181,7 +181,7 @@ public class FlowTask {
 	}
 
 	private static String getNextJobs(String[] nextJobs) {
-		StringBuffer sf = new StringBuffer();
+		StringBuilder sf = new StringBuilder();
 		for (String job : nextJobs) {
 			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(job);
 			if (instanceConfig.openTrans()) {

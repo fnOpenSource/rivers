@@ -27,7 +27,7 @@ public class SolrQueryBuilder {
 	public static SolrQuery queryBuilder(RiverRequest request, InstanceConfig prs,
 			Map<String, String> attrQueryMap) {
 		SolrQuery sq = new SolrQuery();
-		StringBuffer qr = new StringBuffer();
+		StringBuilder qu = new StringBuilder();
 		Map<String, String> paramMap = request.getParams();
 		Set<Entry<String, String>> entries = paramMap.entrySet();
 		Iterator<Entry<String, String>> iter = entries.iterator();
@@ -55,9 +55,9 @@ public class SolrQueryBuilder {
 			
 			if(k.equals(GlobalParam.PARAM_DEFINEDSEARCH)){ 
 				if (!start) {
-					qr.append(" AND ");
+					qu.append(" AND ");
 				} 
-				qr.append("("+v+")");
+				qu.append("("+v+")");
 				start=false;
 				continue;
 			}
@@ -68,29 +68,31 @@ public class SolrQueryBuilder {
 				continue; 
 			}  
 			if (!start) {
-				qr.append(" AND ");
+				qu.append(" AND ");
 			}   
 			if(sp!=null && sp.getFields() != null && sp.getFields().length() > 0){
-				qr.append(buildMultiQuery(v, sp.getFields(), paramMap));
+				qu.append(buildMultiQuery(v, sp.getFields(), paramMap));
 			}else{
-				qr.append(buildSingleQuery(tp.getAlias(), v));
+				qu.append(buildSingleQuery(tp.getAlias(), v));
 			} 
 			start = false;
 		}
-		if (qr.length() < 1) {
+		if (qu.length() < 1) {
 			sq.setQuery("*:*");
 		} else {
-			sq.setQuery("_query_:" + qr);
+			sq.setQuery("_query_:" + qu);
 		}
 		return sq;
 	} 
+	
 	static String buildMultiQuery(String v,String combineSearch,Map<String, String> paramMap){ 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for(String k:combineSearch.split(",")){
 			sb.append(buildSingleQuery(k,v));
 		}
 		return sb.toString();
 	}
+	
 	static String buildSingleQuery(String k,String v){
 		if (k.endsWith(GlobalParam.NOT_SUFFIX)) {
 			k = k.substring(0, k.length() - GlobalParam.NOT_SUFFIX.length());
@@ -145,7 +147,7 @@ public class SolrQueryBuilder {
 	}
 
 	static String getSortInfo(String strs, SolrQuery sq) {
-		StringBuffer sf = new StringBuffer();
+		StringBuilder sf = new StringBuilder();
 		sf.append("score desc");
 		for (String str : strs.split(",")) {
 			str = str.trim();

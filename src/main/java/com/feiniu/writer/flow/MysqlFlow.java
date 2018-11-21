@@ -141,7 +141,7 @@ public class MysqlFlow extends WriterFlowSocket {
 	}
 	
 	private String getTableSql(String instance, Map<String, RiverField> transParams) {
-		StringBuffer sf = new StringBuffer();
+		StringBuilder sf = new StringBuilder();
 		sf.append("create table " + instance + " (");
 		for (Map.Entry<String, RiverField> e : transParams.entrySet()) {
 			RiverField p = e.getValue();

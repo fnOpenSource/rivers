@@ -438,7 +438,7 @@ public final class TransDataFlow extends Instruction {
 
 	private String getTimeString(String[] strs) {
 		if (strs.length > 0) {
-			StringBuffer sb = new StringBuffer();
+			StringBuilder sb = new StringBuilder();
 			for (String s : strs) {
 				sb.append(",");
 				sb.append(s);

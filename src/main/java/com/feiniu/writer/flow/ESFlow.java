@@ -83,7 +83,7 @@ public class ESFlow extends WriterFlowSocket {
 	private void updateByScan(WriterParam writerParam,PipeDataUnit unit, Map<String, RiverField> transParams, String instance,String alias,
 			String storeId, boolean isUpdate) throws FNException{  
 		Script script = null;
-		StringBuffer sf = new StringBuffer();
+		StringBuilder sf = new StringBuilder();
 		for (Entry<String, Object> r : unit.getData().entrySet()) {
 			String field = r.getKey();
 			if (r.getValue() == null)

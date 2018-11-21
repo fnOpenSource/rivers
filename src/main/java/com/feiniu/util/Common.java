@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -174,31 +175,10 @@ public final class Common {
 		return ret;
 	}
 
-	public static List<String> String2List(String str, String seperator) {
-		List<String> ret = new ArrayList<String>();
-		if (str == null || str.length() <= 0)
-			return ret;
-
-		String ss[] = str.split(seperator);
-		for (String s : ss) {
-			if (s.length() > 0)
-				ret.add(s);
-		}
-		return ret;
+	public static List<String> String2List(String str, String seperator) { 
+		return Arrays.asList(str.split(seperator));
 	}
-
-	public static <T> String List2String(List<T> list, String seperator) {
-		StringBuffer ret = new StringBuffer("");
-		if (list == null || list.size() <= 0)
-			return ret.toString();
-
-		for (int i = 0; i < list.size(); i++) {
-			if (i > 0)
-				ret.append(seperator);
-			ret.append(list.get(i));
-		}
-		return ret.toString();
-	}
+ 
 
 	/**
 	 * seq for split data
@@ -253,7 +233,7 @@ public final class Common {
 	}
 	
 	public static String getResourceTag(String instance,String seq,String tag,boolean ignoreSeq) {
-		StringBuffer tags = new StringBuffer();
+		StringBuilder tags = new StringBuilder();
 		if (!ignoreSeq && seq != null && seq.length()>0) {
 			tags.append(instance).append(seq);
 		} else {
@@ -412,7 +392,7 @@ public final class Common {
 			String seq, String total, String dataBoundary, String lastUpdateTime,
 			long useTime, String types, String moreinfo) {
 		String useTimeFormat = Common.seconds2time(useTime);
-		StringBuffer str = new StringBuffer("["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : ""));
+		StringBuilder str = new StringBuilder("["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : ""));
 		String update;
 		if(lastUpdateTime.length()>9 && lastUpdateTime.matches("[0-9]+")){ 
 			update = SDF.format(lastUpdateTime.length()<12?new Long(lastUpdateTime+"000"):new Long(lastUpdateTime));
