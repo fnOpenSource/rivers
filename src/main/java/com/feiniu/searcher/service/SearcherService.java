@@ -21,7 +21,6 @@ import com.feiniu.node.SocketCenter;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
-import com.feiniu.writerUnit.handler.Handler;
 
 /**
  * searcher open http port support service
@@ -66,9 +65,7 @@ public class SearcherService{
 		if (response != null){
 			response.setStartTime(startTime);
 			response.setEndTime(endTime);
-		}
-		Handler handler = (Handler) Class.forName("com.feiniu.writerUnit.handler.Test").newInstance();
-		handler.handle(null, null, null);
+		}  
 		return response;
 	}
 

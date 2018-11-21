@@ -15,6 +15,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.NODE_TYPE;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.NodeConfig;
+import com.feiniu.correspond.ReportStatus;
 import com.feiniu.node.FlowCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.RecoverMonitor;
@@ -136,7 +137,7 @@ public final class Run {
 
 	private void start() {
 		loadGlobalConfig(this.startConfigPath, false);
-		environmentCheck();
+		ReportStatus.nodeConfigs();
 		if (!GlobalParam.StartConfig.containsKey("node_type"))
 			GlobalParam.StartConfig.setProperty("node_type", NODE_TYPE.slave.name());
 		if (GlobalParam.StartConfig.get("node_type").equals(NODE_TYPE.backup.name())) {
@@ -147,31 +148,7 @@ public final class Run {
 			startService();
 		}
 		Common.LOG.info("River Start Success!");
-	}
-
-	private void environmentCheck() {
-		try {
-			if (ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH, true) == null) {
-				String path = "";
-				for (String str : GlobalParam.CONFIG_PATH.split("/")) {
-					path += "/" + str;
-					ZKUtil.createPath(path, true);
-				}
-			}
-			if (ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH + "/RIVER_NODES", false) == null) {
-				ZKUtil.createPath(GlobalParam.CONFIG_PATH + "/RIVER_NODES", true);
-			}
-			if (ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP, false) == null) {
-				ZKUtil.createPath(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP, true);
-			}
-			if (ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs",
-					false) == null) {
-				ZKUtil.createPath(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs", true);
-			}
-		} catch (Exception e) {
-			Common.LOG.error("environmentCheck Exception", e);
-		}
-	}
+	} 
 
 	public static void main(String[] args) throws Exception {
 		GlobalParam.RIVERS = (Run) FNIoc.getBean("RIVERS");
