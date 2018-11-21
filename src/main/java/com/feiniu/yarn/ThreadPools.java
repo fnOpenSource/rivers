@@ -1,4 +1,4 @@
-package com.feiniu.resource;
+package com.feiniu.yarn;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

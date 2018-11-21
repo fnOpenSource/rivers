@@ -1,4 +1,4 @@
-package com.feiniu.resource;
+package com.feiniu.yarn;
 
 /**
  * Statistics current node resources
