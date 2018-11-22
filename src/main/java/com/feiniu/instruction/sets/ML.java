@@ -1,4 +1,4 @@
-package com.feiniu.instruction;
+package com.feiniu.instruction.sets;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -6,6 +6,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.feiniu.instruction.Context;
+import com.feiniu.instruction.Instruction;
 import com.feiniu.model.computer.SampleSets;
 import com.feiniu.model.reader.DataPage;
 

@@ -1,4 +1,4 @@
-package com.feiniu.instruction;
+package com.feiniu.instruction.sets;
 
 import java.util.HashMap;
 
@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.instruction.Context;
+import com.feiniu.instruction.Instruction;
 import com.feiniu.node.CPU;
 
 /**

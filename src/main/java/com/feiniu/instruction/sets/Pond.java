@@ -1,4 +1,4 @@
-package com.feiniu.instruction;
+package com.feiniu.instruction.sets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.Mechanism;
 import com.feiniu.config.GlobalParam.STATUS;
+import com.feiniu.instruction.Context;
+import com.feiniu.instruction.Instruction;
 import com.feiniu.util.Common;
 
 /**

@@ -1,8 +1,10 @@
-package com.feiniu.instruction;
+package com.feiniu.instruction.sets;
 
 import java.util.List;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.instruction.Context;
+import com.feiniu.instruction.Instruction;
 import com.feiniu.piper.TransDataFlow;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;

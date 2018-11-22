@@ -1,5 +1,7 @@
-package com.feiniu.instruction;
+package com.feiniu.instruction.sets;
 
+import com.feiniu.instruction.Context;
+import com.feiniu.instruction.Instruction;
 import com.feiniu.util.Common;
 
 /**
