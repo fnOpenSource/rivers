@@ -61,7 +61,7 @@ public class SQLParam implements ScanParam{
 		return seq;
 	}
 	public void setSeq(String seqs) {
-		this.seq = Common.String2List(seqs, ",");
+		this.seq = Common.stringToList(seqs, ",");
 	}
 	public String getPageScan() {
 		return pageScan;

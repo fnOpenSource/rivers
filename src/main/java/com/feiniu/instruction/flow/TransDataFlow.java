@@ -328,12 +328,12 @@ public final class TransDataFlow extends Instruction {
 								throw new FNException(instanceName + " " + desc + " job has been Terminated!");
 							} else {
 								DataPage pagedata;
-								if (getInstanceConfig().openCompute()) {
-									getReader().lock.lock();
-									pagedata = getSqlPageData(sql, incrementField, keyColumn,
-											getInstanceConfig().getComputeFields(),getReader());
-									getReader().freeJobPage();
-									getReader().lock.unlock();
+								getReader().lock.lock();
+								pagedata = getSqlPageData(sql, incrementField, keyColumn,
+										getInstanceConfig().getWriteFields(),getReader());
+								getReader().freeJobPage();
+								getReader().lock.unlock();
+								if (getInstanceConfig().openCompute()) { 
 									pagedata = computeDataSet(desc, writeTo, pagedata); 
 									if(processPos==pageList.size()) {
 										rState = writeDataSet(desc, writeTo, storeId, tseq, pagedata,
@@ -341,12 +341,7 @@ public final class TransDataFlow extends Instruction {
 									}else {
 										continue; 
 									} 
-								} else {
-									getReader().lock.lock();
-									pagedata = getSqlPageData(sql, incrementField, keyColumn,
-											getInstanceConfig().getWriteFields(),getReader());
-									getReader().freeJobPage();
-									getReader().lock.unlock();
+								} else { 
 									rState = writeDataSet(desc, writeTo, storeId, tseq, pagedata,
 											",process:" + processPos + "/" + pageList.size(), isUpdate, false);
 								} 
@@ -362,7 +357,7 @@ public final class TransDataFlow extends Instruction {
 							}
 							if (!isFull) {
 								GlobalParam.LAST_UPDATE_TIME.set(instanceName, DataSeq,
-										getTimeString(newLastUpdateTimes));
+										Common.arrayToString(newLastUpdateTimes,","));
 								Common.saveTaskInfo(instanceName, DataSeq, storeId, GlobalParam.JOB_INCREMENTINFO_PATH);
 							}
 						}
@@ -423,7 +418,7 @@ public final class TransDataFlow extends Instruction {
 			}
 		}
 
-		return getTimeString(newLastUpdateTimes);
+		return Common.arrayToString(newLastUpdateTimes,",");
 	}
 
 	/**
@@ -440,19 +435,5 @@ public final class TransDataFlow extends Instruction {
 		params.put(GlobalParam.READER_KEY, keyColumn);
 		DataPage tmp = (DataPage) RFS.getPageData(params, transField, this.readHandler,getInstanceConfig().getPipeParams().getReadPageSize());
 		return (DataPage) tmp.clone();
-	}
-
-	private String getTimeString(String[] strs) {
-		if (strs.length > 0) {
-			StringBuilder sb = new StringBuilder();
-			for (String s : strs) {
-				sb.append(",");
-				sb.append(s);
-			}
-			return sb.toString().substring(1);
-		} else {
-			return "0";
-		}
-	}
-
+	} 
 }

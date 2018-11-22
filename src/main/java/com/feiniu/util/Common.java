@@ -175,8 +175,20 @@ public final class Common {
 		return ret;
 	}
 
-	public static List<String> String2List(String str, String seperator) { 
+	public static List<String> stringToList(String str, String seperator) { 
 		return Arrays.asList(str.split(seperator));
+	}
+	
+	public static String arrayToString(String[] strs, String seperator) {
+		StringBuilder sf = new StringBuilder();
+		if (strs.length > 0) { 
+			for (String s : strs) {
+				sf.append(",");
+				sf.append(s);
+			}
+			return sf.substring(1);
+		} 
+		return sf.toString();
 	}
  
 
