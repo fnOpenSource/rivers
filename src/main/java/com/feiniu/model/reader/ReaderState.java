@@ -1,5 +1,11 @@
 package com.feiniu.model.reader;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class ReaderState { 
 	private String ReaderScanStamp = "0";
 	private int count = 0;

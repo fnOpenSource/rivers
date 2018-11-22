@@ -4,6 +4,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-22 09:08
+ */
 public class RiverState<T> extends ConcurrentHashMap<String,T>{
  
 	private static final long serialVersionUID = 7134367712318896122L;

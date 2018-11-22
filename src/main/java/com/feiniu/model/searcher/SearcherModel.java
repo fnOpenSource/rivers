@@ -3,6 +3,12 @@ package com.feiniu.model.searcher;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public interface SearcherModel<T1, T2, T3> {
 	public T1 getQuery();
 

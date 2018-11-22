@@ -5,6 +5,12 @@ import java.util.LinkedList;
 
 import com.feiniu.config.GlobalParam;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class DataPage extends HashMap<String, Object> {
 
 	private static final long serialVersionUID = 8764060758588207664L;

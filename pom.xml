@@ -426,7 +426,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>statisticsplatform</finalName>
+		<finalName>rivers</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

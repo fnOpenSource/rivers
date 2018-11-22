@@ -2,6 +2,12 @@ package com.feiniu.param.warehouse;
 
 import java.util.List;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public interface ScanParam {
 	
 	public boolean isSqlType();

@@ -31,6 +31,7 @@ public class PipeParam {
 	/**data write into type,full create new record,increment update part of data*/
 	private String writeType="full";
 	private Mechanism writeMechanism = Mechanism.AB;
+	private boolean multiThread = false;
 	
 	 
 	public String getWriteTo() {
@@ -54,6 +55,9 @@ public class PipeParam {
 	public String[] getNextJob() {
 		return nextJob;
 	}
+	public boolean isMultiThread() {
+		return multiThread;
+	} 
 	public String getReadHandler() {
 		return readHandler;
 	}
@@ -178,6 +182,10 @@ public class PipeParam {
 			if(!v.toLowerCase().equals("ab")) {
 				PP.writeMechanism = Mechanism.Time;
 			}
+			break;
+		case "multithread":
+			if(v.length()>0 && (v.equals("true")))
+				PP.multiThread = true;
 			break;
 		}
 	}

@@ -6,6 +6,12 @@ import java.util.Map;
 import com.feiniu.field.RiverField;
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class PipeDataUnit implements Cloneable{  
 	public String key_column_val;
 	private HashMap<String,Object> data;  

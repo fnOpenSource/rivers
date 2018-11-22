@@ -3,6 +3,12 @@ package com.feiniu.model.computer;
 import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.param.ml.ComputeParam;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-22 09:08
+ */
 public class SampleSets {
 	
 	private SamplePoint[] datas;

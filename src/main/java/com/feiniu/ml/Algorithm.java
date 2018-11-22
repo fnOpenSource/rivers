@@ -2,14 +2,21 @@ package com.feiniu.ml;
 
 import com.feiniu.model.computer.SamplePoint;
 
-public interface Algorithm {
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-11-22 09:04
+ */
+public abstract class Algorithm {
+ 
 	
-	public boolean loadModel(Object datas);
+	abstract public boolean loadModel(Object datas);
 	 
     /**
      * predicte the value of sample s
      * @param s : prediction sample
      * @return : predicted value
      */
-	public Object predict(SamplePoint point);
+	abstract public Object predict(SamplePoint point);
 }

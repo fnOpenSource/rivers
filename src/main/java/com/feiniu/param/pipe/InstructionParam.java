@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import com.feiniu.model.InstructionTree;
 import com.feiniu.util.Common;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-05-22 09:08
+ */
 public class InstructionParam {
 	
 	private String id;

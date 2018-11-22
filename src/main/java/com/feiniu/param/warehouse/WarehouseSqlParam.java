@@ -7,7 +7,8 @@ import com.feiniu.config.GlobalParam.DATA_TYPE;
 /**
  * 
  * @author chengwen
- *
+ * @version 1.0
+ * @date 2018-03-22 09:08
  */
 public class WarehouseSqlParam implements WarehouseParam{
 	

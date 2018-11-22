@@ -4,6 +4,12 @@ import java.util.HashMap;
 
 import com.feiniu.config.GlobalParam.DATA_TYPE;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class WarehouseNosqlParam implements WarehouseParam{
 	
 	private DATA_TYPE type = DATA_TYPE.UNKNOWN;

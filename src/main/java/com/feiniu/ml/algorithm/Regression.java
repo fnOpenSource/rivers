@@ -9,7 +9,7 @@ import com.feiniu.ml.Algorithm;
 import com.feiniu.model.computer.SamplePoint;
 import com.feiniu.model.computer.SampleSets;
 
-public abstract class Regression implements Algorithm{
+public abstract class Regression extends Algorithm{
 	
     double[] theta;  
     int featureSize; 

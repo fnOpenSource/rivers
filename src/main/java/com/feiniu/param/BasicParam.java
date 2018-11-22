@@ -1,5 +1,11 @@
 package com.feiniu.param;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-02-22 09:08
+ */
 public class BasicParam {
 	private String name = null;
 	private String value = null;

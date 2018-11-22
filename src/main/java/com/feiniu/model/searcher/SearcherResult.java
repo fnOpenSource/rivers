@@ -5,6 +5,12 @@ import java.util.List;
 
 import com.feiniu.model.ResponseDataUnit;
  
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class SearcherResult {
 	private float useTime;
 	private String callDateTime; 

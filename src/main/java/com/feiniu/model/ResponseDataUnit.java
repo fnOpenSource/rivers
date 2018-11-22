@@ -3,6 +3,12 @@ package com.feiniu.model;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-22 09:08
+ */
 public class ResponseDataUnit {
 	
 	Map<String,Object> internalMap = new LinkedHashMap<String, Object>();

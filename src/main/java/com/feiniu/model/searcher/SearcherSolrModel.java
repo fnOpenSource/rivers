@@ -11,6 +11,12 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.RiverRequest;
 import com.feiniu.searcher.flow.SolrQueryBuilder;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class SearcherSolrModel implements SearcherModel<SolrQuery, String, String> {
 	private SolrQuery query ; 
 	private int start = 0;

@@ -5,6 +5,12 @@ import java.util.List;
 import com.feiniu.param.warehouse.SQLParam;
 import com.feiniu.param.warehouse.ScanParam;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-02-22 09:08
+ */
 public class MessageParam implements ScanParam{
 	private SQLParam sqlParam; 
 	private String se;

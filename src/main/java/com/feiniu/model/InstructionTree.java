@@ -4,6 +4,12 @@ import java.util.ArrayList;
 
 import com.feiniu.node.CPU;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-06-22 09:08
+ */
 public class InstructionTree {
 
 	private Node root;
@@ -39,7 +45,7 @@ public class InstructionTree {
     }
   
     
-   public static class Node{
+   public class Node{
         String value;
         ArrayList<Node> leaf = new ArrayList<>();  
         public Node(String value){

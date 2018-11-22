@@ -8,6 +8,12 @@ import java.util.Map;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.param.end.SearcherParam;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-10-22 09:08
+ */
 public class RiverRequest {
 	private String pipe = null;
 	private String detail = null;

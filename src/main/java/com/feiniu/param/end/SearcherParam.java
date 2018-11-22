@@ -1,5 +1,12 @@
 package com.feiniu.param.end;
 
+
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-01-22 09:08
+ */
 public class SearcherParam {
 	
 	private String name = null;

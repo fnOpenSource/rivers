@@ -7,6 +7,12 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.NodeUtil;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 @Component
 public class RecoverMonitor {
 	 	

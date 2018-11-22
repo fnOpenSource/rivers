@@ -24,6 +24,12 @@ import com.feiniu.model.RiverRequest;
 import com.feiniu.searcher.flow.ESQueryBuilder;
 import com.feiniu.util.SearchParamUtil;
 
+/**
+ * 
+ * @author chengwen
+ * @version 1.0
+ * @date 2018-07-22 09:08
+ */
 public class SearcherESModel implements SearcherModel<QueryBuilder,SortBuilder<?>,AggregationBuilder>{
 	private QueryBuilder query;
 	private List<SortBuilder<?>> sortinfo;

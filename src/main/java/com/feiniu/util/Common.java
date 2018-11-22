@@ -389,7 +389,7 @@ public final class Common {
 	 */
 	
 	public static String formatLog(String heads,String instanceName, String storeId,
-			String seq, String total, String dataBoundary, String lastUpdateTime,
+			String seq, int total, String dataBoundary, String lastUpdateTime,
 			long useTime, String types, String moreinfo) {
 		String useTimeFormat = Common.seconds2time(useTime);
 		StringBuilder str = new StringBuilder("["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : ""));
