@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.node.CPU;
+import com.feiniu.piper.TransDataFlow;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 

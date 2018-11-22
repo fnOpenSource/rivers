@@ -17,13 +17,13 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.field.RiverField;
-import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.reader.DataPage;
 import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.model.searcher.SearcherESModel;
 import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.node.CPU;
 import com.feiniu.param.warehouse.WarehouseParam;
+import com.feiniu.piper.TransDataFlow;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
@@ -121,11 +121,11 @@ public class HttpReaderService {
 								if(writeTo==null) {
 									writeTo = Common.getInstanceName(instance, seq);
 								}
-								transDataFlow.writeDataSet("HTTP PUT",
+								CPU.RUN(transDataFlow.getID(), "Pipe", "writeDataSet", false, "HTTP PUT",
 										writeTo,
 										storeid, "", getPageData(rq.getParameter("data"), keycolumn, updatecolumn,
 												transDataFlow.getInstanceConfig().getWriteFields()),
-										"", isUpdate,monopoly);
+										"", isUpdate,monopoly); 
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
 								Common.LOG.error("Http Write Exception,",e);

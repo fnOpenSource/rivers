@@ -31,8 +31,8 @@ public class Pond extends Instruction {
 		boolean state = false;
 		if (context.getWriter().ISLINK()) {
 			try { 
-				String mainName = (String) args[0]; 
-				String storeId = (String) args[1];  
+				String mainName = String.valueOf(args[0]); 
+				String storeId = String.valueOf(args[1]);  
 				if(context.getInstanceConfig().getPipeParams().getWriteMechanism()==Mechanism.AB) {
 					state = context.getWriter().create(mainName, storeId, context.getInstanceConfig().getWriteFields());    
 				}else {
@@ -84,8 +84,8 @@ public class Pond extends Instruction {
 		context.getWriter().PREPARE(false, false);
 		if (context.getWriter().ISLINK()) {
 			try {
-				String mainName = (String) args[0]; 
-				String storeId = (String) args[1];
+				String mainName = String.valueOf(args[0]); 
+				String storeId = String.valueOf(args[1]);
 				context.getWriter().optimize(mainName, storeId);
 			} finally {
 				context.getWriter().REALEASE(false,false);
@@ -158,7 +158,7 @@ public class Pond extends Instruction {
 			log.error("getNewStoreId parameter not match!");
 			return null;
 		}
-		String mainName = (String) args[0];
+		String mainName = String.valueOf(args[0]);
 		boolean isIncrement = (boolean) args[1]; 
 		context.getWriter().PREPARE(false, false);
 		boolean release = false;

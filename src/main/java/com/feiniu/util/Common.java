@@ -27,11 +27,11 @@ import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
-import com.feiniu.instruction.flow.TransDataFlow;
 import com.feiniu.model.InstructionTree;
 import com.feiniu.model.RiverRequest;
 import com.feiniu.node.CPU;
-import com.feiniu.param.warehouse.WarehouseParam; 
+import com.feiniu.param.warehouse.WarehouseParam;
+import com.feiniu.piper.TransDataFlow; 
 
 /**
  * 

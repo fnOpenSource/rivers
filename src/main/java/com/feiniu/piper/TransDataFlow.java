@@ -1,4 +1,4 @@
-package com.feiniu.instruction.flow;
+package com.feiniu.piper;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -108,73 +108,7 @@ public final class TransDataFlow extends Instruction {
 		}
 		return DP;
 	}
-
-	/**
-	 * do index one page
-	 * 
-	 * @param id
-	 *            distinguish jobs,for write logs
-	 * @param instance
-	 *            Instance Name append with data source sequence,should use
-	 *            Common.getInstanceName to fetch
-	 * @param storeId
-	 * @param seq
-	 *            data source son level sequence
-	 * @param sql
-	 * @param info
-	 *            log info
-	 * @param incrementField
-	 *            for SQL scan job
-	 * @param isUpdate
-	 *            write with update method
-	 * @param monopoly
-	 *            monopoly resource not release
-	 * @return ReaderState
-	 * @throws Exception
-	 */
-	public ReaderState writeDataSet(String id, String instance, String storeId, String seq, DataPage pageData,
-			String info, boolean isUpdate, boolean monopoly) throws Exception {
-		ReaderState rstate = new ReaderState();
-		if (pageData.size() == 0)
-			return rstate;
-		DataSetReader DSReader = new DataSetReader();
-		DSReader.init(pageData);
-		long start = Common.getNow();
-		int num = 0;
-		if (DSReader.status()) {
-			getWriter().PREPARE(monopoly, false);
-			if (!getWriter().ISLINK()) {
-				rstate.setStatus(false);
-				return rstate;
-			}
-			boolean freeConn = false;
-			try {
-				while (DSReader.nextLine()) {
-					getWriter().write(getInstanceConfig().getWriterParams(), DSReader.getLineData(),
-							getInstanceConfig().getWriteFields(), instance, storeId, isUpdate);
-					num++;
-				}
-				rstate.setReaderScanStamp(DSReader.getScanStamp());
-				rstate.setCount(num);
-				log.info(Common.formatLog(" -- " + id + " onepage ", instance, storeId, seq, num,
-						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start, "onepage", info));
-			} catch (Exception e) {
-				if (e.getMessage().equals("storeId not found")) {
-					throw new FNException("storeId not found");
-				} else {
-					freeConn = true;
-				}
-			} finally {
-				DSReader.close();
-				getWriter().flush();
-				getWriter().REALEASE(monopoly, freeConn);
-			}
-		} else {
-			rstate.setStatus(false);
-		}
-		return rstate;
-	}
-
+ 
 	/**
 	 * write to not db platform
 	 * 
@@ -206,7 +140,7 @@ public final class TransDataFlow extends Instruction {
 				String startId = "";
 				String endId = "";
 				int total = 0;
-				ReaderState rstate;
+				ReaderState rState;
 				long start = Common.getNow();
 				for (String page : pageList) {
 					processPos++;
@@ -216,12 +150,11 @@ public final class TransDataFlow extends Instruction {
 					pageParams.put(GlobalParam._end, endId);
 					pageParams.put(GlobalParam._start_time, lastTime);
 					pageParams.put(GlobalParam._incrementField, noSqlParam.getIncrementField());
-
-					rstate = writeDataSet(desc, destName, storeId, "",
+					rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, destName, storeId, "",
 							getReader().getPageData(pageParams, getInstanceConfig().getWriteFields(), this.readHandler,getInstanceConfig().getPipeParams().getReadPageSize()),
-							",process:" + processPos + "/" + pageList.size(), false, false);
+							",process:" + processPos + "/" + pageList.size(), false, false); 
 
-					total += rstate.getCount();
+					total += rState.getCount();
 					startId = endId;
 				}
 				log.info(Common.formatLog("complete " + desc, destName, storeId, "", total, "",
@@ -336,14 +269,15 @@ public final class TransDataFlow extends Instruction {
 								if (getInstanceConfig().openCompute()) { 
 									pagedata = computeDataSet(desc, writeTo, pagedata); 
 									if(processPos==pageList.size()) {
-										rState = writeDataSet(desc, writeTo, storeId, tseq, pagedata,
-												",process:" + processPos + "/" + pageList.size(), isUpdate, false);
+										rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, writeTo, storeId, tseq, pagedata,
+												",process:" + processPos + "/" + pageList.size(), isUpdate, false);  
 									}else {
 										continue; 
 									} 
 								} else { 
-									rState = writeDataSet(desc, writeTo, storeId, tseq, pagedata,
-											",process:" + processPos + "/" + pageList.size(), isUpdate, false);
+									rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, writeTo, storeId, tseq, pagedata,
+											",process:" + processPos + "/" + pageList.size(), isUpdate, false); 
+								 
 								} 
 								if (rState.isStatus() == false)
 									throw new FNException("read data exception!");

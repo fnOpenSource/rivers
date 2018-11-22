@@ -3,7 +3,7 @@ package com.feiniu.instruction;
 import java.util.List;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.instruction.flow.TransDataFlow;
+import com.feiniu.piper.TransDataFlow;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
