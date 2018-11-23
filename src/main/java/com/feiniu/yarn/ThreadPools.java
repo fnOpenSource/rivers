@@ -1,5 +1,6 @@
 package com.feiniu.yarn;
 
+import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -33,6 +34,16 @@ public class ThreadPools {
 			Common.LOG.error("SubmitJobPage Exception", e);
 		}
 	}
+	
+	public void cleanWaitJob(int id) {
+		Iterator<JobPage> iter = waitJob.iterator();
+		JobPage jp;
+        while(iter.hasNext()) {
+        	jp = iter.next();
+        	if(jp.getId()==id)
+        		waitJob.remove(jp);
+        }
+	}
 
 	public void start() {
 		try {
@@ -42,7 +53,7 @@ public class ThreadPools {
 					Thread.sleep(900);
 				} 
 				cachedThreadPool.execute(()->runJobPage(jp));
-			} 
+			}  
 		} catch (Exception e) {
 			Common.LOG.error("start run JobPage Exception", e);
 		}
