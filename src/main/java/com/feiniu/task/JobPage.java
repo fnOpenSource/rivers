@@ -16,4 +16,40 @@ public class JobPage {
 	private String keyColumn;
 	private Map<String, RiverField> transField;
 	private long timeStamp = System.currentTimeMillis();
+
+	public String getSql() {
+		return sql;
+	}
+
+	public void setSql(String sql) {
+		this.sql = sql;
+	}
+
+	public String getIncrementField() {
+		return incrementField;
+	}
+
+	public void setIncrementField(String incrementField) {
+		this.incrementField = incrementField;
+	}
+
+	public String getKeyColumn() {
+		return keyColumn;
+	}
+
+	public void setKeyColumn(String keyColumn) {
+		this.keyColumn = keyColumn;
+	}
+
+	public Map<String, RiverField> getTransField() {
+		return transField;
+	}
+
+	public void setTransField(Map<String, RiverField> transField) {
+		this.transField = transField;
+	}
+
+	public long getTimeStamp() {
+		return timeStamp;
+	}
 }

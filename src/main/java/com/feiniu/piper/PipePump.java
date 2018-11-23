@@ -23,17 +23,16 @@ import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.SqlUtil;
 import com.feiniu.writer.WriterFlowSocket;
-
+ 
 /**
- * Build computing river flow transfer data from A to B
- * 
+ * PipePump is the energy of the flow pipes 
  * @author chengwen
- * @version 4.0
- * @date 2018-10-29 09:20
+ * @version 1.0
+ * @date 2018-11-23 14:36
  */
 public final class PipePump extends Instruction {
 
-	private final static Logger log = LoggerFactory.getLogger("TransDataFlow");
+	private final static Logger log = LoggerFactory.getLogger("PipePump");
 	/** defined custom read flow socket */
 	private Handler readHandler;
 
@@ -50,7 +49,7 @@ public final class PipePump extends Instruction {
 						.newInstance();
 			}
 		} catch (Exception e) {
-			log.error("TransDataFlow Instruction Exception,", e);
+			log.error("PipePump init Exception,", e);
 		}
 	}
 
