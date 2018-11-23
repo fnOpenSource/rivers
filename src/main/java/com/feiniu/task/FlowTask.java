@@ -9,7 +9,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.node.CPU;
-import com.feiniu.piper.TransDataFlow;
+import com.feiniu.piper.PipePump;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 
@@ -24,7 +24,7 @@ public class FlowTask {
 	private boolean recompute = true;
 	private boolean masterControl = false;
 	private String instanceName;
-	private TransDataFlow transDataFlow;
+	private PipePump transDataFlow;
 	/**
 	 * seq for scan series datas
 	 */
@@ -32,15 +32,15 @@ public class FlowTask {
 
 	private final static Logger log = LoggerFactory.getLogger(FlowTask.class);
 
-	public static FlowTask createTask(String instanceName, TransDataFlow transDataFlow) {
+	public static FlowTask createTask(String instanceName, PipePump transDataFlow) {
 		return new FlowTask(instanceName, transDataFlow, GlobalParam.DEFAULT_RESOURCE_SEQ);
 	}
 
-	public static FlowTask createTask(String instanceName, TransDataFlow transDataFlow, String seq) {
+	public static FlowTask createTask(String instanceName, PipePump transDataFlow, String seq) {
 		return new FlowTask(instanceName, transDataFlow, seq);
 	}
 
-	private FlowTask(String instanceName, TransDataFlow transDataFlow, String seq) {
+	private FlowTask(String instanceName, PipePump transDataFlow, String seq) {
 		this.instanceName = instanceName;
 		this.transDataFlow = transDataFlow;
 		this.seq = seq;

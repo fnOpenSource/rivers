@@ -23,7 +23,7 @@ import com.feiniu.model.searcher.SearcherESModel;
 import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.node.CPU;
 import com.feiniu.param.warehouse.WarehouseParam;
-import com.feiniu.piper.TransDataFlow;
+import com.feiniu.piper.PipePump;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
@@ -99,8 +99,8 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,monopoly?GlobalParam.FLOW_TAG._MOP.name():GlobalParam.FLOW_TAG._DEFAULT.name());
-							if (transDataFlow == null || !transDataFlow.getInstanceConfig().getAlias().equals(dataTo)) {
+							PipePump pipePump = GlobalParam.SOCKET_CENTER.getPipePump(instance, seq, false,monopoly?GlobalParam.FLOW_TAG._MOP.name():GlobalParam.FLOW_TAG._DEFAULT.name());
+							if (pipePump == null || !pipePump.getInstanceConfig().getAlias().equals(dataTo)) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance not exits!\"}");
 								break;
 							}
@@ -108,7 +108,7 @@ public class HttpReaderService {
 							if (rq.getParameter("type").equals("full") && rq.getParameterMap().get("storeid") != null) {
 								storeid = rq.getParameter("storeid");
 							} else {
-								storeid = Common.getStoreId(instance, seq, transDataFlow, true, false);
+								storeid = Common.getStoreId(instance, seq, pipePump, true, false);
 							}
 							boolean isUpdate = false; 
 							
@@ -117,14 +117,14 @@ public class HttpReaderService {
 								isUpdate = true;  
 							
 							try {
-								String writeTo = transDataFlow.getInstanceConfig().getPipeParams().getInstanceName();
+								String writeTo = pipePump.getInstanceConfig().getPipeParams().getInstanceName();
 								if(writeTo==null) {
 									writeTo = Common.getInstanceName(instance, seq);
 								}
-								CPU.RUN(transDataFlow.getID(), "Pipe", "writeDataSet", false, "HTTP PUT",
+								CPU.RUN(pipePump.getID(), "Pipe", "writeDataSet", false, "HTTP PUT",
 										writeTo,
 										storeid, "", getPageData(rq.getParameter("data"), keycolumn, updatecolumn,
-												transDataFlow.getInstanceConfig().getWriteFields()),
+												pipePump.getInstanceConfig().getWriteFields()),
 										"", isUpdate,monopoly); 
 								response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 							} catch (Exception e) {
@@ -143,11 +143,11 @@ public class HttpReaderService {
 						break;
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
-							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(rq.getParameter("instance"),
+							PipePump pipePump = GlobalParam.SOCKET_CENTER.getPipePump(rq.getParameter("instance"),
 									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
-									transDataFlow, false, false);
-							CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition",true,rq.getParameter("instance"), storeid);   
+									pipePump, false, false);
+							CPU.RUN(pipePump.getID(), "Pond", "createStorePosition",true,rq.getParameter("instance"), storeid);   
 							response.getWriter()
 									.println("{\"status\":1,\"info\":\"success\",\"storeid\":\"" + storeid + "\"}");
 						} else {
@@ -160,16 +160,16 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
+							PipePump pipePump = GlobalParam.SOCKET_CENTER.getPipePump(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
 								storeid = Common.getStoreId(instance, seq,
-										transDataFlow, false, false);
-								CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition",true,instance, storeid);    
+										pipePump, false, false);
+								CPU.RUN(pipePump.getID(), "Pond", "createStorePosition",true,instance, storeid);    
 							} 
-							CPU.RUN(transDataFlow.getID(), "Pond", "switchInstance",true, instance,seq,storeid);
-							transDataFlow.run(instance, storeid, "-1", seq, true,transDataFlow.getInstanceConfig().getPipeParams().getInstanceName()==null?false:true);
+							CPU.RUN(pipePump.getID(), "Pond", "switchInstance",true, instance,seq,storeid);
+							pipePump.run(instance, storeid, "-1", seq, true,pipePump.getInstanceConfig().getPipeParams().getInstanceName()==null?false:true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"切换索引失败!\"}");
@@ -181,7 +181,7 @@ public class HttpReaderService {
 							SearcherModel<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							TransDataFlow transFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name()); 
+							PipePump transFlow = GlobalParam.SOCKET_CENTER.getPipePump(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name()); 
 							if (transFlow == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;

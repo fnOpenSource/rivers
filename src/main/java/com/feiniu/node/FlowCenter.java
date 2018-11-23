@@ -91,7 +91,7 @@ public class FlowCenter{
 						GlobalParam.tasks.remove(Common.getInstanceName(instance, seq));
 					
 					for(GlobalParam.FLOW_TAG tag:GlobalParam.FLOW_TAG.values()) {
-						GlobalParam.SOCKET_CENTER.clearTransDataFlow(instance, seq, tag.name());
+						GlobalParam.SOCKET_CENTER.clearPipePump(instance, seq, tag.name());
 					} 
 					state = removeFlowScheduleJob(Common.getInstanceName(instance, seq),instanceConfig) && state;
 				}
@@ -113,7 +113,7 @@ public class FlowCenter{
 					continue; 
 				if(!GlobalParam.tasks.containsKey(Common.getInstanceName(instanceName, seq)) || needClear){
 					GlobalParam.tasks.put(Common.getInstanceName(instanceName, seq), FlowTask.createTask(instanceName,
-							GlobalParam.SOCKET_CENTER.getTransDataFlow(instanceName, seq,needClear,GlobalParam.FLOW_TAG._DEFAULT.name()), seq));
+							GlobalParam.SOCKET_CENTER.getPipePump(instanceName, seq,needClear,GlobalParam.FLOW_TAG._DEFAULT.name()), seq));
 				}  
 				createFlowScheduleJob(Common.getInstanceName(instanceName, seq), GlobalParam.tasks.get(Common.getInstanceName(instanceName, seq)),
 						instanceConfig,needClear);

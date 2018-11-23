@@ -69,8 +69,7 @@ public class MysqlFlow extends WriterFlowSocket {
 	@Override
 	public boolean create(String instance, String storeId, Map<String, RiverField> transParams) {
 		String name = Common.getStoreName(instance, storeId);
-		String type = instance;
-		boolean releaseConn = false;
+		String type = instance; 
 		PREPARE(false, false);
 		if (!ISLINK())
 			return false;
@@ -83,7 +82,7 @@ public class MysqlFlow extends WriterFlowSocket {
 			log.error("create Instance " + name + ":" + type + " failed!", e);
 			return false;
 		} finally {
-			REALEASE(false, releaseConn);
+			REALEASE(false, false);
 		}
 	} 
 
@@ -95,8 +94,19 @@ public class MysqlFlow extends WriterFlowSocket {
 
 	@Override
 	public void removeInstance(String instance, String storeId) {
-		// TODO Auto-generated method stub
-		
+		String name = Common.getStoreName(instance, storeId); 
+		PREPARE(false, false);
+		if (!ISLINK())
+			return;
+		Connection conn = (Connection) GETSOCKET().getConnection(false);
+		try (PreparedStatement statement = conn.prepareStatement("DROP table if exists "+name);) {
+			log.info("Remove Instance " + name + " success!");
+			statement.execute(); 
+		} catch (Exception e) {
+			log.error("Remove Instancee " + name + " failed!", e); 
+		} finally {
+			REALEASE(false, false);
+		}
 	}
 
 	@Override
@@ -118,11 +128,11 @@ public class MysqlFlow extends WriterFlowSocket {
 		if (!ISLINK())
 			return select;
 		Connection conn = (Connection) GETSOCKET().getConnection(false);
-		String checkSql = "SELECT table_name FROM information_schema.TABLES WHERE table_name ='"
+		String checkSql = " show tables like '"
 				+ Common.getStoreName(mainName, "a") + "';";
 		try (PreparedStatement statement = conn.prepareStatement(checkSql);) {
 			try (ResultSet rs = statement.executeQuery();) {
-				if (rs.getRow() == 0)
+				if (!rs.next())  
 					select = "a";
 			} catch (Exception e) {
 				log.error("ResultSet Exception", e);

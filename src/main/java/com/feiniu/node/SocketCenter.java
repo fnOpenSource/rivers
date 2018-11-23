@@ -7,7 +7,7 @@ import com.feiniu.computer.Computer;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.param.warehouse.WarehouseParam;
-import com.feiniu.piper.TransDataFlow;
+import com.feiniu.piper.PipePump;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.ReaderFlowSocketFactory;
 import com.feiniu.searcher.Searcher;
@@ -33,7 +33,7 @@ public final class SocketCenter {
 	private Map<String, Computer> computerMap = new ConcurrentHashMap<>();
 
 	/** for normal transfer **/
-	private Map<String, TransDataFlow> transDataFlowMap = new ConcurrentHashMap<>();
+	private Map<String, PipePump> pipePumpMap = new ConcurrentHashMap<>();
 	private Map<String, WriterFlowSocket> writerSocketMap = new ConcurrentHashMap<>();
 	private Map<String, ReaderFlowSocket> readerSocketMap = new ConcurrentHashMap<>();
 	private Map<String, SearcherFlowSocket> searcherSocketMap = new ConcurrentHashMap<>();
@@ -51,11 +51,11 @@ public final class SocketCenter {
 	 * @param tag
 	 *            Marking resource
 	 */
-	public TransDataFlow getTransDataFlow(String instance, String seq, boolean needClear, String tag) {
-		synchronized (transDataFlowMap) {
+	public PipePump getPipePump(String instance, String seq, boolean needClear, String tag) {
+		synchronized (pipePumpMap) {
 			String tags = Common.getResourceTag(instance, seq, tag, false);
-			if (!transDataFlowMap.containsKey(tags) || needClear) {
-				TransDataFlow transDataFlow = TransDataFlow.getInstance(
+			if (!pipePumpMap.containsKey(tags) || needClear) {
+				PipePump transDataFlow = PipePump.getInstance(
 						getReaderSocket(
 								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadFrom(),
 								instance, seq, tag),
@@ -63,9 +63,9 @@ public final class SocketCenter {
 								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
 								instance, seq, tag),
 						GlobalParam.nodeConfig.getInstanceConfigs().get(instance));
-				transDataFlowMap.put(tags, transDataFlow);
+				pipePumpMap.put(tags, transDataFlow);
 			}
-			return transDataFlowMap.get(tags);
+			return pipePumpMap.get(tags);
 		}
 	}
 
@@ -101,11 +101,11 @@ public final class SocketCenter {
 		}
 	}
 
-	public void clearTransDataFlow(String instance, String seq, String tag) {
+	public void clearPipePump(String instance, String seq, String tag) {
 		synchronized (this) {
 			String tags = Common.getResourceTag(instance, seq, tag, false);
-			if (transDataFlowMap.containsKey(tags)) {
-				transDataFlowMap.remove(tags);
+			if (pipePumpMap.containsKey(tags)) {
+				pipePumpMap.remove(tags);
 
 				boolean ignoreSeqUseAlias = false;
 				if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance) != null)

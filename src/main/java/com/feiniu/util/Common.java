@@ -31,7 +31,7 @@ import com.feiniu.model.InstructionTree;
 import com.feiniu.model.RiverRequest;
 import com.feiniu.node.CPU;
 import com.feiniu.param.warehouse.WarehouseParam;
-import com.feiniu.piper.TransDataFlow; 
+import com.feiniu.piper.PipePump; 
 
 /**
  * 
@@ -301,7 +301,7 @@ public final class Common {
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static synchronized String getStoreId(String instanceName, String seq, TransDataFlow transDataFlow, boolean isIncrement,
+	public static synchronized String getStoreId(String instanceName, String seq, PipePump transDataFlow, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) { 
 			String storeId = getStoreIdFromZK(instanceName,seq,true); 

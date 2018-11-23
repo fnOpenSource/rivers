@@ -3,7 +3,6 @@ package com.feiniu.piper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +11,7 @@ import com.feiniu.config.GlobalParam;
 import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
-import com.feiniu.field.RiverField;
 import com.feiniu.instruction.Instruction;
-import com.feiniu.model.computer.SampleSets;
 import com.feiniu.model.reader.DataPage;
 import com.feiniu.model.reader.ReaderState;
 import com.feiniu.node.CPU;
@@ -22,7 +19,6 @@ import com.feiniu.param.warehouse.NoSQLParam;
 import com.feiniu.param.warehouse.SQLParam;
 import com.feiniu.reader.ReaderFlowSocket;
 import com.feiniu.reader.handler.Handler;
-import com.feiniu.reader.util.DataSetReader;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.SqlUtil;
@@ -35,18 +31,18 @@ import com.feiniu.writer.WriterFlowSocket;
  * @version 4.0
  * @date 2018-10-29 09:20
  */
-public final class TransDataFlow extends Instruction {
+public final class PipePump extends Instruction {
 
 	private final static Logger log = LoggerFactory.getLogger("TransDataFlow");
 	/** defined custom read flow socket */
 	private Handler readHandler;
 
-	public static TransDataFlow getInstance(ReaderFlowSocket reader, WriterFlowSocket writer,
+	public static PipePump getInstance(ReaderFlowSocket reader, WriterFlowSocket writer,
 			InstanceConfig instanceConfig) {
-		return new TransDataFlow(reader, writer, instanceConfig);
+		return new PipePump(reader, writer, instanceConfig);
 	}
 
-	private TransDataFlow(ReaderFlowSocket reader, WriterFlowSocket writer, InstanceConfig instanceConfig) {
+	private PipePump(ReaderFlowSocket reader, WriterFlowSocket writer, InstanceConfig instanceConfig) {
 		CPU.prepare(getID(), instanceConfig, writer, reader);
 		try {
 			if (instanceConfig.getPipeParams().getReadHandler() != null) {
@@ -77,37 +73,7 @@ public final class TransDataFlow extends Instruction {
 
 	public WriterFlowSocket getWriter() {
 		return CPU.getContext(getID()).getWriter();
-	}
-
-	public DataPage computeDataSet(String id, String instance, DataPage pageData) {
-		if (pageData.size() == 0)
-			return pageData;
-		DataPage DP = new DataPage();
-		DataSetReader DSReader = new DataSetReader();
-		DSReader.init(pageData);
-		long start = Common.getNow();
-		int num = 0;
-		if (DSReader.status()) {
-			try {
-				SampleSets samples = SampleSets.getInstance(pageData.getData().size());
-				while (DSReader.nextLine()) {
-					samples.addPoint(DSReader.getLineData(), getInstanceConfig().getComputeParams());
-					num++;
-				}
-				DP = (DataPage) CPU.RUN(getID(), "ML", "train", false,
-						getInstanceConfig().getComputeParams().getAlgorithm(), samples,
-						getInstanceConfig().getWriteFields());
-				log.info(Common.formatLog(" -- " + id + " compute onepage ", instance,
-						getInstanceConfig().getComputeParams().getAlgorithm(), "", num,
-						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start, "onepage", ""));
-			} catch (Exception e) {
-				log.error("computeDataSet Exception", e);
-			} finally {
-				DSReader.close();
-			}
-		}
-		return DP;
-	}
+	} 
  
 	/**
 	 * write to not db platform
@@ -260,14 +226,14 @@ public final class TransDataFlow extends Instruction {
 							if (Common.checkFlowStatus(instanceName, DataSeq, desc, STATUS.Termination)) {
 								throw new FNException(instanceName + " " + desc + " job has been Terminated!");
 							} else {
-								DataPage pagedata;
-								getReader().lock.lock();
-								pagedata = getSqlPageData(sql, incrementField, keyColumn,
-										getInstanceConfig().getWriteFields(),getReader());
-								getReader().freeJobPage();
-								getReader().lock.unlock();
+								DataPage pagedata; 
 								if (getInstanceConfig().openCompute()) { 
-									pagedata = computeDataSet(desc, writeTo, pagedata); 
+									getReader().lock.lock();
+									pagedata = (DataPage) CPU.RUN(getID(), "Pipe", "fetchDataSet", false, sql, incrementField, keyColumn,
+											getInstanceConfig().getComputeFields(),getReader(),this.readHandler);  
+									getReader().freeJobPage();
+									getReader().lock.unlock();
+									pagedata = (DataPage) CPU.RUN(getID(), "ML", "computeDataSet", false, getID(), desc, writeTo, pagedata); 
 									if(processPos==pageList.size()) {
 										rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, writeTo, storeId, tseq, pagedata,
 												",process:" + processPos + "/" + pageList.size(), isUpdate, false);  
@@ -275,6 +241,11 @@ public final class TransDataFlow extends Instruction {
 										continue; 
 									} 
 								} else { 
+									getReader().lock.lock();
+									pagedata = (DataPage) CPU.RUN(getID(), "Pipe", "fetchDataSet", false, sql, incrementField, keyColumn,
+											getInstanceConfig().getWriteFields(),getReader(),this.readHandler);  
+									getReader().freeJobPage();
+									getReader().lock.unlock();
 									rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, writeTo, storeId, tseq, pagedata,
 											",process:" + processPos + "/" + pageList.size(), isUpdate, false); 
 								 
@@ -328,8 +299,7 @@ public final class TransDataFlow extends Instruction {
 			}
 		}
 
-		GlobalParam.FLOW_INFOS.get(instanceName, desc).clear();
-
+		GlobalParam.FLOW_INFOS.get(instanceName, desc).clear(); 
 		if (isFull) {
 			if (masterControl) {
 				String _dest = getInstanceConfig().getPipeParams().getInstanceName();
@@ -342,7 +312,7 @@ public final class TransDataFlow extends Instruction {
 					if (remainJobs.length() == 0) {
 						String _storeId = GlobalParam.FLOW_INFOS.get(_dest, GlobalParam.FLOWINFO.MASTER.name())
 								.get(GlobalParam.FLOWINFO.FULL_STOREID.name());
-						TransDataFlow ts = GlobalParam.SOCKET_CENTER.getTransDataFlow(_dest, null, false,
+						PipePump ts = GlobalParam.SOCKET_CENTER.getPipePump(_dest, null, false,
 								GlobalParam.FLOW_TAG._DEFAULT.name());
 						CPU.RUN(ts.getID(), "Pond", "switchInstance", true, instanceName, DataSeq, _storeId);
 					}
@@ -354,20 +324,5 @@ public final class TransDataFlow extends Instruction {
 
 		return Common.arrayToString(newLastUpdateTimes,",");
 	}
-
-	/**
-	 * @param sql
-	 * @param incrementField
-	 *            get auto incrementField to store
-	 * @return
-	 */
-	private DataPage getSqlPageData(String sql, String incrementField, String keyColumn,
-			Map<String, RiverField> transField,ReaderFlowSocket RFS) {
-		HashMap<String, String> params = new HashMap<>();
-		params.put("sql", sql);
-		params.put(GlobalParam.READER_SCAN_KEY, incrementField);
-		params.put(GlobalParam.READER_KEY, keyColumn);
-		DataPage tmp = (DataPage) RFS.getPageData(params, transField, this.readHandler,getInstanceConfig().getPipeParams().getReadPageSize());
-		return (DataPage) tmp.clone();
-	} 
+ 
 }

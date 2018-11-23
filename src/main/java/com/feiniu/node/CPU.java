@@ -39,7 +39,7 @@ public class CPU {
 	public static Object RUN(String runId,String instructionsSet,String instruction,boolean runCheck,Object... args){ 
 		Object rs=null;
 		try {
-			Class<?> clz = Class.forName("com.feiniu.instruction.sets"+instructionsSet); 
+			Class<?> clz = Class.forName("com.feiniu.instruction.sets."+instructionsSet); 
 			Method m = clz.getMethod(instruction, Context.class,Object[].class);  
 			if(instructionsSet.equals("Track")) {
 				Object[] argsNew = new Object[args.length+1];

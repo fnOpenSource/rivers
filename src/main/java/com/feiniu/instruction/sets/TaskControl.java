@@ -5,7 +5,7 @@ import java.util.List;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.Context;
 import com.feiniu.instruction.Instruction;
-import com.feiniu.piper.TransDataFlow;
+import com.feiniu.piper.PipePump;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
 
@@ -55,7 +55,7 @@ public class TaskControl extends Instruction{
 		for(String seq:seqs) { 
 			String saveInfo=""; 
 			List<String> table_seq = context.getInstanceConfig().getReadParams().getSeq();
-			TransDataFlow transDataFlow = GlobalParam.SOCKET_CENTER.getTransDataFlow(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
+			PipePump transDataFlow = GlobalParam.SOCKET_CENTER.getPipePump(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 			String storeId = Common.getStoreId(context.getInstanceConfig().getName(), seq, transDataFlow, true, false);
 			if(storeId==null)
 				break;
