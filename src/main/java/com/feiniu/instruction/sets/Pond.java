@@ -109,9 +109,9 @@ public class Pond extends Instruction {
 		mainName = Common.getInstanceName(String.valueOf(args[0]),String.valueOf(args[1]));
 		storeId = String.valueOf(args[2]); 
 		int waittime=0; 
-		if(Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Running)) {
+		if(Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT,STATUS.Running)) {
 			Common.setFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(), STATUS.Blank, STATUS.Termination);
-			while (!Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready)) {
+			while (!Common.checkFlowStatus(mainName,"",GlobalParam.JOB_TYPE.INCREMENT,STATUS.Ready)) {
 				try {
 					waittime++;
 					Thread.sleep(2000);

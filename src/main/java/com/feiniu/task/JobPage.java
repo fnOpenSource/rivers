@@ -1,7 +1,9 @@
 package com.feiniu.task;
 
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
+import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.field.RiverField;
 
 /**
@@ -13,6 +15,9 @@ import com.feiniu.field.RiverField;
 public class JobPage {
 	private long id;
 	private String instance;
+	public CountDownLatch leftPage;
+	private JOB_TYPE job_type;
+	private String seq;
 	private String sql;
 	private String incrementField;
 	private String keyColumn;
@@ -33,6 +38,22 @@ public class JobPage {
 
 	public void setInstance(String instance) {
 		this.instance = instance;
+	}
+
+	public JOB_TYPE getJob_type() {
+		return job_type;
+	}
+
+	public void setJob_type(JOB_TYPE job_type) {
+		this.job_type = job_type;
+	}
+
+	public String getSeq() {
+		return seq;
+	}
+
+	public void setSeq(String seq) {
+		this.seq = seq;
 	}
 
 	public String getSql() {

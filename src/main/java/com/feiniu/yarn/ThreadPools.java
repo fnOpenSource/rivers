@@ -7,6 +7,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.task.JobPage;
 import com.feiniu.util.Common;
 
@@ -57,9 +58,15 @@ public class ThreadPools {
 		} catch (Exception e) {
 			Common.LOG.error("start run JobPage Exception", e);
 		}
-	}
+	} 
 	
 	private static void runJobPage(JobPage jp) {
-		
+		if(jp.getId()>0) {
+			Thread.interrupted();
+		}
+		if (Common.checkFlowStatus(jp.getInstance(), jp.getSeq(), jp.getJob_type(), STATUS.Termination)) {
+			return;
+		}
+		jp.leftPage.countDown();
 	}
 }

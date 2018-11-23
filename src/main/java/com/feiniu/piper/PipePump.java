@@ -146,14 +146,14 @@ public final class PipePump extends Instruction {
 	 */
 	private String sqlFlow(String instanceName, String storeId, String lastTime, String DataSeq, boolean isFull,
 			boolean masterControl) throws FNException {
-		String desc;
+		JOB_TYPE job_type;
 		boolean isUpdate = getInstanceConfig().getPipeParams().getWriteType().equals("increment") ? true : false;
 		String destName = Common.getInstanceName(instanceName, DataSeq);
 		String writeTo = masterControl ? getInstanceConfig().getPipeParams().getInstanceName() : destName;
 		if (isFull) {
-			desc = JOB_TYPE.FULL.name();
+			job_type = JOB_TYPE.FULL;
 		} else {
-			desc = JOB_TYPE.INCREMENT.name();
+			job_type = JOB_TYPE.INCREMENT;
 		}
 		SQLParam sqlParam = (SQLParam) getInstanceConfig().getReadParams();
 		List<String> table_seqs = sqlParam.getSeq().size() > 0 ? sqlParam.getSeq() : Arrays.asList("");
@@ -169,10 +169,10 @@ public final class PipePump extends Instruction {
 		} else {
 			Arrays.fill(lastUpdateTimes, lastTime);
 		}
-		if (!GlobalParam.FLOW_INFOS.containsKey(instanceName, desc)) {
-			GlobalParam.FLOW_INFOS.set(instanceName, desc, new HashMap<String, String>());
+		if (!GlobalParam.FLOW_INFOS.containsKey(instanceName, job_type.name())) {
+			GlobalParam.FLOW_INFOS.set(instanceName, job_type.name(), new HashMap<String, String>());
 		}
-		GlobalParam.FLOW_INFOS.get(instanceName, desc).put(instanceName + " seqs nums",
+		GlobalParam.FLOW_INFOS.get(instanceName, job_type.name()).put(instanceName + " seqs nums",
 				String.valueOf(table_seqs.size()));
 		for (int i = 0; i < table_seqs.size(); i++) {
 			int total = 0;
@@ -203,27 +203,27 @@ public final class PipePump extends Instruction {
 					this.readHandler.handlePage("", param);
 				// control repeat with time job
 				do { 
-					GlobalParam.FLOW_INFOS.get(instanceName, desc).put(instanceName + tseq, "start count page..."); 
+					GlobalParam.FLOW_INFOS.get(instanceName, job_type.name()).put(instanceName + tseq, "start count page..."); 
 					getReader().lock.lock();
 					List<String> pageList = getReader().getPageSplit(param,getInstanceConfig().getPipeParams().getReadPageSize());
 					getReader().lock.unlock();
 					if (pageList == null)
 						throw new FNException("read data get page split exception!");
 					if (pageList.size() > 0) {
-						log.info(Common.formatLog("Start " + desc, destName, storeId, tseq, 0, dataBoundary,
+						log.info(Common.formatLog("Start " + job_type.name(), destName, storeId, tseq, 0, dataBoundary,
 								READER_LAST_STAMP, 0, "start", ",totalpage:" + pageList.size()));
 						int processPos = 0;
 						for (String page : pageList) {
 							processPos++;
-							GlobalParam.FLOW_INFOS.get(instanceName, desc).put(instanceName + tseq,
+							GlobalParam.FLOW_INFOS.get(instanceName, job_type.name()).put(instanceName + tseq,
 									processPos + "/" + pageList.size());
 							dataBoundary = page;
 							String sql = SqlUtil.fillParam(originalSql,
 									SqlUtil.getScanParam(tseq, startId, dataBoundary,
 											param.get(GlobalParam._start_time), param.get(GlobalParam._end_time),
 											incrementField)); 
-							if (Common.checkFlowStatus(instanceName, DataSeq, desc, STATUS.Termination)) {
-								throw new FNException(instanceName + " " + desc + " job has been Terminated!");
+							if (Common.checkFlowStatus(instanceName, DataSeq, job_type, STATUS.Termination)) {
+								throw new FNException(instanceName + " " + job_type.name() + " job has been Terminated!");
 							} else {
 								DataPage pagedata; 
 								if (getInstanceConfig().openCompute()) { 
@@ -232,9 +232,9 @@ public final class PipePump extends Instruction {
 											getInstanceConfig().getComputeFields(),getReader(),this.readHandler);  
 									getReader().freeJobPage();
 									getReader().lock.unlock();
-									pagedata = (DataPage) CPU.RUN(getID(), "ML", "computeDataSet", false, getID(), desc, writeTo, pagedata); 
+									pagedata = (DataPage) CPU.RUN(getID(), "ML", "computeDataSet", false, getID(), job_type.name(), writeTo, pagedata); 
 									if(processPos==pageList.size()) {
-										rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, writeTo, storeId, tseq, pagedata,
+										rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, job_type.name(), writeTo, storeId, tseq, pagedata,
 												",process:" + processPos + "/" + pageList.size(), isUpdate, false);  
 									}else {
 										continue; 
@@ -245,7 +245,7 @@ public final class PipePump extends Instruction {
 											getInstanceConfig().getWriteFields(),getReader(),this.readHandler);  
 									getReader().freeJobPage();
 									getReader().lock.unlock();
-									rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, desc, writeTo, storeId, tseq, pagedata,
+									rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, job_type.name(), writeTo, storeId, tseq, pagedata,
 											",process:" + processPos + "/" + pageList.size(), isUpdate, false); 
 								 
 								} 
@@ -265,10 +265,10 @@ public final class PipePump extends Instruction {
 								Common.saveTaskInfo(instanceName, DataSeq, storeId, GlobalParam.JOB_INCREMENTINFO_PATH);
 							}
 						}
-						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq, total,
+						log.info(Common.formatLog("Complete " + job_type.name(), destName, storeId, tseq, total,
 								dataBoundary, READER_LAST_STAMP, Common.getNow() - start, "complete", "")); 
 					} else {
-						log.info(Common.formatLog("Complete " + desc, destName, storeId, tseq,0, dataBoundary,
+						log.info(Common.formatLog("Complete " + job_type.name(), destName, storeId, tseq,0, dataBoundary,
 								READER_LAST_STAMP, 0, "start", " no data!"));
 					}
 				} while (param.get(GlobalParam._end_time).length() > 0 && this.readHandler.loopScan(param));
@@ -290,15 +290,15 @@ public final class PipePump extends Instruction {
 				if (e.getMessage() != null && e.getMessage().equals("storeId not found")) {
 					throw new FNException("storeId not found");
 				} else {
-					log.error("[" + desc + " " + destName + tseq + "_" + storeId + " ERROR]", e);
+					log.error("[" + job_type.name() + " " + destName + tseq + "_" + storeId + " ERROR]", e);
 					GlobalParam.mailSender.sendHtmlMailBySynchronizationMode(" [Rivers] " + GlobalParam.run_environment,
-							"Job " + destName + " " + desc + " Has stopped!");
+							"Job " + destName + " " + job_type.name() + " Has stopped!");
 					newLastUpdateTimes = lastUpdateTimes;
 				}
 			}
 		}
 
-		GlobalParam.FLOW_INFOS.get(instanceName, desc).clear(); 
+		GlobalParam.FLOW_INFOS.get(instanceName, job_type.name()).clear(); 
 		if (isFull) {
 			if (masterControl) {
 				String _dest = getInstanceConfig().getPipeParams().getInstanceName();

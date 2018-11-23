@@ -453,9 +453,9 @@ public final class NodeMonitor {
 							+ GlobalParam.FLOW_INFOS.get(instance, JOB_TYPE.INCREMENT.name()));
 				}
 				sb.append(",[增量线程状态] ");
-				sb.append(threadStateInfo(instance, GlobalParam.JOB_TYPE.INCREMENT.name()));
+				sb.append(threadStateInfo(instance, GlobalParam.JOB_TYPE.INCREMENT));
 				sb.append(",[全量线程状态] ");
-				sb.append(threadStateInfo(instance, GlobalParam.JOB_TYPE.FULL.name()));
+				sb.append(threadStateInfo(instance, GlobalParam.JOB_TYPE.FULL));
 			}
 			setResponse(1, sb.toString());
 		} else {
@@ -716,9 +716,9 @@ public final class NodeMonitor {
 		if ((GlobalParam.SERVICE_LEVEL & 6) == 0) {
 			return;
 		}
-		String controlType = GlobalParam.JOB_TYPE.FULL.name();
+		JOB_TYPE controlType = GlobalParam.JOB_TYPE.FULL;
 		if (isIncrement)
-			controlType = GlobalParam.JOB_TYPE.INCREMENT.name();
+			controlType = GlobalParam.JOB_TYPE.INCREMENT;
 
 		for (String inst : instance.split(",")) {
 			Common.LOG.info("Instance " + inst + " waitting set state " + state + " ...");
@@ -726,7 +726,7 @@ public final class NodeMonitor {
 			String[] seqs = getInstanceSeqs(instance);
 			for (String seq : seqs) {
 				if (Common.checkFlowStatus(inst, seq, controlType, STATUS.Running)) {
-					Common.setFlowStatus(inst, seq, controlType, STATUS.Blank, STATUS.Termination);
+					Common.setFlowStatus(inst, seq, controlType.name(), STATUS.Blank, STATUS.Termination);
 					while (!Common.checkFlowStatus(inst, seq, controlType, STATUS.Ready)) {
 						try {
 							waittime++;
@@ -739,8 +739,8 @@ public final class NodeMonitor {
 						}
 					}
 				}
-				Common.setFlowStatus(inst, seq, controlType, STATUS.Blank, STATUS.Termination);
-				if (Common.setFlowStatus(inst, seq, controlType, STATUS.Termination, state)) {
+				Common.setFlowStatus(inst, seq, controlType.name(), STATUS.Blank, STATUS.Termination);
+				if (Common.setFlowStatus(inst, seq, controlType.name(), STATUS.Termination, state)) {
 					Common.LOG.info("Instance " + inst + " success set state " + state);
 				} else {
 					Common.LOG.info("Instance " + inst + " fail set state " + state);
@@ -749,18 +749,18 @@ public final class NodeMonitor {
 		}
 	}
 
-	private String threadStateInfo(String instance, String tag) {
+	private String threadStateInfo(String instance, JOB_TYPE type) {
 		String[] seqs = getInstanceSeqs(instance);
 		StringBuilder sb = new StringBuilder();
 		for (String seq : seqs) {
 			sb.append(seq + ":");
-			if (Common.checkFlowStatus(instance, seq, tag, STATUS.Stop))
+			if (Common.checkFlowStatus(instance, seq, type, STATUS.Stop))
 				sb.append("Stop,");
-			if (Common.checkFlowStatus(instance, seq, tag, STATUS.Ready))
+			if (Common.checkFlowStatus(instance, seq, type, STATUS.Ready))
 				sb.append("Ready,");
-			if (Common.checkFlowStatus(instance, seq, tag, STATUS.Running))
+			if (Common.checkFlowStatus(instance, seq, type, STATUS.Running))
 				sb.append("Running,");
-			if (Common.checkFlowStatus(instance, seq, tag, STATUS.Termination))
+			if (Common.checkFlowStatus(instance, seq, type, STATUS.Termination))
 				sb.append("Termination,");
 			sb.append(" ;");
 		}

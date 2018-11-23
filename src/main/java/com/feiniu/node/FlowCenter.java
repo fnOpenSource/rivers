@@ -61,10 +61,10 @@ public class FlowCenter{
 					continue;
 				
 				if(GlobalParam.JOB_TYPE.FULL.name().equals(type.toUpperCase())) {
-					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Ready))
+					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.FULL,STATUS.Ready))
 						state = jobAction(Common.getInstanceName(instanceName, seq), GlobalParam.JOB_TYPE.FULL.name(), "run") && state;
 				}else {
-					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready))
+					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.INCREMENT,STATUS.Ready))
 						state = jobAction(Common.getInstanceName(instanceName, seq), GlobalParam.JOB_TYPE.INCREMENT.name(), "run") && state;
 				}
 				

@@ -23,6 +23,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.feiniu.config.GlobalParam;
+import com.feiniu.config.GlobalParam.JOB_TYPE;
 import com.feiniu.config.GlobalParam.KEY_PARAM;
 import com.feiniu.config.GlobalParam.STATUS;
 import com.feiniu.config.InstanceConfig;
@@ -478,8 +479,8 @@ public final class Common {
 		}
 	}  
 	
-	public static boolean checkFlowStatus(String instance,String seq,String type,STATUS state) {
-		if((GlobalParam.FLOW_STATUS.get(instance, seq, type).get() & state.getVal())>0)
+	public static boolean checkFlowStatus(String instance,String seq,JOB_TYPE type,STATUS state) {
+		if((GlobalParam.FLOW_STATUS.get(instance, seq, type.name()).get() & state.getVal())>0)
 			return true; 
 		return false;
 	} 
