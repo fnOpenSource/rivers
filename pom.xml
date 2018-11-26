@@ -94,11 +94,11 @@
 			<groupId>com.oracle.ojdbc6</groupId>
 			<artifactId>ojdbc6</artifactId>
 			<version>11.2.0.4</version>
-		</dependency>
+		</dependency> 
 		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>1.1.26</version>
+    		<groupId>com.alibaba</groupId>
+   			 <artifactId>fastjson</artifactId>
+   			 <version>1.2.51</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.json-lib</groupId>
