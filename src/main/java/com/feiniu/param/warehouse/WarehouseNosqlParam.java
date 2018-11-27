@@ -18,7 +18,7 @@ public class WarehouseNosqlParam implements WarehouseParam{
 	private String ip;
 	private String defaultValue;
 	private String handler;
-	private String[] seqs = {};
+	private String[] L1seq = {};
 	
 	public DATA_TYPE getType() {
 		return type;
@@ -67,12 +67,12 @@ public class WarehouseNosqlParam implements WarehouseParam{
 		this.alias = alias;
 	}
 	@Override
-	public String[] getSeq() {
-		return this.seqs;
+	public String[] getL1seq() {
+		return this.L1seq;
 	}
 	@Override
-	public void setSeq(String seqs) {
-		this.seqs = seqs.split(",");
+	public void setL1seq(String seqs) {
+		this.L1seq = seqs.split(",");
 	}
 
 	@Override

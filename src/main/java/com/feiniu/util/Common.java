@@ -30,6 +30,7 @@ import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.InstructionTree;
 import com.feiniu.model.RiverRequest;
+import com.feiniu.model.reader.ScanPosition;
 import com.feiniu.node.CPU;
 import com.feiniu.param.warehouse.WarehouseParam;
 import com.feiniu.piper.PipePump; 
@@ -206,24 +207,29 @@ public final class Common {
 				+location;
 	}
 
-	public static void saveTaskInfo(String instanceName, String seq, String storeId,String location) {
-		if (storeId.length() > 0) {
-			ZKUtil.setData(getTaskStorePath(instanceName, seq,location),
-					storeId + GlobalParam.JOB_STATE_SPERATOR + GlobalParam.LAST_UPDATE_TIME.get(instanceName,seq));
-		}
+	/**
+	 * 
+	 * @param instance
+	 * @param seq level 1 seq
+	 * @param storeId
+	 * @param location
+	 */
+	public static void saveTaskInfo(String instance, String seq,String storeId,String location) {
+		String instanceName = getMainName(instance, seq);
+		GlobalParam.SCAN_POSITION.get(instanceName).updateStoreId(storeId);
+		ZKUtil.setData(getTaskStorePath(instanceName, seq,location),
+				GlobalParam.SCAN_POSITION.get(instanceName).getString());
 	} 
 
 	/**
-	 * 
-	 * @param seq
-	 *            for series data source sequence
 	 * @param instanceName
 	 *            data source main tag name
+	 * @param storeId 
 	 * @return String
 	 */
-	public static String getStoreName(String instanceName, String seq) {
-		if (seq != null && seq.length() > 0) {
-			return instanceName + "_" + seq;
+	public static String getStoreName(String instanceName, String storeId) {
+		if (storeId != null && storeId.length() > 0) {
+			return instanceName + "_" + storeId;
 		} else {
 			return instanceName;
 		}
@@ -232,16 +238,16 @@ public final class Common {
 
 	/** 
 	 * @param seq
-	 *            for data source sequence tag
-	 * @param instanceName
+	 *            for data source sequence tag,level one
+	 * @param instance
 	 *            data source main tag name 
 	 * @return String
 	 */
-	public static String getInstanceName(String instanceName, String seq) {
+	public static String getMainName(String instance, String seq) {
 		if (seq != null && seq.length()>0) {
-			return instanceName + seq;
+			return instance + seq;
 		} else {
-			return instanceName;
+			return instance;
 		} 
 	}
 	
@@ -255,9 +261,9 @@ public final class Common {
 		return tags.append(tag).toString();
 	}
 	
-	public static String getFullStartInfo(String instanceName, String seq) {
-		String info = null;
-		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_FULLINFO_PATH);
+	public static String getFullStartInfo(String instance, String L1seq) {
+		String info = "0";
+		String path = Common.getTaskStorePath(instance, L1seq,GlobalParam.JOB_FULLINFO_PATH);
 		byte[] b = ZKUtil.getData(path,true); 
 		if (b != null && b.length > 0) {
 			String str = new String(b); 
@@ -270,24 +276,26 @@ public final class Common {
 	
 	/**
 	 * for Master/slave job get and set LastUpdateTime
-	 * @param instanceName
+	 * @param instance
 	 * @param seq
 	 * @param storeId  Master store id
 	 */
-	public static void setAndGetLastUpdateTime(String instanceName, String seq,String storeId) {
-		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
-		byte[] b = ZKUtil.getData(path,true);
-		if (b != null && b.length > 0) {
-			String str = new String(b);
-			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR); 
-			if (strs.length > 1) {
-				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, strs[1]);
-				if (!strs[0].equals(storeId)) {
-					storeId = strs[0];
-					saveTaskInfo(instanceName, seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
-				}  
+	public static void setAndGetScanInfo(String instance, String seq,String storeId) {
+		String mainName = getMainName(instance, seq);
+		synchronized (GlobalParam.SCAN_POSITION) {
+			if(!GlobalParam.SCAN_POSITION.containsKey(mainName)) {
+				String path = Common.getTaskStorePath(mainName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+				byte[] b = ZKUtil.getData(path,true);
+				if (b != null && b.length > 0) {
+					String str = new String(b); 
+					GlobalParam.SCAN_POSITION.put(mainName, new ScanPosition(str,instance,seq));  
+				}else {
+					GlobalParam.SCAN_POSITION.put(mainName, new ScanPosition(instance,seq));
+				}
+				saveTaskInfo(instance, seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 		}
+		
 	}
 
 	/**
@@ -298,46 +306,25 @@ public final class Common {
 	 *            force to get storeid recompute from destination engine
 	 * @param seq
 	 *            for series data source sequence
-	 * @param instanceName
+	 * @param instance
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static synchronized String getStoreId(String instanceName, String seq, PipePump transDataFlow, boolean isIncrement,
+	public static synchronized String getStoreId(String instance, String seq, PipePump transDataFlow, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) { 
-			String storeId = getStoreIdFromZK(instanceName,seq,true); 
+			String storeId = getStoreId(instance,seq,true); 
 			if (storeId.length() == 0 || reCompute) {
-				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getInstanceName(instanceName, seq), true); 
+				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getMainName(instance, seq), true); 
 				if (storeId == null)
 					storeId = "a";
-				saveTaskInfo(instanceName, seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
+				saveTaskInfo(instance,seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 			return storeId;
 		} else {
-			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getInstanceName(instanceName, seq), false);
+			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getMainName(instance, seq), false);
 		}
-	}
-	
-	public static String getStoreIdFromZK(String instanceName, String seq,boolean initParam) {
-		String path = Common.getTaskStorePath(instanceName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
-		byte[] b = ZKUtil.getData(path,true);
-		String storeId = "";
-		if (b != null && b.length > 0) {
-			String str = new String(b);
-			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
-			if (strs.length > 0) {
-				if (!strs[0].equals("null")) {
-					storeId = strs[0];
-				} else {
-					storeId = "";
-				}
-			}
-			if (strs.length > 1 && initParam) {
-				GlobalParam.LAST_UPDATE_TIME.set(instanceName,seq, strs[1]);
-			}
-		}
-		return storeId; 
-	}
+	} 
 	
 	/**
 	 * get store tag name
@@ -345,20 +332,21 @@ public final class Common {
 	 * @param seq 
 	 * @return String
 	 */
-	public static String getStoreId(String instance, String seq) {
-		String path = Common.getTaskStorePath(instance, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
-		byte[] b = ZKUtil.getData(path, true);
-		String storeId = "";
-		if (b != null && b.length > 0) {
-			String str = new String(b);
-			String[] strs = str.split(GlobalParam.JOB_STATE_SPERATOR);
-			if (strs.length > 0) {
-				if (!strs[0].equals("null")) {
-					storeId = strs[0];
+	public static String getStoreId(String instance, String seq,boolean reload) { 
+		String instanceName = getMainName(instance, seq);
+		synchronized (GlobalParam.SCAN_POSITION) {
+			if(reload) {
+				String path = Common.getTaskStorePath(instance, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+				byte[] b = ZKUtil.getData(path, true);
+				if (b != null && b.length > 0) {
+					String str = new String(b);
+					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(str,instance,seq));  
+				}else {
+					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(instance,seq));
 				}
-			}
-		}
-		return storeId;
+			} 
+		} 
+		return GlobalParam.SCAN_POSITION.get(instanceName).getStoreId();
 	}
 	
 	/**
@@ -378,7 +366,7 @@ public final class Common {
 					instanceConfig.getPipeParams().getReadFrom());
 		}
 		if (null != whParam) {
-			seqs = whParam.getSeq();
+			seqs = whParam.getL1seq();
 		}  
 		if (fillDefault && seqs.length == 0) {
 			seqs = new String[1];
@@ -401,9 +389,9 @@ public final class Common {
 	 * @param moreinfo
 	 */
 	
-	public static String formatLog(String heads,String instanceName, String storeId,
+	public static String formatLog(String types,String heads,String instanceName, String storeId,
 			String seq, int total, String dataBoundary, String lastUpdateTime,
-			long useTime, String types, String moreinfo) {
+			long useTime, String moreinfo) {
 		String useTimeFormat = Common.seconds2time(useTime);
 		StringBuilder str = new StringBuilder("["+heads+" "+instanceName + "_" + storeId+"] "+(!seq.equals("") ? " table:" + seq : ""));
 		String update;
@@ -422,7 +410,7 @@ public final class Common {
 			str.append(" position:" + update);
 			break;
 		default:
-			str.append(" docs:" + total+ (dataBoundary.equals("0") ? "" : " dataBoundary:" + dataBoundary)
+			str.append(" docs:" + total+ (dataBoundary.length()<1 ? "" : " dataBoundary:" + dataBoundary)
 			+ " position:" + update + " useTime:"	+ useTimeFormat);
 			break;
 		} 

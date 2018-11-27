@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.connect.handler.ConnectionHandler;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.ResponseDataUnit;
+import com.feiniu.model.searcher.ResponseDataUnit;
 import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.model.searcher.SearcherResult;
 import com.feiniu.searcher.SearcherFlowSocket;

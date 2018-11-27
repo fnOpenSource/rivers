@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.InstanceConfig;
 import com.feiniu.model.RiverRequest;
-import com.feiniu.model.ResponseDataUnit;
 import com.feiniu.model.ResponseState;
+import com.feiniu.model.searcher.ResponseDataUnit;
 import com.feiniu.model.searcher.SearcherESModel;
 import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.model.searcher.SearcherResult;

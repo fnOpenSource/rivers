@@ -11,9 +11,9 @@ import com.feiniu.config.GlobalParam.DATA_TYPE;
  */
 public interface WarehouseParam {
 	
-	public String[] getSeq();
+	public String[] getL1seq();
 	
-	public void setSeq(String seqs);
+	public void setL1seq(String seqs);
 	
 	public DATA_TYPE getType();
 	

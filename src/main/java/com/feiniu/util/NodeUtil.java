@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.config.InstanceConfig;
+import com.feiniu.model.reader.ScanPosition;
 
 public final class NodeUtil {
 	
@@ -16,8 +17,15 @@ public final class NodeUtil {
 		String[] seqs = Common.getSeqs(instanceConfig, true);
 		for (String seq : seqs) { 
 			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.FULL.name(), new AtomicInteger(1));
-			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1));
-			GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
+			GlobalParam.FLOW_STATUS.set(instance, seq,GlobalParam.JOB_TYPE.INCREMENT.name(), new AtomicInteger(1)); 
+			String path = Common.getTaskStorePath(instance, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+			byte[] b = ZKUtil.getData(path, true);
+			if (b != null && b.length > 0) {
+				String str = new String(b);
+				GlobalParam.SCAN_POSITION.put(Common.getMainName(instance, seq), new ScanPosition(str,instance,seq));  
+			}else {
+				GlobalParam.SCAN_POSITION.put(Common.getMainName(instance, seq), new ScanPosition(instance,seq));
+			}
 		}
 	}
 	

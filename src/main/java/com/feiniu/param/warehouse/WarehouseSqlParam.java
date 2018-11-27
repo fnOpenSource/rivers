@@ -20,7 +20,7 @@ public class WarehouseSqlParam implements WarehouseParam{
 	private String user = "";
 	private String password = "";
 	private DATA_TYPE type = DATA_TYPE.UNKNOWN;
-	private String[] seq = {};
+	private String[] L1seq = {};
 	private String handler;
 	
 	public String getName() {
@@ -88,13 +88,13 @@ public class WarehouseSqlParam implements WarehouseParam{
 		this.alias = alias;
 	}
 	@Override
-	public String[] getSeq() {
-		return this.seq;
+	public String[] getL1seq() {
+		return this.L1seq;
 	}
 	
 	@Override
-	public void setSeq(String seqs) {
-		this.seq = seqs.split(",");
+	public void setL1seq(String seqs) {
+		this.L1seq = seqs.split(",");
 	}
 	@Override
 	public String getPoolName(String seq) {  

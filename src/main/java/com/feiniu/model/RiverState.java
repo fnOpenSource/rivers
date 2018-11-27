@@ -19,23 +19,23 @@ public class RiverState<T> extends ConcurrentHashMap<String,T>{
 	} 
 	
 	public void set(String instance,String seq,T dt) {
-		put(Common.getInstanceName(instance, seq), dt);
+		put(Common.getMainName(instance, seq), dt);
 	} 
 	
 	public void set(String instance,String seq,String tag,T dt) {
-		put(Common.getInstanceName(instance, seq)+tag, dt);
+		put(Common.getMainName(instance, seq)+tag, dt);
 	}  
 	
 	public T get(String instance,String seq) {
-		return get(Common.getInstanceName(instance, seq));
+		return get(Common.getMainName(instance, seq));
 	}
 	
 	public T get(String instance,String seq,String tag) {
-		return get(Common.getInstanceName(instance, seq)+tag);
+		return get(Common.getMainName(instance, seq)+tag);
 	}
 	
 	public boolean containsKey(String instance,String seq) {
-		return containsKey(Common.getInstanceName(instance, seq));
+		return containsKey(Common.getMainName(instance, seq));
 	}
 	 
 }

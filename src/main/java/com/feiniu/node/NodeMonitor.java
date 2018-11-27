@@ -37,8 +37,7 @@ import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.util.Common;
 import com.feiniu.util.NodeUtil;
-import com.feiniu.util.SystemInfoUtil;
-import com.feiniu.util.ZKUtil;
+import com.feiniu.util.SystemInfoUtil; 
 import com.feiniu.writer.WriterFlowSocket;
 
 /**
@@ -302,7 +301,7 @@ public final class NodeMonitor {
 				if (dataMap == null) {
 					dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
 				}
-				setResponse(1, StringUtils.join(dataMap.getSeq(), ","));
+				setResponse(1, StringUtils.join(dataMap.getL1seq(), ","));
 			} catch (Exception e) {
 				setResponse(0, rq.getParameter("instance") + " not exists!");
 			}
@@ -314,14 +313,16 @@ public final class NodeMonitor {
 	public void resetInstanceState(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
 			try {
-				String instance = rq.getParameter("instance");
+				String instance = rq.getParameter("instance"); 
 				String val = "0";
 				if (rq.getParameterMap().get("set_value") != null)
 					val = rq.getParameter("set_value");
-				String[] seqs = getInstanceSeqs(instance);
-				for (String seq : seqs) {
-					GlobalParam.LAST_UPDATE_TIME.set(instance, seq, val);
-					Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq),
+				String instanceName;
+				String[] seqs = getInstanceL1seqs(instance);
+				for (String seq : seqs) { 
+					instanceName = Common.getMainName(instance, seq);
+					GlobalParam.SCAN_POSITION.get(instanceName).batchUpdateSeqPos(val);
+					Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq,false),
 							GlobalParam.JOB_INCREMENTINFO_PATH);
 				}
 				setResponse(1, rq.getParameter("instance") + " reset Success!");
@@ -346,8 +347,8 @@ public final class NodeMonitor {
 				WarehouseSqlParam ws = GlobalParam.nodeConfig.getSqlWarehouse()
 						.get(config.getPipeParams().getReadFrom());
 				String poolname = "";
-				if (ws.getSeq() != null && ws.getSeq().length > 0) {
-					for (String seq : ws.getSeq()) {
+				if (ws.getL1seq() != null && ws.getL1seq().length > 0) {
+					for (String seq : ws.getL1seq()) {
 						poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
 								.getPoolName(seq);
 						sb.append(",[Seq(" + seq + ") Reader Pool Status] " + FnConnectionPool.getStatus(poolname));
@@ -391,43 +392,41 @@ public final class NodeMonitor {
 			if (config.openTrans()) {
 				WarehouseSqlParam wsp = GlobalParam.nodeConfig.getSqlWarehouse()
 						.get(config.getPipeParams().getReadFrom());
-				if (wsp.getSeq().length > 0) {
+				if (wsp.getL1seq().length > 0) {
 					sb.append(",[增量存储状态]");
 					StringBuilder fullstate = new StringBuilder();
-					for (String seriesDataSeq : wsp.getSeq()) {
-						String strs = getZkData(
-								Common.getTaskStorePath(instance, seriesDataSeq, GlobalParam.JOB_INCREMENTINFO_PATH));
+					for (String seq : wsp.getL1seq()) {
+						String strs = GlobalParam.SCAN_POSITION.get(Common.getStoreName(instance, seq)).getPositionString();
 						if (strs == null)
 							continue;
-						sb.append(
-								"\r\n;(" + seriesDataSeq + ") " + strs.split(GlobalParam.JOB_STATE_SPERATOR)[0] + ":");
-						if (strs.split(GlobalParam.JOB_STATE_SPERATOR).length == 1)
-							continue;
-						for (String str : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
+						sb.append("\r\n;(" + seq + ") " + GlobalParam.SCAN_POSITION.get(Common.getStoreName(instance, seq)).getStoreId() + ":");
+					 
+						for (String str : strs.split(",")) {
 							String update;
-							if (str.length() > 9 && str.matches("[0-9]+")) {
-								update = (this.SDF.format(str.length() < 12 ? new Long(str + "000") : new Long(str)))
-										+ " (" + str + ")";
+							String[] dstr = str.split(":");
+							if (dstr[1].length() > 9 && dstr[1].matches("[0-9]+")) {
+								update = dstr[0]+":"+(this.SDF.format(dstr[1].length() < 12 ? new Long(dstr[1] + "000") : new Long(dstr[1])))
+										+ " (" + dstr[1] + ")";
 							} else {
 								update = str;
 							}
 							sb.append(", ");
 							sb.append(update);
 						}
-						fullstate.append(seriesDataSeq + ":" + Common.getFullStartInfo(instance, seriesDataSeq) + "; ");
+						fullstate.append(seq + ":" + Common.getFullStartInfo(instance, seq) + "; ");
 					}
 					sb.append(",[全量存储状态]");
 					sb.append(fullstate);
 
 				} else {
-					String strs = getZkData(
-							Common.getTaskStorePath(instance, null, GlobalParam.JOB_INCREMENTINFO_PATH));
+					String strs = GlobalParam.SCAN_POSITION.get(Common.getStoreName(instance, null)).getPositionString(); 
 					StringBuilder stateStr = new StringBuilder();
-					if (strs.split(GlobalParam.JOB_STATE_SPERATOR).length > 1) {
-						for (String tm : strs.split(GlobalParam.JOB_STATE_SPERATOR)[1].split(",")) {
-							if (tm.length() > 9 && tm.matches("[0-9]+")) {
-								stateStr.append(
-										this.SDF.format(tm.length() < 12 ? new Long(tm + "000") : new Long(tm)));
+					if (strs.split(",").length > 1) {
+						for (String tm : strs.split(",")) {
+							String[] dstr = tm.split(":");
+							if (dstr[1].length() > 9 && dstr[1].matches("[0-9]+")) {
+								stateStr.append(dstr[0]+":"+
+										this.SDF.format(tm.length() < 12 ? new Long(tm + "000") : new Long(dstr[1])));
 								stateStr.append(" (").append(tm).append(")");
 							} else {
 								stateStr.append(tm);
@@ -435,7 +434,7 @@ public final class NodeMonitor {
 							stateStr.append(", ");
 						}
 					}
-					sb.append(",[增量存储状态] " + strs.split(GlobalParam.JOB_STATE_SPERATOR)[0] + ":" + stateStr.toString());
+					sb.append(",[增量存储状态] " + GlobalParam.SCAN_POSITION.get(Common.getStoreName(instance, null)).getStoreId() + ":" + stateStr.toString());
 					sb.append(",[全量存储状态] ");
 					sb.append(Common.getFullStartInfo(instance, null));
 				}
@@ -649,21 +648,20 @@ public final class NodeMonitor {
 					return;
 				}
 				if (instance.equals(_instance) || instanceConfig.getAlias().equals(_instance)) {
-					String[] seqs = getInstanceSeqs(instance);
+					String[] seqs = getInstanceL1seqs(instance);
 					if (seqs.length == 0) {
 						seqs = new String[1];
 						seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;
 					}
 					controlThreadState(instance, STATUS.Stop, true);
-					for (String seq : seqs) {
-						GlobalParam.LAST_UPDATE_TIME.set(instance, seq, "0");
+					for (String seq : seqs) { 
 						String tags = Common.getResourceTag(instance, seq, GlobalParam.FLOW_TAG._DEFAULT.name(), false);
 						WriterFlowSocket wfs = GlobalParam.SOCKET_CENTER.getWriterSocket(
 								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
 								instance, seq, tags); 
 						wfs.PREPARE(false, false);
 						if(wfs.ISLINK()) {
-							wfs.removeInstance(instance, Common.getStoreId(instance, seq));
+							wfs.removeInstance(instance, Common.getStoreId(instance, seq,true));
 							wfs.REALEASE(false, false);
 						} 
 					}
@@ -723,7 +721,7 @@ public final class NodeMonitor {
 		for (String inst : instance.split(",")) {
 			Common.LOG.info("Instance " + inst + " waitting set state " + state + " ...");
 			int waittime = 0;
-			String[] seqs = getInstanceSeqs(instance);
+			String[] seqs = getInstanceL1seqs(instance);
 			for (String seq : seqs) {
 				if (Common.checkFlowStatus(inst, seq, controlType, STATUS.Running)) {
 					Common.setFlowStatus(inst, seq, controlType.name(), STATUS.Blank, STATUS.Termination);
@@ -750,7 +748,7 @@ public final class NodeMonitor {
 	}
 
 	private String threadStateInfo(String instance, JOB_TYPE type) {
-		String[] seqs = getInstanceSeqs(instance);
+		String[] seqs = getInstanceL1seqs(instance);
 		StringBuilder sb = new StringBuilder();
 		for (String seq : seqs) {
 			sb.append(seq + ":");
@@ -767,7 +765,7 @@ public final class NodeMonitor {
 		return sb.toString();
 	}
 
-	private String[] getInstanceSeqs(String instance) {
+	private String[] getInstanceL1seqs(String instance) {
 		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
 		WarehouseParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse()
 				.get(instanceConfig.getPipeParams().getReadFrom());
@@ -778,7 +776,7 @@ public final class NodeMonitor {
 		if (dataMap == null) {
 			seqs = new String[] {};
 		} else {
-			seqs = dataMap.getSeq();
+			seqs = dataMap.getL1seq();
 		}
 
 		if (seqs.length == 0) {
@@ -796,16 +794,7 @@ public final class NodeMonitor {
 			GlobalParam.FlOW_CENTER.addFlowGovern(strs[0], GlobalParam.nodeConfig.getInstanceConfigs().get(strs[0]),
 					true);
 		}
-	}
- 
-	private String getZkData(String path) {
-		String str = null;
-		byte[] b = ZKUtil.getData(path, false);
-		if (b != null && b.length > 0) {
-			str = new String(b);
-		}
-		return str;
-	}
+	} 
 
 	private void freeInstanceConnectPool(String instanceName) {
 		InstanceConfig paramConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName);
@@ -816,7 +805,7 @@ public final class NodeMonitor {
 				if (dataMap == null) {
 					break;
 				}
-				String[] seqs = dataMap.getSeq();
+				String[] seqs = dataMap.getL1seq();
 				if (seqs.length > 0) {
 					for (String seq : seqs) {
 						FnConnectionPool.release(dataMap.getPoolName(seq));
@@ -829,7 +818,7 @@ public final class NodeMonitor {
 				if (dataMap == null) {
 					break;
 				}
-				String[] seqs = dataMap.getSeq();
+				String[] seqs = dataMap.getL1seq();
 				if (seqs.length > 0) {
 					for (String seq : seqs) {
 						FnConnectionPool.release(dataMap.getPoolName(seq));

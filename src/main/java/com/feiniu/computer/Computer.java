@@ -47,7 +47,7 @@ public class Computer {
 		if(model==null) {
 			log.info("start loading model...");
 			HashMap<String, String> params = new HashMap<>(); 
-			String table = Common.getStoreName(instanceName, Common.getStoreIdFromZK(instanceName,"",true));
+			String table = Common.getStoreName(instanceName, Common.getStoreId(instanceName,"",true));
 			params.put("sql", "select model,remark from "+table); 
 			DataPage dp = readerFlowSocket.getPageData(params, instanceConfig.getWriteFields(), null,instanceConfig.getPipeParams().getReadPageSize());
 			DataSetReader DSReader = new DataSetReader();

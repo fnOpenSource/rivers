@@ -19,7 +19,7 @@ import org.elasticsearch.search.sort.SortBuilder;
 import com.alibaba.fastjson.JSON;
 import com.feiniu.connect.ESConnector;
 import com.feiniu.field.RiverField;
-import com.feiniu.model.ResponseDataUnit;
+import com.feiniu.model.searcher.ResponseDataUnit;
 import com.feiniu.model.searcher.SearcherModel;
 import com.feiniu.model.searcher.SearcherResult;
 import com.feiniu.searcher.SearcherFlowSocket;

@@ -66,9 +66,9 @@ public class ML extends Instruction {
 				res = (DataPage) CPU.RUN(contextId, "ML", "train", false,
 						context.getInstanceConfig().getComputeParams().getAlgorithm(), samples,
 						context.getInstanceConfig().getWriteFields());
-				log.info(Common.formatLog(" -- " + types + " compute onepage ", instance,
+				log.info(Common.formatLog("onepage"," -- " + types + " compute onepage ", instance,
 						context.getInstanceConfig().getComputeParams().getAlgorithm(), "", num,
-						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start, "onepage", ""));
+						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start,  ""));
 			} catch (Exception e) {
 				log.error("computeDataSet Exception", e);
 			} finally {

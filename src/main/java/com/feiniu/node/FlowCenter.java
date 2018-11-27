@@ -49,8 +49,8 @@ public class FlowCenter{
 		}
 	}
  
-	public boolean runInstanceNow(String instanceName,String type){
-		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName); 
+	public boolean runInstanceNow(String instance,String type){
+		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance); 
 		boolean state = true; 
 		try {
 			if (instanceConfig.openTrans() == false)
@@ -61,16 +61,16 @@ public class FlowCenter{
 					continue;
 				
 				if(GlobalParam.JOB_TYPE.FULL.name().equals(type.toUpperCase())) {
-					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.FULL,STATUS.Ready))
-						state = jobAction(Common.getInstanceName(instanceName, seq), GlobalParam.JOB_TYPE.FULL.name(), "run") && state;
+					if (Common.checkFlowStatus(instance, seq,GlobalParam.JOB_TYPE.FULL,STATUS.Ready))
+						state = jobAction(Common.getMainName(instance, seq), GlobalParam.JOB_TYPE.FULL.name(), "run") && state;
 				}else {
-					if (Common.checkFlowStatus(instanceName, seq,GlobalParam.JOB_TYPE.INCREMENT,STATUS.Ready))
-						state = jobAction(Common.getInstanceName(instanceName, seq), GlobalParam.JOB_TYPE.INCREMENT.name(), "run") && state;
+					if (Common.checkFlowStatus(instance, seq,GlobalParam.JOB_TYPE.INCREMENT,STATUS.Ready))
+						state = jobAction(Common.getMainName(instance, seq), GlobalParam.JOB_TYPE.INCREMENT.name(), "run") && state;
 				}
 				
 			}
 		} catch (Exception e) {
-			Common.LOG.error("runInstanceNow "+instanceName+" Exception", e);
+			Common.LOG.error("runInstanceNow "+instance+" Exception", e);
 			return false;
 		}
 
@@ -87,13 +87,13 @@ public class FlowCenter{
 				for (String seq : seqs) {
 					if (seq == null)
 						continue;  
-					if(GlobalParam.tasks.containsKey(Common.getInstanceName(instance, seq)))
-						GlobalParam.tasks.remove(Common.getInstanceName(instance, seq));
+					if(GlobalParam.tasks.containsKey(Common.getMainName(instance, seq)))
+						GlobalParam.tasks.remove(Common.getMainName(instance, seq));
 					
 					for(GlobalParam.FLOW_TAG tag:GlobalParam.FLOW_TAG.values()) {
 						GlobalParam.SOCKET_CENTER.clearPipePump(instance, seq, tag.name());
 					} 
-					state = removeFlowScheduleJob(Common.getInstanceName(instance, seq),instanceConfig) && state;
+					state = removeFlowScheduleJob(Common.getMainName(instance, seq),instanceConfig) && state;
 				}
 			}catch(Exception e){
 				Common.LOG.error("remove Instance "+instance+" Exception", e);
@@ -111,11 +111,11 @@ public class FlowCenter{
 			for (String seq : seqs) {
 				if (seq == null)
 					continue; 
-				if(!GlobalParam.tasks.containsKey(Common.getInstanceName(instanceName, seq)) || needClear){
-					GlobalParam.tasks.put(Common.getInstanceName(instanceName, seq), FlowTask.createTask(instanceName,
+				if(!GlobalParam.tasks.containsKey(Common.getMainName(instanceName, seq)) || needClear){
+					GlobalParam.tasks.put(Common.getMainName(instanceName, seq), FlowTask.createTask(instanceName,
 							GlobalParam.SOCKET_CENTER.getPipePump(instanceName, seq,needClear,GlobalParam.FLOW_TAG._DEFAULT.name()), seq));
 				}  
-				createFlowScheduleJob(Common.getInstanceName(instanceName, seq), GlobalParam.tasks.get(Common.getInstanceName(instanceName, seq)),
+				createFlowScheduleJob(Common.getMainName(instanceName, seq), GlobalParam.tasks.get(Common.getMainName(instanceName, seq)),
 						instanceConfig,needClear);
 			}
 		} catch (Exception e) {

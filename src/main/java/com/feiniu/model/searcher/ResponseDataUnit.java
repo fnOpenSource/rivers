@@ -1,4 +1,4 @@
-package com.feiniu.model;
+package com.feiniu.model.searcher;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

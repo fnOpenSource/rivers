@@ -52,22 +52,17 @@ public class TaskControl extends Instruction{
 		
 		int position = Integer.parseInt(args[0].toString());
 		String[] seqs = Common.getSeqs(context.getInstanceConfig(),true);  
-		for(String seq:seqs) { 
-			String saveInfo=""; 
+		String instanceName;
+		for(String seq:seqs) {  
+			instanceName = Common.getMainName(context.getInstanceConfig().getName(), seq);
 			List<String> table_seq = context.getInstanceConfig().getReadParams().getSeq();
 			PipePump transDataFlow = GlobalParam.SOCKET_CENTER.getPipePump(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 			String storeId = Common.getStoreId(context.getInstanceConfig().getName(), seq, transDataFlow, true, false);
 			if(storeId==null)
 				break;
-			if(table_seq.size()>0) {
-				for(int i=0;i<table_seq.size();i++) {
-					saveInfo += String.valueOf(position)+",";
-				}
-			}else {
-				saveInfo = String.valueOf(position);
+			for(String tseq:table_seq) {
+				GlobalParam.SCAN_POSITION.get(instanceName).updateSeqPos(tseq, String.valueOf(position));  
 			}
-			
-			GlobalParam.LAST_UPDATE_TIME.set(context.getInstanceConfig().getName(),seq, saveInfo);
 			Common.saveTaskInfo(context.getInstanceConfig().getName(), seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 		}
 	}

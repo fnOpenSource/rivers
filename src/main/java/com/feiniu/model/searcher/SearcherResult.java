@@ -2,8 +2,6 @@ package com.feiniu.model.searcher;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.feiniu.model.ResponseDataUnit;
  
 /**
  * 

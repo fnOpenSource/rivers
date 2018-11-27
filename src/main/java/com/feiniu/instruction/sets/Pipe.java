@@ -113,8 +113,8 @@ public class Pipe extends Instruction {
 				}
 				rstate.setReaderScanStamp(DSReader.getScanStamp());
 				rstate.setCount(num);
-				log.info(Common.formatLog(" -- " + id + " onepage ", instance, storeId, seq, num,
-						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start, "onepage", info));
+				log.info(Common.formatLog("onepage"," -- " + id + " onepage ", instance, storeId, seq, num,
+						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start, info));
 			} catch (Exception e) {
 				if (e.getMessage().equals("storeId not found")) {
 					throw new FNException("storeId not found");

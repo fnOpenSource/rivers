@@ -6,6 +6,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.feiniu.model.RiverState;
+import com.feiniu.model.reader.ScanPosition;
 import com.feiniu.node.FlowCenter;
 import com.feiniu.node.NodeMonitor;
 import com.feiniu.node.SocketCenter;
@@ -37,8 +38,6 @@ public class GlobalParam {
 	public volatile static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
 	/**FLOW_INFOS store current flow running state information*/
 	public volatile static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState<HashMap<String,String>>();
-	
-	public volatile static RiverState<String> LAST_UPDATE_TIME = new RiverState<String>();
 	
 	public static boolean WRITE_BATCH = false;
 	/**#1 searcher service  2 writer service 4 http reader service 8 instruction service 16 compute service*/
@@ -110,7 +109,8 @@ public class GlobalParam {
 	public static enum FLOWINFO{
 		MASTER,FULL_STATE,FULL_STOREID,INCRE_STOREID,FULL_JOBS
 	} 
-	public final static String JOB_STATE_SPERATOR = ":"; 
+	public final static HashMap<String,ScanPosition> SCAN_POSITION = new HashMap<>(); 
+	public final static String DEFAULT_SEQ = "_DFAUTL";
 	public final static String JOB_INCREMENTINFO_PATH = "batch";  
 	public final static String JOB_FULLINFO_PATH = "full_info"; 
 	

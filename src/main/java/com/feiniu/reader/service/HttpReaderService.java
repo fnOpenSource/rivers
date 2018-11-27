@@ -119,7 +119,7 @@ public class HttpReaderService {
 							try {
 								String writeTo = pipePump.getInstanceConfig().getPipeParams().getInstanceName();
 								if(writeTo==null) {
-									writeTo = Common.getInstanceName(instance, seq);
+									writeTo = Common.getMainName(instance, seq);
 								}
 								CPU.RUN(pipePump.getID(), "Pipe", "writeDataSet", false, "HTTP PUT",
 										writeTo,
@@ -169,7 +169,7 @@ public class HttpReaderService {
 								CPU.RUN(pipePump.getID(), "Pond", "createStorePosition",true,instance, storeid);    
 							} 
 							CPU.RUN(pipePump.getID(), "Pond", "switchInstance",true, instance,seq,storeid);
-							pipePump.run(instance, storeid, "-1", seq, true,pipePump.getInstanceConfig().getPipeParams().getInstanceName()==null?false:true);
+							pipePump.run(instance, storeid, seq, true,pipePump.getInstanceConfig().getPipeParams().getInstanceName()==null?false:true);
 							response.getWriter().println("{\"status\":1,\"info\":\"success\"}");
 						} else {
 							response.getWriter().println("{\"status\":0,\"info\":\"切换索引失败!\"}");
