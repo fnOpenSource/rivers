@@ -73,7 +73,7 @@ public class Pipe extends Instruction {
 	/**
 	 * @param args
 	 *            parameter order is: String id, String instance, String storeId,
-	 *            String seq, DataPage pageData, String info, boolean isUpdate,
+	 *            String L2seq, DataPage pageData, String info, boolean isUpdate,
 	 *            boolean monopoly
 	 * @throws Exception
 	 */
@@ -86,7 +86,7 @@ public class Pipe extends Instruction {
 		String id = String.valueOf(args[0]);
 		String instance = String.valueOf(args[1]);
 		String storeId = String.valueOf(args[2]);
-		String seq = String.valueOf(args[3]);
+		String L2seq = String.valueOf(args[3]);
 		DataPage pageData = (DataPage) args[4];
 		String info = String.valueOf(args[5]);
 		boolean isUpdate = (boolean) args[6];
@@ -113,7 +113,7 @@ public class Pipe extends Instruction {
 				}
 				rstate.setReaderScanStamp(DSReader.getScanStamp());
 				rstate.setCount(num);
-				log.info(Common.formatLog("onepage"," -- " + id + " onepage ", instance, storeId, seq, num,
+				log.info(Common.formatLog("onepage"," -- " + id + " onepage ", instance, storeId, L2seq, num,
 						DSReader.getDataBoundary(), DSReader.getScanStamp(), Common.getNow() - start, info));
 			} catch (Exception e) {
 				if (e.getMessage().equals("storeId not found")) {

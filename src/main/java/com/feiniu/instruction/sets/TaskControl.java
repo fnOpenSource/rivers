@@ -25,9 +25,9 @@ public class TaskControl extends Instruction{
 		int start = Integer.parseInt(args[0].toString());
 		int days = Integer.parseInt(args[1].toString());
 		int ride = Integer.parseInt(args[2].toString());
-		String[] seqs = Common.getSeqs(context.getInstanceConfig(),true);  
-		for(String seq:seqs) {
-			String info = Common.getFullStartInfo(context.getInstanceConfig().getName(), seq);
+		String[] L1seqs = Common.getL1seqs(context.getInstanceConfig(),true);  
+		for(String L1seq:L1seqs) {
+			String info = Common.getFullStartInfo(context.getInstanceConfig().getName(), L1seq);
 			String saveInfo="";
 			if(info!=null && info.length()>5) {
 				for(String tm:info.split(",")) {
@@ -40,7 +40,7 @@ public class TaskControl extends Instruction{
 			}else {
 				saveInfo = String.valueOf(start + days*3600*24*ride);
 			}
-			ZKUtil.setData(Common.getTaskStorePath(context.getInstanceConfig().getName(), seq,GlobalParam.JOB_FULLINFO_PATH),saveInfo);
+			ZKUtil.setData(Common.getTaskStorePath(context.getInstanceConfig().getName(), L1seq,GlobalParam.JOB_FULLINFO_PATH),saveInfo);
 		} 
 	}
 	
@@ -51,7 +51,7 @@ public class TaskControl extends Instruction{
 		} 
 		
 		int position = Integer.parseInt(args[0].toString());
-		String[] seqs = Common.getSeqs(context.getInstanceConfig(),true);  
+		String[] seqs = Common.getL1seqs(context.getInstanceConfig(),true);  
 		String instanceName;
 		for(String seq:seqs) {  
 			instanceName = Common.getMainName(context.getInstanceConfig().getName(), seq);
@@ -61,7 +61,7 @@ public class TaskControl extends Instruction{
 			if(storeId==null)
 				break;
 			for(String tseq:table_seq) {
-				GlobalParam.SCAN_POSITION.get(instanceName).updateSeqPos(tseq, String.valueOf(position));  
+				GlobalParam.SCAN_POSITION.get(instanceName).updateL2SeqPos(tseq, String.valueOf(position));  
 			}
 			Common.saveTaskInfo(context.getInstanceConfig().getName(), seq, storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 		}

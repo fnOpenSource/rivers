@@ -64,7 +64,7 @@ public class ThreadPools {
 		if(jp.getId()>0) {
 			Thread.interrupted();
 		}
-		if (Common.checkFlowStatus(jp.getInstance(), jp.getSeq(), jp.getJob_type(), STATUS.Termination)) {
+		if (Common.checkFlowStatus(jp.getInstance(), jp.getL2seq(), jp.getJob_type(), STATUS.Termination)) {
 			return;
 		}
 		jp.leftPage.countDown();

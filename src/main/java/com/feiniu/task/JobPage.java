@@ -17,7 +17,7 @@ public class JobPage {
 	private String instance;
 	public CountDownLatch leftPage;
 	private JOB_TYPE job_type;
-	private String seq;
+	private String L2seq;
 	private String sql;
 	private String incrementField;
 	private String keyColumn;
@@ -48,12 +48,12 @@ public class JobPage {
 		this.job_type = job_type;
 	}
 
-	public String getSeq() {
-		return seq;
+	public String getL2seq() {
+		return L2seq;
 	}
 
-	public void setSeq(String seq) {
-		this.seq = seq;
+	public void setL2seq(String L2seq) {
+		this.L2seq = L2seq;
 	}
 
 	public String getSql() {

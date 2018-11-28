@@ -29,9 +29,9 @@ public class ScanPosition {
 		}else {
 			instance = tmp[0];
 			storeId = tmp[1];
-			String[] seqs = tmp[2].split(JOB_SEQ_SPERATOR);
+			String[] L2seqs = tmp[2].split(JOB_SEQ_SPERATOR);
 			String[] row;
-			for(String seq:seqs) {
+			for(String seq:L2seqs) {
 				row = seq.split(JOB_STATE_SPERATOR);
 				L2seqPos.put(row[0], row[1]);
 			}
@@ -43,7 +43,7 @@ public class ScanPosition {
 		this.storeId = storeId;
 	}
 	
-	public void updateSeqPos(String k,String v) {
+	public void updateL2SeqPos(String k,String v) {
 		L2seqPos.put(k, v);
 	} 
 	
@@ -71,7 +71,7 @@ public class ScanPosition {
 		}
 	}
 	
-	public String getSeqPos(String seq) {
+	public String getL2SeqPos(String seq) {
 		if(L2seqPos.containsKey(seq)) {
 			return L2seqPos.get(seq);
 		}

@@ -189,16 +189,8 @@ public class ESFlow extends WriterFlowSocket {
 				throw new FNException("BulkProcessor Exception!Need Redo!");
 			}
 		}
-	}
-
-	/**
-	 * add index
-	 * 
-	 * @param seq
-	 *            for series data source sequence
-	 * @param instance
-	 *            data source main tag name
-	 */
+	} 
+	
 	@Override
 	public boolean create(String instance, String storeId, Map<String, RiverField> transParams) {
 		String name = Common.getStoreName(instance, storeId);

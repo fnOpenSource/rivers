@@ -21,7 +21,7 @@ public class SQLParam implements ScanParam{
 	private String incrementField = "";
 	private String pageScan;
 	private String handler;
-	private List<String> seq = new ArrayList<String>();
+	private List<String> L2seqs = new ArrayList<String>();
 	
 	public String getSql() {
 		return sql;
@@ -58,10 +58,10 @@ public class SQLParam implements ScanParam{
 		this.incrementField = incrementField;
 	}
 	public List<String> getSeq() {
-		return seq;
+		return L2seqs;
 	}
-	public void setSeq(String seqs) {
-		this.seq = Common.stringToList(seqs, ",");
+	public void setSeq(String L2seqs) {
+		this.L2seqs = Common.stringToList(L2seqs, ",");
 	}
 	public String getPageScan() {
 		return pageScan;

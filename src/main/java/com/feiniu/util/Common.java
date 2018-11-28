@@ -198,33 +198,33 @@ public final class Common {
 	 * seq for split data
 	 * 
 	 * @param indexname
-	 * @param seq,for
+	 * @param L1seq,for
 	 *            series data source fetch
 	 * @return
 	 */
-	public static String getTaskStorePath(String instanceName, String seq,String location) {
-		return GlobalParam.INSTANCE_PATH + "/" + instanceName + "/" + ((seq != null && seq.length() > 0) ? seq + "/" : "")
+	public static String getTaskStorePath(String instanceName, String L1seq,String location) {
+		return GlobalParam.INSTANCE_PATH + "/" + instanceName + "/" + ((L1seq != null && L1seq.length() > 0) ? L1seq + "/" : "")
 				+location;
 	}
 
 	/**
 	 * 
 	 * @param instance
-	 * @param seq level 1 seq
+	 * @param L1seq
 	 * @param storeId
 	 * @param location
 	 */
-	public static void saveTaskInfo(String instance, String seq,String storeId,String location) {
-		String instanceName = getMainName(instance, seq);
+	public static void saveTaskInfo(String instance, String L1seq,String storeId,String location) {
+		String instanceName = getMainName(instance, L1seq);
 		GlobalParam.SCAN_POSITION.get(instanceName).updateStoreId(storeId);
-		ZKUtil.setData(getTaskStorePath(instanceName, seq,location),
+		ZKUtil.setData(getTaskStorePath(instanceName, L1seq,location),
 				GlobalParam.SCAN_POSITION.get(instanceName).getString());
 	} 
 
 	/**
 	 * @param instanceName
 	 *            data source main tag name
-	 * @param storeId 
+	 * @param storeId a/b or time mechanism tags
 	 * @return String
 	 */
 	public static String getStoreName(String instanceName, String storeId) {
@@ -237,24 +237,24 @@ public final class Common {
 	}
 
 	/** 
-	 * @param seq
-	 *            for data source sequence tag,level one
+	 * @param L1seq
+	 *            for data source sequence tag 
 	 * @param instance
 	 *            data source main tag name 
 	 * @return String
 	 */
-	public static String getMainName(String instance, String seq) {
-		if (seq != null && seq.length()>0) {
-			return instance + seq;
+	public static String getMainName(String instance, String L1seq) {
+		if (L1seq != null && L1seq.length()>0) {
+			return instance + L1seq;
 		} else {
 			return instance;
 		} 
 	}
 	
-	public static String getResourceTag(String instance,String seq,String tag,boolean ignoreSeq) {
+	public static String getResourceTag(String instance,String L1seq,String tag,boolean ignoreSeq) {
 		StringBuilder tags = new StringBuilder();
-		if (!ignoreSeq && seq != null && seq.length()>0) {
-			tags.append(instance).append(seq);
+		if (!ignoreSeq && L1seq != null && L1seq.length()>0) {
+			tags.append(instance).append(L1seq);
 		} else {
 			tags.append(instance).append(GlobalParam.DEFAULT_RESOURCE_SEQ);
 		} 
@@ -277,22 +277,22 @@ public final class Common {
 	/**
 	 * for Master/slave job get and set LastUpdateTime
 	 * @param instance
-	 * @param seq
+	 * @param L1seq
 	 * @param storeId  Master store id
 	 */
-	public static void setAndGetScanInfo(String instance, String seq,String storeId) {
-		String mainName = getMainName(instance, seq);
+	public static void setAndGetScanInfo(String instance, String L1seq,String storeId) {
+		String mainName = getMainName(instance, L1seq);
 		synchronized (GlobalParam.SCAN_POSITION) {
 			if(!GlobalParam.SCAN_POSITION.containsKey(mainName)) {
-				String path = Common.getTaskStorePath(mainName, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+				String path = Common.getTaskStorePath(mainName, L1seq,GlobalParam.JOB_INCREMENTINFO_PATH);
 				byte[] b = ZKUtil.getData(path,true);
 				if (b != null && b.length > 0) {
 					String str = new String(b); 
-					GlobalParam.SCAN_POSITION.put(mainName, new ScanPosition(str,instance,seq));  
+					GlobalParam.SCAN_POSITION.put(mainName, new ScanPosition(str,instance,storeId));  
 				}else {
-					GlobalParam.SCAN_POSITION.put(mainName, new ScanPosition(instance,seq));
+					GlobalParam.SCAN_POSITION.put(mainName, new ScanPosition(instance,storeId));
 				}
-				saveTaskInfo(instance, seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
+				saveTaskInfo(instance, L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 		}
 		
@@ -304,45 +304,45 @@ public final class Common {
 	 * @param isIncrement
 	 * @param reCompute
 	 *            force to get storeid recompute from destination engine
-	 * @param seq
+	 * @param L1seq
 	 *            for series data source sequence
 	 * @param instance
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static synchronized String getStoreId(String instance, String seq, PipePump transDataFlow, boolean isIncrement,
+	public static synchronized String getStoreId(String instance, String L1seq, PipePump transDataFlow, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) { 
-			String storeId = getStoreId(instance,seq,true); 
+			String storeId = getStoreId(instance,L1seq,true); 
 			if (storeId.length() == 0 || reCompute) {
-				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getMainName(instance, seq), true); 
+				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getMainName(instance, L1seq), true); 
 				if (storeId == null)
 					storeId = "a";
-				saveTaskInfo(instance,seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
+				saveTaskInfo(instance,L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 			return storeId;
 		} else {
-			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getMainName(instance, seq), false);
+			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getMainName(instance, L1seq), false);
 		}
 	} 
 	
 	/**
 	 * get store tag name
 	 * @param instanceName
-	 * @param seq 
+	 * @param L1seq 
 	 * @return String
 	 */
-	public static String getStoreId(String instance, String seq,boolean reload) { 
-		String instanceName = getMainName(instance, seq);
+	public static String getStoreId(String instance, String L1seq,boolean reload) { 
+		String instanceName = getMainName(instance, L1seq);
 		synchronized (GlobalParam.SCAN_POSITION) {
 			if(reload) {
-				String path = Common.getTaskStorePath(instance, seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+				String path = Common.getTaskStorePath(instance, L1seq,GlobalParam.JOB_INCREMENTINFO_PATH);
 				byte[] b = ZKUtil.getData(path, true);
 				if (b != null && b.length > 0) {
 					String str = new String(b);
-					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(str,instance,seq));  
+					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(str,instance,L1seq));  
 				}else {
-					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(instance,seq));
+					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(instance,L1seq));
 				}
 			} 
 		} 
@@ -355,7 +355,7 @@ public final class Common {
 	 * @param fillDefault if empty fill with system default blank seq
 	 * @return
 	 */
-	public static String[] getSeqs(InstanceConfig instanceConfig,boolean fillDefault){
+	public static String[] getL1seqs(InstanceConfig instanceConfig,boolean fillDefault){
 		String[] seqs = {};
 		WarehouseParam whParam;
 		if(GlobalParam.nodeConfig.getNoSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom())!=null){
@@ -455,10 +455,10 @@ public final class Common {
 	 * @param removeState
 	 * @return boolean,lock status
 	 */
-	public static boolean setFlowStatus(String instance,String seq,String type,STATUS needState, STATUS setState) {
-		synchronized (GlobalParam.FLOW_STATUS.get(instance, seq, type)) {
-			if (needState.equals(STATUS.Blank) || (GlobalParam.FLOW_STATUS.get(instance, seq, type).get() == needState.getVal())) {
-				GlobalParam.FLOW_STATUS.get(instance, seq, type).set(setState.getVal()); 
+	public static boolean setFlowStatus(String instance,String L1seq,String type,STATUS needState, STATUS setState) {
+		synchronized (GlobalParam.FLOW_STATUS.get(instance, L1seq, type)) {
+			if (needState.equals(STATUS.Blank) || (GlobalParam.FLOW_STATUS.get(instance, L1seq, type).get() == needState.getVal())) {
+				GlobalParam.FLOW_STATUS.get(instance, L1seq, type).set(setState.getVal()); 
 				return true;
 			} else {
 				LOG.info(instance + " " + type + " not in state "+needState.name()+"!");

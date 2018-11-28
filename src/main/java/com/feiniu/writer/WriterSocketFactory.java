@@ -30,20 +30,20 @@ public class WriterSocketFactory implements Socket<WriterFlowSocket>{
 	@Override
 	public WriterFlowSocket getSocket(Object... args) {
 		WarehouseParam param = (WarehouseParam) args[0];
-		String seq = (String) args[1];
+		String L1seq = (String) args[1];
 		String handler = (String) args[2];
 		if(param instanceof WarehouseNosqlParam) {
-			return getNoSqlFlow(param,seq,handler);
+			return getNoSqlFlow(param,L1seq,handler);
 		}else {
-			return getSqlFlow(param,seq,handler);
+			return getSqlFlow(param,L1seq,handler);
 		} 
 	} 
  
 	
-	private static WriterFlowSocket getSqlFlow(WarehouseParam param,String seq,String handler) {
+	private static WriterFlowSocket getSqlFlow(WarehouseParam param,String L1seq,String handler) {
 		WriterFlowSocket writer = null;  
 		WarehouseSqlParam params = (WarehouseSqlParam) param;
-		HashMap<String, Object> connectParams = params.getConnectParams(seq);
+		HashMap<String, Object> connectParams = params.getConnectParams(L1seq);
 		switch (params.getType()) {
 		case MYSQL: 
 			writer = MysqlFlow.getInstance(connectParams);
@@ -54,10 +54,10 @@ public class WriterSocketFactory implements Socket<WriterFlowSocket>{
 		return writer;
 	}
 	
-	private static WriterFlowSocket getNoSqlFlow(WarehouseParam param,String seq,String handler) {
+	private static WriterFlowSocket getNoSqlFlow(WarehouseParam param,String L1seq,String handler) {
 		WriterFlowSocket writer = null;  
 		WarehouseNosqlParam params = (WarehouseNosqlParam) param;
-		HashMap<String, Object> connectParams = params.getConnectParams(seq);
+		HashMap<String, Object> connectParams = params.getConnectParams(L1seq);
 		if(handler!=null) {
 			try {
 				Class<?> clz = Class.forName("com.feiniu.writer.handler."+handler);

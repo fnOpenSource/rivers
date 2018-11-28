@@ -27,10 +27,10 @@ public final class SqlUtil {
 	 * @param incrementField
 	 * @return
 	 */
-	public static HashMap<String, String> getScanParam(String tableSeq,String startKey,String endKey,String start_time,String end_time,String incrementField){
+	public static HashMap<String, String> getScanParam(String L2seq,String startKey,String endKey,String start_time,String end_time,String incrementField){
 		HashMap<String, String> sqlParams = new HashMap<>();
-		if (tableSeq != null && tableSeq.length() > 0)
-			sqlParams.put(GlobalParam._seq, tableSeq);
+		if (L2seq != null && L2seq.length() > 0)
+			sqlParams.put(GlobalParam._seq, L2seq);
 		sqlParams.put(GlobalParam._start, startKey);
 		sqlParams.put(GlobalParam._end, endKey);
 		sqlParams.put(GlobalParam._start_time, start_time);

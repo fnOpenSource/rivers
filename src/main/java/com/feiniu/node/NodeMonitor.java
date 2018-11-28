@@ -318,11 +318,11 @@ public final class NodeMonitor {
 				if (rq.getParameterMap().get("set_value") != null)
 					val = rq.getParameter("set_value");
 				String instanceName;
-				String[] seqs = getInstanceL1seqs(instance);
-				for (String seq : seqs) { 
-					instanceName = Common.getMainName(instance, seq);
+				String[] L1seqs = getInstanceL1seqs(instance);
+				for (String L1seq : L1seqs) { 
+					instanceName = Common.getMainName(instance, L1seq);
 					GlobalParam.SCAN_POSITION.get(instanceName).batchUpdateSeqPos(val);
-					Common.saveTaskInfo(instance, seq, Common.getStoreId(instance, seq,false),
+					Common.saveTaskInfo(instance, L1seq, Common.getStoreId(instance, L1seq,false),
 							GlobalParam.JOB_INCREMENTINFO_PATH);
 				}
 				setResponse(1, rq.getParameter("instance") + " reset Success!");
@@ -648,20 +648,20 @@ public final class NodeMonitor {
 					return;
 				}
 				if (instance.equals(_instance) || instanceConfig.getAlias().equals(_instance)) {
-					String[] seqs = getInstanceL1seqs(instance);
-					if (seqs.length == 0) {
-						seqs = new String[1];
-						seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;
+					String[] L1seqs = getInstanceL1seqs(instance);
+					if (L1seqs.length == 0) {
+						L1seqs = new String[1];
+						L1seqs[0] = GlobalParam.DEFAULT_RESOURCE_SEQ;
 					}
 					controlThreadState(instance, STATUS.Stop, true);
-					for (String seq : seqs) { 
-						String tags = Common.getResourceTag(instance, seq, GlobalParam.FLOW_TAG._DEFAULT.name(), false);
+					for (String L1seq : L1seqs) { 
+						String tags = Common.getResourceTag(instance, L1seq, GlobalParam.FLOW_TAG._DEFAULT.name(), false);
 						WriterFlowSocket wfs = GlobalParam.SOCKET_CENTER.getWriterSocket(
 								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
-								instance, seq, tags); 
+								instance, L1seq, tags); 
 						wfs.PREPARE(false, false);
 						if(wfs.ISLINK()) {
-							wfs.removeInstance(instance, Common.getStoreId(instance, seq,true));
+							wfs.removeInstance(instance, Common.getStoreId(instance, L1seq,true));
 							wfs.REALEASE(false, false);
 						} 
 					}

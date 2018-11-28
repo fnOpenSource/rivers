@@ -26,23 +26,23 @@ public class SearcherSocketFactory implements Socket<SearcherFlowSocket>{
 	 
 	/** 
 	 * @param args final WarehouseParam param, final InstanceConfig instanceConfig,
-			String seq
+			String L1seq
 	 * @return
 	 */
 	@Override
 	public SearcherFlowSocket getSocket(Object... args) {
 		WarehouseParam param = (WarehouseParam) args[0];
 		InstanceConfig instanceConfig = (InstanceConfig) args[1];
-		String seq = (String) args[2];
+		String L1seq = (String) args[2];
 		if (param instanceof WarehouseNosqlParam) {
-			return getNosqlFlowSocket(param, instanceConfig, seq);
+			return getNosqlFlowSocket(param, instanceConfig, L1seq);
 		} else {
-			return getSqlFlowSocket(param, instanceConfig, seq);
+			return getSqlFlowSocket(param, instanceConfig, L1seq);
 		}
 	} 
 
-	private static SearcherFlowSocket getNosqlFlowSocket(WarehouseParam params, InstanceConfig instanceConfig, String seq) {
-		HashMap<String, Object> connectParams = params.getConnectParams(seq);
+	private static SearcherFlowSocket getNosqlFlowSocket(WarehouseParam params, InstanceConfig instanceConfig, String L1seq) {
+		HashMap<String, Object> connectParams = params.getConnectParams(L1seq);
 		connectParams.put("instanceConfig", instanceConfig);
 		connectParams.put("handler", params.getHandler()); 
 		SearcherFlowSocket searcher = null;
@@ -59,8 +59,8 @@ public class SearcherSocketFactory implements Socket<SearcherFlowSocket>{
 		return searcher;
 	}
 
-	private static SearcherFlowSocket getSqlFlowSocket(WarehouseParam params, InstanceConfig instanceConfig, String seq) {
-		HashMap<String, Object> connectParams = params.getConnectParams(seq);
+	private static SearcherFlowSocket getSqlFlowSocket(WarehouseParam params, InstanceConfig instanceConfig, String L1seq) {
+		HashMap<String, Object> connectParams = params.getConnectParams(L1seq);
 		SearcherFlowSocket searcher = null;
 		switch (params.getType()) {
 		case MYSQL:
