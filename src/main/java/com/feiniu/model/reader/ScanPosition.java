@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 
+ * store Level-2-seqs relate information
  * @author chengwen
  * @version 1.0
  * @date 2018-11-26 13:43

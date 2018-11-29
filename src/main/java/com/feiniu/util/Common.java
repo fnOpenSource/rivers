@@ -310,22 +310,25 @@ public final class Common {
 	 *            data source main tag name
 	 * @return String
 	 */
-	public static synchronized String getStoreId(String instance, String L1seq, PipePump transDataFlow, boolean isIncrement,
+	public static String getStoreId(String instance, String L1seq, PipePump transDataFlow, boolean isIncrement,
 			boolean reCompute) {
 		if (isIncrement) { 
-			String storeId = getStoreId(instance,L1seq,true); 
-			if (storeId.length() == 0 || reCompute) {
-				storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getMainName(instance, L1seq), true); 
-				if (storeId == null)
-					storeId = "a";
-				saveTaskInfo(instance,L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
-			}
-			return storeId;
+			return getIncrementStoreId(instance,L1seq,transDataFlow,reCompute);
 		} else {
 			return  (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",true, getMainName(instance, L1seq), false);
 		}
 	} 
 	
+	private static synchronized String getIncrementStoreId(String instance, String L1seq, PipePump transDataFlow,boolean reCompute) {
+		String storeId = getStoreId(instance,L1seq,true); 
+		if (storeId.length() == 0 || reCompute) {
+			storeId = (String) CPU.RUN(transDataFlow.getID(), "Pond", "getNewStoreId",false, getMainName(instance, L1seq), true); 
+			if (storeId == null)
+				storeId = "a";
+			saveTaskInfo(instance,L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
+		}
+		return storeId;
+	}
 	/**
 	 * get store tag name
 	 * @param instanceName
@@ -334,18 +337,16 @@ public final class Common {
 	 */
 	public static String getStoreId(String instance, String L1seq,boolean reload) { 
 		String instanceName = getMainName(instance, L1seq);
-		synchronized (GlobalParam.SCAN_POSITION) {
-			if(reload) {
-				String path = Common.getTaskStorePath(instance, L1seq,GlobalParam.JOB_INCREMENTINFO_PATH);
-				byte[] b = ZKUtil.getData(path, true);
-				if (b != null && b.length > 0) {
-					String str = new String(b);
-					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(str,instance,L1seq));  
-				}else {
-					GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(instance,L1seq));
-				}
-			} 
-		} 
+		if(reload) {
+			String path = Common.getTaskStorePath(instance, L1seq,GlobalParam.JOB_INCREMENTINFO_PATH);
+			byte[] b = ZKUtil.getData(path, true);
+			if (b != null && b.length > 0) {
+				String str = new String(b);
+				GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(str,instance,L1seq));  
+			}else {
+				GlobalParam.SCAN_POSITION.put(instanceName, new ScanPosition(instance,L1seq));
+			}
+		}  
 		return GlobalParam.SCAN_POSITION.get(instanceName).getStoreId();
 	}
 	

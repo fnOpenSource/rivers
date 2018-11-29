@@ -3,6 +3,7 @@ package com.feiniu.config;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.feiniu.model.RiverState;
@@ -109,7 +110,7 @@ public class GlobalParam {
 	public static enum FLOWINFO{
 		MASTER,FULL_STATE,FULL_STOREID,INCRE_STOREID,FULL_JOBS
 	} 
-	public final static HashMap<String,ScanPosition> SCAN_POSITION = new HashMap<>(); 
+	public final static ConcurrentHashMap<String,ScanPosition> SCAN_POSITION = new ConcurrentHashMap<>(); 
 	public final static String DEFAULT_SEQ = "_DFAUTL";
 	public final static String JOB_INCREMENTINFO_PATH = "batch";  
 	public final static String JOB_FULLINFO_PATH = "full_info"; 

@@ -53,12 +53,12 @@ public final class PipePump extends Instruction {
 		}
 	}
 
-	public void run(String instanceName, String storeId, String DataSeq, boolean isFull,
+	public void run(String instanceName, String storeId, String L1seq, boolean isFull,
 			boolean masterControl) throws FNException {
 		if (getInstanceConfig().getReadParams().isSqlType()) {
-			sqlFlow(instanceName, storeId, DataSeq, isFull, masterControl);
+			sqlFlow(instanceName, storeId, L1seq, isFull, masterControl);
 		} else {
-			noSqlFlow(instanceName, storeId, DataSeq, isFull, masterControl);
+			noSqlFlow(instanceName, storeId, L1seq, isFull, masterControl);
 		}
 	}
 

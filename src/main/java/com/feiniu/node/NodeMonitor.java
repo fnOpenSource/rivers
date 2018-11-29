@@ -589,7 +589,6 @@ public final class NodeMonitor {
 				String alias = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
 				GlobalParam.nodeConfig.getSearchConfigs().remove(alias);
 				GlobalParam.nodeConfig.loadConfig(instanceConfig, false);
-				GlobalParam.SOCKET_CENTER.getSearcher(alias, "", "", true);
 			}
 			rebuildFlowGovern(instanceConfig);
 			controlThreadState(rq.getParameter("instance"), STATUS.Ready, true);

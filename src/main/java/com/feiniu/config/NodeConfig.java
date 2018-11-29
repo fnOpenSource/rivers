@@ -29,11 +29,11 @@ import com.feiniu.util.ZKUtil;
  */
 public class NodeConfig { 
 	
-	private Map<String, InstanceConfig> instanceConfigs;
-	private Map<String, InstanceConfig> searchConfigMap = new HashMap<String, InstanceConfig>();
-	private Map<String, WarehouseSqlParam> sqlWarehouse = new HashMap<String, WarehouseSqlParam>();
-	private Map<String, WarehouseNosqlParam> NoSqlWarehouse = new HashMap<String, WarehouseNosqlParam>(); 
-	private Map<String,InstructionParam> instructions = new HashMap<String, InstructionParam>();
+	private final Map<String, InstanceConfig> instanceConfigs = new HashMap<>();
+	private final Map<String, InstanceConfig> searchConfigMap = new HashMap<>();
+	private final Map<String, WarehouseSqlParam> sqlWarehouse = new HashMap<>();
+	private final Map<String, WarehouseNosqlParam> NoSqlWarehouse = new HashMap<>(); 
+	private final Map<String,InstructionParam> instructions = new HashMap<>();
 	private String pondFile = null; 
 	private String instructionsFile = null; 
 	
@@ -54,7 +54,7 @@ public class NodeConfig {
 	
 	public void loadConfig(String instances,boolean reset){
 		if(reset){
-			this.instanceConfigs = new HashMap<String, InstanceConfig>();
+			this.instanceConfigs.clear();
 			parsePondFile(GlobalParam.CONFIG_PATH + "/" +  this.pondFile);
 			parseInstructionsFile(GlobalParam.CONFIG_PATH + "/" +  this.instructionsFile); 
 		}  
@@ -70,14 +70,19 @@ public class NodeConfig {
 				instanceType = Integer.parseInt(strs[1]); 
 			}
 			String filename = GlobalParam.INSTANCE_PATH + "/" +  name  + "/" +  name + ".xml";
-			InstanceConfig nconfig = new InstanceConfig(filename, instanceType);  
+			InstanceConfig nconfig;
+			if(this.instanceConfigs.containsKey(name)) {
+				nconfig = this.instanceConfigs.get(name);  
+			}else {
+				nconfig = new InstanceConfig(filename, instanceType);  
+				this.instanceConfigs.put(name, nconfig);
+			} 
 			nconfig.init();
 			if(nconfig.getAlias().equals("")){
 				nconfig.setAlias(name);
 			}  
 			nconfig.setName(name);
-			this.searchConfigMap.put(nconfig.getAlias(), nconfig);
-			this.instanceConfigs.put(name, nconfig);  
+			this.searchConfigMap.put(nconfig.getAlias(), nconfig); 
 		}	  
 	}
 	

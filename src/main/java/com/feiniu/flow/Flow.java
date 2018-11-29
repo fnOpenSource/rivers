@@ -67,7 +67,7 @@ public abstract class Flow {
 	}
 	
 	public boolean ISLINK() {
-		if(this.FC==null) 
+		if(this.FC==null || this.FC.status()) 
 			return false;
 		return true;
 	}  

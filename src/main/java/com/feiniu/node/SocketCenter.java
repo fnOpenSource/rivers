@@ -94,7 +94,7 @@ public final class SocketCenter {
 				Searcher searcher = Searcher.getInstance(instance, instanceConfig,
 						getSearcherSocket(
 								GlobalParam.nodeConfig.getSearchConfigs().get(instance).getPipeParams().getSearchFrom(),
-								instance, L1seq, tag));
+								instance, L1seq, tag,reload));
 				searcherMap.put(instance, searcher);
 			}
 			return searcherMap.get(instance);
@@ -165,7 +165,7 @@ public final class SocketCenter {
 		}
 	}
 
-	public SearcherFlowSocket getSearcherSocket(String resourceName, String instance, String L1seq, String tag) {
+	public SearcherFlowSocket getSearcherSocket(String resourceName, String instance, String L1seq, String tag,boolean reload) {
 		synchronized (searcherSocketMap) {
 			boolean ignoreSeqUseAlias = false;
 			if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance) != null)
@@ -176,13 +176,11 @@ public final class SocketCenter {
 				tagInstance = GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getAlias();
 			String tags = Common.getResourceTag(tagInstance, L1seq, tag, ignoreSeqUseAlias);
 
-			if (!searcherSocketMap.containsKey(tags)) {
+			if (reload || !searcherSocketMap.containsKey(tags)) {
 				WarehouseParam param = getWHP(resourceName);
 				if (param == null)
-					return null;
-
-				InstanceConfig paramConfig = GlobalParam.nodeConfig.getSearchConfigs().get(instance);
-				SearcherFlowSocket searcher = SearcherSocketFactory.getInstance(param, paramConfig, null);
+					return null; 
+				SearcherFlowSocket searcher = SearcherSocketFactory.getInstance(param, GlobalParam.nodeConfig.getSearchConfigs().get(instance), null);
 				searcherSocketMap.put(tags, searcher);
 			}
 			return searcherSocketMap.get(tags);
