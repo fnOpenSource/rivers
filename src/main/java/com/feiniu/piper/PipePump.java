@@ -246,25 +246,23 @@ public final class PipePump extends Instruction {
 	}
 	
 	/**
-	 * support recover job type
+	 * It is a support recover mechanism job type
 	 * @param pageList
 	 * @throws FNException 
 	 */
 	private void singleThread(String instanceName,String mainName,String L2seq,JOB_TYPE job_type,String storeId,String L1seq,String tseq,String originalSql,List<String> pageList,HashMap<String, String> param,SQLParam sqlParam,String writeTo) throws FNException { 
 		ReaderState rState = null;
 		int processPos = 0;
-		String startId = "0";
-		String dataBoundary = "";
+		String startId = "0"; 
 		int total = 0; 
 		long start = Common.getNow();
 		boolean isUpdate = getInstanceConfig().getPipeParams().getWriteType().equals("increment") ? true : false;
 		String incrementField = sqlParam.getIncrementField();
 		String keyColumn = sqlParam.getKeyColumn();
-		for (String page : pageList) {
+		for (String dataBoundary : pageList) {
 			processPos++;
 			GlobalParam.FLOW_INFOS.get(instanceName, job_type.name()).put(instanceName + tseq,
-					processPos + "/" + pageList.size());
-			dataBoundary = page;
+					processPos + "/" + pageList.size()); 
 			String sql = SqlUtil.fillParam(originalSql,
 					SqlUtil.getScanParam(tseq, startId, dataBoundary,
 							param.get(GlobalParam._start_time), param.get(GlobalParam._end_time),
@@ -309,6 +307,6 @@ public final class PipePump extends Instruction {
 			}
 		}
 		log.info(Common.formatLog("complete", "Complete " + job_type.name(), mainName, storeId, tseq, total,
-				dataBoundary, GlobalParam.SCAN_POSITION.get(mainName).getL2SeqPos(tseq), Common.getNow() - start, "")); 
+				startId, GlobalParam.SCAN_POSITION.get(mainName).getL2SeqPos(tseq), Common.getNow() - start, "")); 
 	}
 }
