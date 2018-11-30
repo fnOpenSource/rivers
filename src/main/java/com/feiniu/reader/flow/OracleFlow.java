@@ -76,11 +76,11 @@ public class OracleFlow extends ReaderFlowSocket{
 		if(param.get("pageSql")!=null){
 			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
 					+ param.get("pageSql")
-					+ ") FN_FPG_MAIN  order by #{COLUMN} asc";
+					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
 		}else{
 			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
 					+ param.get("originalSql")
-					+ ") FN_FPG_MAIN  order by #{COLUMN} asc";
+					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
 		} 
 		sql = " select id from (" + sql + ") FN_FPG_END where MOD(FN_ROW_ID, "
 				+ pageSize + ") = 0";
