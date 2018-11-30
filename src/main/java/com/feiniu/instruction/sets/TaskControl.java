@@ -8,6 +8,7 @@ import com.feiniu.instruction.Instruction;
 import com.feiniu.piper.PipePump;
 import com.feiniu.util.Common;
 import com.feiniu.util.ZKUtil;
+import com.feiniu.yarn.Resource;
 
 /**
  * 
@@ -56,7 +57,7 @@ public class TaskControl extends Instruction{
 		for(String seq:seqs) {  
 			instanceName = Common.getMainName(context.getInstanceConfig().getName(), seq);
 			List<String> table_seq = context.getInstanceConfig().getReadParams().getSeq();
-			PipePump transDataFlow = GlobalParam.SOCKET_CENTER.getPipePump(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
+			PipePump transDataFlow = Resource.SOCKET_CENTER.getPipePump(context.getInstanceConfig().getName(), seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 			String storeId = Common.getStoreId(context.getInstanceConfig().getName(), seq, transDataFlow, true, false);
 			if(storeId==null)
 				break;

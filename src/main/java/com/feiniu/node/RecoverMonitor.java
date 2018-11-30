@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import com.feiniu.config.GlobalParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.NodeUtil;
+import com.feiniu.yarn.Resource;
 
 /**
  * 
@@ -61,9 +62,9 @@ public class RecoverMonitor {
 	}
 	
 	private void takeOverNode() { 
-		GlobalParam.RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+this.takeIp+"/configs",true); 
-		GlobalParam.RIVERS.init(true);
-		GlobalParam.RIVERS.startService();
+		Resource.RIVERS.loadGlobalConfig(GlobalParam.CONFIG_PATH+"/RIVER_NODES/"+this.takeIp+"/configs",true); 
+		Resource.RIVERS.init(true);
+		Resource.RIVERS.startService();
 		Common.LOG.info(GlobalParam.IP+" has take Over Node "+this.takeIp);
 		new Thread() {
 			public void run() {

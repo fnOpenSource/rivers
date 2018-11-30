@@ -29,6 +29,7 @@ import com.feiniu.util.FNIoc;
 import com.feiniu.util.NodeUtil;
 import com.feiniu.util.ZKUtil;
 import com.feiniu.util.email.FNEmailSender;
+import com.feiniu.yarn.Resource;
 
 /**
  * Application startup position
@@ -71,22 +72,24 @@ public final class Run {
 
 	public void init(boolean initInstance) {
 		GlobalParam.run_environment = String.valueOf(GlobalParam.StartConfig.get("run_environment"));
-		GlobalParam.mailSender = mailSender;
-		GlobalParam.tasks = new HashMap<String, FlowTask>();
-		GlobalParam.SOCKET_CENTER = socketCenter;
-		GlobalParam.FlOW_CENTER = flowCenter;
 		GlobalParam.VERSION = version;
-		GlobalParam.nodeMonitor = nodeMonitor;
 		GlobalParam.POOL_SIZE = Integer.parseInt(GlobalParam.StartConfig.getProperty("pool_size"));
 		GlobalParam.WRITE_BATCH = GlobalParam.StartConfig.getProperty("write_batch").equals("false") ? false : true;
 		GlobalParam.SERVICE_LEVEL = Integer.parseInt(GlobalParam.StartConfig.get("service_level").toString());
+	
+		Resource.mailSender = mailSender;
+		Resource.tasks = new HashMap<String, FlowTask>();
+		Resource.SOCKET_CENTER = socketCenter;
+		Resource.FlOW_CENTER = flowCenter;
+		Resource.nodeMonitor = nodeMonitor; 
+		
 		if (initInstance) {
 			ZKUtil.setData(GlobalParam.CONFIG_PATH + "/RIVER_NODES/" + GlobalParam.IP + "/configs",
 					JSON.toJSONString(GlobalParam.StartConfig));
-			GlobalParam.nodeConfig = NodeConfig.getInstance(GlobalParam.StartConfig.getProperty("instances"),
+			Resource.nodeConfig = NodeConfig.getInstance(GlobalParam.StartConfig.getProperty("instances"),
 					GlobalParam.StartConfig.getProperty("pond"), GlobalParam.StartConfig.getProperty("instructions"));
-			GlobalParam.nodeConfig.init();
-			Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+			Resource.nodeConfig.init();
+			Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
 			for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
 				InstanceConfig instanceConfig = entry.getValue();
 				if (instanceConfig.checkStatus())
@@ -98,14 +101,21 @@ public final class Run {
 	public void startService() {
 		if ((GlobalParam.SERVICE_LEVEL & 1) > 0) 
 			searcherService.start(); 
-		if ((GlobalParam.SERVICE_LEVEL & 2) > 0)
-			GlobalParam.FlOW_CENTER.buildRWFlow();
+		
+		if ((GlobalParam.SERVICE_LEVEL & 2) > 0) {
+			Resource.ThreadPools.start();
+			Resource.FlOW_CENTER.buildRWFlow();
+		} 
+		
 		if ((GlobalParam.SERVICE_LEVEL & 4) > 0)
 			httpReaderService.start();
+		
 		if ((GlobalParam.SERVICE_LEVEL & 16) > 0)
 			computerService.start(); 
+		
 		if ((GlobalParam.SERVICE_LEVEL & 8) > 0)
-			GlobalParam.FlOW_CENTER.startInstructionsJob();
+			Resource.FlOW_CENTER.startInstructionsJob();
+		
 		new FNMonitor().start();
 	}
 
@@ -151,8 +161,8 @@ public final class Run {
 	} 
 
 	public static void main(String[] args) throws Exception {
-		GlobalParam.RIVERS = (Run) FNIoc.getBean("RIVERS");
-		GlobalParam.RIVERS.start();
+		Resource.RIVERS = (Run) FNIoc.getBean("RIVERS");
+		Resource.RIVERS.start();
 	}
 
 }

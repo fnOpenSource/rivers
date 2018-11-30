@@ -21,6 +21,7 @@ import com.feiniu.node.SocketCenter;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
+import com.feiniu.yarn.Resource;
 
 /**
  * searcher open http port support service
@@ -57,7 +58,7 @@ public class SearcherService{
 		long startTime = System.currentTimeMillis();
 		ResponseState response = null; 
 		String pipe = request.getPipe(); 
-		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getSearchConfigs();
+		Map<String, InstanceConfig> configMap = Resource.nodeConfig.getSearchConfigs();
 		if (configMap.containsKey(pipe)) {  
 			response = SocketCenter.getSearcher(pipe,"","",false).startSearch(request);
 		} 
@@ -83,7 +84,7 @@ public class SearcherService{
 			rq.setHandled(true);
 			RiverRequest _request = Common.getRequest(rq);
 
-			if (GlobalParam.nodeConfig.getSearchConfigs().containsKey(
+			if (Resource.nodeConfig.getSearchConfigs().containsKey(
 					_request.getPipe())) {
 				ResponseState rps = null;
 				try {

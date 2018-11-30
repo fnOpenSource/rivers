@@ -41,6 +41,8 @@ public class Pond extends Instruction {
 					context.getWriter().removeInstance(mainName, storeId);
 					state = context.getWriter().create(mainName, storeId, context.getInstanceConfig().getWriteFields());    
 				} 
+			}catch (Exception e) {
+				log.error("Create Store Position Exception",e);
 			}finally {
 				context.getWriter().REALEASE(false,state?false:true);
 			}

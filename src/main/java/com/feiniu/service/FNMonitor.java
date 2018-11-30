@@ -13,6 +13,7 @@ import org.mortbay.jetty.handler.AbstractHandler;
 
 import com.feiniu.config.GlobalParam;
 import com.feiniu.util.MD5Util;
+import com.feiniu.yarn.Resource;
 
 
 /**
@@ -49,9 +50,9 @@ public class FNMonitor {
 			switch (dataTo) {  
 			case "search.doaction":{
 				if(rq.getParameter("ac") !=null && rq.getParameter("code")!=null && rq.getParameter("code").equals(MD5Util.SaltMd5(rq.getParameter("ac")))){
-					GlobalParam.nodeMonitor.ac(rq);
-					response.getWriter().println(GlobalParam.nodeMonitor.getResponse()); 
-					GlobalParam.nodeMonitor.setResponse(0, "");
+					Resource.nodeMonitor.ac(rq);
+					response.getWriter().println(Resource.nodeMonitor.getResponse()); 
+					Resource.nodeMonitor.setResponse(0, "");
 				}else{
 					response.getWriter().println("{\"status\":0,\"info\":\"Action failed!parameter ac or code error!\"}");
 				}

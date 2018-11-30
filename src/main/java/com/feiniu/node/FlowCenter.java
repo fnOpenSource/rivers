@@ -15,6 +15,7 @@ import com.feiniu.task.InstructionTask;
 import com.feiniu.task.schedule.JobModel;
 import com.feiniu.task.schedule.TaskJobCenter;
 import com.feiniu.util.Common;
+import com.feiniu.yarn.Resource;
 
 /**
  * read to write flow build center
@@ -36,21 +37,21 @@ public class FlowCenter{
 	 * build read to flow flow
 	 */
 	public void buildRWFlow() { 
-		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+		Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
 		for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) { 
 			addFlowGovern(entry.getKey(), entry.getValue(),false); 
 		} 
 	}
 	
 	public void startInstructionsJob() {
-		Map<String, InstructionParam> instructions = GlobalParam.nodeConfig.getInstructions();
+		Map<String, InstructionParam> instructions = Resource.nodeConfig.getInstructions();
 		for (Map.Entry<String,InstructionParam> entry : instructions.entrySet()){
 			createInstructionScheduleJob(entry.getValue(),InstructionTask.createTask(entry.getKey()));
 		}
 	}
  
 	public boolean runInstanceNow(String instance,String type){
-		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance); 
+		InstanceConfig instanceConfig = Resource.nodeConfig.getInstanceConfigs().get(instance); 
 		boolean state = true; 
 		try {
 			if (instanceConfig.openTrans() == false)
@@ -78,7 +79,7 @@ public class FlowCenter{
 	}
  
 	public boolean removeInstance(String instance){
-		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+		Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
 		boolean state = true;
 		if(configMap.containsKey(instance)){
 			try{
@@ -87,11 +88,11 @@ public class FlowCenter{
 				for (String L1seq : L1seqs) {
 					if (L1seq == null)
 						continue;  
-					if(GlobalParam.tasks.containsKey(Common.getMainName(instance, L1seq)))
-						GlobalParam.tasks.remove(Common.getMainName(instance, L1seq));
+					if(Resource.tasks.containsKey(Common.getMainName(instance, L1seq)))
+						Resource.tasks.remove(Common.getMainName(instance, L1seq));
 					
 					for(GlobalParam.FLOW_TAG tag:GlobalParam.FLOW_TAG.values()) {
-						GlobalParam.SOCKET_CENTER.clearPipePump(instance, L1seq, tag.name());
+						Resource.SOCKET_CENTER.clearPipePump(instance, L1seq, tag.name());
 					} 
 					state = removeFlowScheduleJob(Common.getMainName(instance, L1seq),instanceConfig) && state;
 				}
@@ -111,11 +112,11 @@ public class FlowCenter{
 			for (String L1seq : L1seqs) {
 				if (L1seq == null)
 					continue; 
-				if(!GlobalParam.tasks.containsKey(Common.getMainName(instanceName, L1seq)) || needClear){
-					GlobalParam.tasks.put(Common.getMainName(instanceName, L1seq), FlowTask.createTask(instanceName,
-							GlobalParam.SOCKET_CENTER.getPipePump(instanceName, L1seq,needClear,GlobalParam.FLOW_TAG._DEFAULT.name()), L1seq));
+				if(!Resource.tasks.containsKey(Common.getMainName(instanceName, L1seq)) || needClear){
+					Resource.tasks.put(Common.getMainName(instanceName, L1seq), FlowTask.createTask(instanceName,
+							Resource.SOCKET_CENTER.getPipePump(instanceName, L1seq,needClear,GlobalParam.FLOW_TAG._DEFAULT.name()), L1seq));
 				}  
-				createFlowScheduleJob(Common.getMainName(instanceName, L1seq), GlobalParam.tasks.get(Common.getMainName(instanceName, L1seq)),
+				createFlowScheduleJob(Common.getMainName(instanceName, L1seq), Resource.tasks.get(Common.getMainName(instanceName, L1seq)),
 						instanceConfig,needClear);
 			}
 		} catch (Exception e) {

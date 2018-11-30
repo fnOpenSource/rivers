@@ -5,11 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +70,7 @@ public class MysqlFlow extends ReaderFlowSocket{
 	} 
 	
 	@Override
-	public List<String> getPageSplit(final HashMap<String, String> param,int pageSize) {
+	public ConcurrentLinkedDeque<String> getPageSplit(final HashMap<String, String> param,int pageSize) {
 		String sql;
 		if(param.get("pageSql")!=null){
 			sql = " select #{COLUMN} as id,(@a:=@a+1) AS FN_ROW_ID from ("
@@ -97,10 +95,9 @@ public class MysqlFlow extends ReaderFlowSocket{
 				.replace("#{start}", "0")
 				.replace("#{START}", "0");
 		if (param.get(GlobalParam._seq) != null && param.get(GlobalParam._seq).length() > 0)
-			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
-		
+			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq)); 
 		 
-		List<String> page = new ArrayList<String>();
+		ConcurrentLinkedDeque<String> page = new ConcurrentLinkedDeque<>();
 		PREPARE(false,false); 
 		if(!ISLINK())
 			return page;
@@ -125,7 +122,7 @@ public class MysqlFlow extends ReaderFlowSocket{
 			statement.setFetchSize(pageSize);
 			rs = statement.executeQuery(); 
 			while (rs.next()) { 
-				page.add(rs.getString("id"));
+				page.push(rs.getString("id"));
 			}
 			if (autoSelect && page.size() == 0) {
 				statement.close();
@@ -133,10 +130,9 @@ public class MysqlFlow extends ReaderFlowSocket{
 				statement = conn.prepareStatement(sql.replace("#{end}", "~").replace("#{END}", "~")); 
 				rs = statement.executeQuery();  
 				while (rs.next()) {
-					page.add(rs.getString("id"));
+					page.push(rs.getString("id"));
 				}
-			}
-			Collections.reverse(page);  
+			} 
 		}catch(SQLException e){
 			page = null;
 			log.error("get dataPage SQLException "+sql, e);

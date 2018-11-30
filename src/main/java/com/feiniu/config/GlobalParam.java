@@ -1,26 +1,17 @@
 package com.feiniu.config;
 
 import java.net.InetAddress;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.feiniu.model.RiverState;
 import com.feiniu.model.reader.ScanPosition;
-import com.feiniu.node.FlowCenter;
-import com.feiniu.node.NodeMonitor;
-import com.feiniu.node.SocketCenter;
-import com.feiniu.node.startup.Run;
-import com.feiniu.task.FlowTask;
 import com.feiniu.util.Common;
-import com.feiniu.util.email.FNEmailSender;
 /**
  * global node data store position  
  * @author chengwen
  * @version 1.0 
  */
-public class GlobalParam {
+public final class GlobalParam {
 	
 	public static String run_environment;
 	
@@ -36,9 +27,6 @@ public class GlobalParam {
 	        return v;  
 	    } 
 	} 
-	public volatile static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
-	/**FLOW_INFOS store current flow running state information*/
-	public volatile static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState<HashMap<String,String>>();
 	
 	public static boolean WRITE_BATCH = false;
 	/**#1 searcher service  2 writer service 4 http reader service 8 instruction service 16 compute service*/
@@ -48,27 +36,14 @@ public class GlobalParam {
 	
 	public static String INSTANCE_PATH;
 	
-	public static String IP;
-	
-	public static SocketCenter SOCKET_CENTER;
-	
-	public static FlowCenter FlOW_CENTER;
-	
-	public static NodeMonitor nodeMonitor; 
-	
-	public static FNEmailSender mailSender; 
+	public static String IP; 
 	
 	public static int POOL_SIZE = 6;
 	/** CONNECT_EXPIRED is milliseconds time */
-	public static int CONNECT_EXPIRED = 7200000; 
+	public static int CONNECT_EXPIRED = 7200000;   
 	
-	public static NodeConfig nodeConfig;
+	public static Properties StartConfig; 
 	
-	public static HashMap<String, FlowTask> tasks; 
-	
-	public static Properties StartConfig;
-	
-	public static Run RIVERS;
 	
 	/**master,slave,backup*/
 	public static enum NODE_TYPE{

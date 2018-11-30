@@ -5,11 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,16 +71,16 @@ public class OracleFlow extends ReaderFlowSocket{
 	}
 
 	@Override
-	public List<String> getPageSplit(final HashMap<String, String> param,int pageSize) {
+	public ConcurrentLinkedDeque<String> getPageSplit(final HashMap<String, String> param,int pageSize) {
 		String sql;
 		if(param.get("pageSql")!=null){
 			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
 					+ param.get("pageSql")
-					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
+					+ ") FN_FPG_MAIN  order by #{COLUMN} asc";
 		}else{
 			sql = " select #{COLUMN} as id,ROWNUM AS FN_ROW_ID from ("
 					+ param.get("originalSql")
-					+ ") FN_FPG_MAIN  order by #{COLUMN} desc";
+					+ ") FN_FPG_MAIN  order by #{COLUMN} asc";
 		} 
 		sql = " select id from (" + sql + ") FN_FPG_END where MOD(FN_ROW_ID, "
 				+ pageSize + ") = 0";
@@ -100,7 +98,7 @@ public class OracleFlow extends ReaderFlowSocket{
 		if (param.get(GlobalParam._seq) != null && param.get(GlobalParam._seq).length() > 0)
 			sql = sql.replace(GlobalParam._seq, param.get(GlobalParam._seq));
 		 
-		List<String> page = new ArrayList<String>();
+		ConcurrentLinkedDeque<String> page = new ConcurrentLinkedDeque<>();
 		PREPARE(false,false); 
 		if(!ISLINK())
 			return page;
@@ -125,7 +123,7 @@ public class OracleFlow extends ReaderFlowSocket{
 			statement.setFetchSize(pageSize);
 			rs = statement.executeQuery(); 
 			while (rs.next()) { 
-				page.add(rs.getString("id"));
+				page.push(rs.getString("id"));
 			}
 			if (autoSelect && page.size() == 0) {
 				statement.close();
@@ -135,8 +133,7 @@ public class OracleFlow extends ReaderFlowSocket{
 				while (rs.next()) {
 					page.add(rs.getString("id"));
 				}
-			}
-			Collections.reverse(page);  
+			} 
 		}catch(SQLException e){
 			page = null;
 			log.error("get dataPage SQLException "+sql, e);

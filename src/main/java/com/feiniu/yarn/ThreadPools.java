@@ -7,8 +7,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.GlobalParam.STATUS;
-import com.feiniu.task.JobPage;
+import com.feiniu.piper.PipePump;
 import com.feiniu.util.Common;
 
 /**
@@ -20,7 +19,7 @@ import com.feiniu.util.Common;
  */
 public class ThreadPools {
 
-	private ArrayBlockingQueue<JobPage> waitJob = new ArrayBlockingQueue<>(GlobalParam.POOL_SIZE * 10);
+	private ArrayBlockingQueue<PipePump.Pump> waitJob = new ArrayBlockingQueue<>(GlobalParam.POOL_SIZE * 10);
 
 	private int maxThreadNums = GlobalParam.POOL_SIZE;
 
@@ -28,7 +27,7 @@ public class ThreadPools {
             30L, TimeUnit.SECONDS,
             new SynchronousQueue<Runnable>());
 
-	public void submitJobPage(JobPage jobPage) {
+	public void submitJobPage(PipePump.Pump jobPage) {
 		try {
 			waitJob.put(jobPage);
 		} catch (Exception e) {
@@ -37,36 +36,29 @@ public class ThreadPools {
 	}
 	
 	public void cleanWaitJob(int id) {
-		Iterator<JobPage> iter = waitJob.iterator();
-		JobPage jp;
+		Iterator<PipePump.Pump> iter = waitJob.iterator();
+		PipePump.Pump job;
         while(iter.hasNext()) {
-        	jp = iter.next();
-        	if(jp.getId()==id)
-        		waitJob.remove(jp);
+        	job = iter.next();
+        	if(job.getId()==id)
+        		waitJob.remove(job);
         }
 	}
 
 	public void start() {
-		try {
-			while(true) {
-				JobPage jp = waitJob.take();
-				while(cachedThreadPool.getTaskCount()>=maxThreadNums) {
-					Thread.sleep(900);
-				} 
-				cachedThreadPool.execute(()->runJobPage(jp));
-			}  
-		} catch (Exception e) {
-			Common.LOG.error("start run JobPage Exception", e);
-		}
-	} 
-	
-	private static void runJobPage(JobPage jp) {
-		if(jp.getId()>0) {
-			Thread.interrupted();
-		}
-		if (Common.checkFlowStatus(jp.getInstance(), jp.getL2seq(), jp.getJob_type(), STATUS.Termination)) {
-			return;
-		}
-		jp.leftPage.countDown();
-	}
+		new Thread(() -> {
+			try {
+				while(true) {
+					PipePump.Pump job = waitJob.take();
+					while(cachedThreadPool.getTaskCount()>=maxThreadNums) {
+						Thread.sleep(900);
+					} 
+					for(int i=0;i<job.estimateThreads();i++)
+						cachedThreadPool.execute(job);
+				}  
+			} catch (Exception e) {
+				Common.LOG.error("Start ThreadPools Exception", e);
+			}
+		}).start();
+	}  
 }

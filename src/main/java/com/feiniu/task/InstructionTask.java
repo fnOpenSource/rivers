@@ -2,8 +2,8 @@ package com.feiniu.task;
 
 import java.util.ArrayList;
 
-import com.feiniu.config.GlobalParam;
 import com.feiniu.model.InstructionTree;
+import com.feiniu.yarn.Resource;
 
 /**
  * 
@@ -22,7 +22,7 @@ public class InstructionTask {
 	}
 
 	public void runInstructions() {
-		ArrayList<InstructionTree> Instructions = GlobalParam.nodeConfig.getInstructions().get(this.codeID).getCode(); 
+		ArrayList<InstructionTree> Instructions = Resource.nodeConfig.getInstructions().get(this.codeID).getCode(); 
 		for(InstructionTree Instruction:Instructions ) {
 			Instruction.depthRun(Instruction.getRoot());
 		}

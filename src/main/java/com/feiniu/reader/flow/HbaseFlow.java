@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -131,9 +132,9 @@ public class HbaseFlow extends ReaderFlowSocket {
 	}
 
 	@Override
-	public List<String> getPageSplit(HashMap<String, String> param,int pageSize) {
+	public ConcurrentLinkedDeque<String> getPageSplit(HashMap<String, String> param,int pageSize) {
 		int i = 0;
-		List<String> dt = new ArrayList<String>(); 
+		ConcurrentLinkedDeque<String> dt = new ConcurrentLinkedDeque<>(); 
 		PREPARE(false,false);
 		if(!ISLINK())
 			return dt; 

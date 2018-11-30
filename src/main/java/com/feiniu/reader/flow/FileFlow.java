@@ -1,9 +1,8 @@
 package com.feiniu.reader.flow;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +47,8 @@ public class FileFlow extends ReaderFlowSocket {
 	}
 
 	@Override
-	public List<String> getPageSplit(HashMap<String, String> param, int pageSize) {
-		List<String> dt = new ArrayList<String>(); 
+	public ConcurrentLinkedDeque<String> getPageSplit(HashMap<String, String> param, int pageSize) {
+		ConcurrentLinkedDeque<String> dt = new ConcurrentLinkedDeque<>(); 
 		PREPARE(false,false);
 		if(!ISLINK())
 			return dt; 

@@ -12,6 +12,7 @@ import com.feiniu.node.CPU;
 import com.feiniu.piper.PipePump;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
+import com.feiniu.yarn.Resource;
  
 /**
  * schedule task description,to manage task job
@@ -66,7 +67,7 @@ public class FlowTask {
 				GlobalParam.SCAN_POSITION.get(Common.getMainName(instance, L1seq)).keepCurrentPos();
 				String storeId;
 				if (masterControl) {
-					storeId = GlobalParam.FLOW_INFOS
+					storeId = Resource.FLOW_INFOS
 							.get(transDataFlow.getInstanceConfig().getPipeParams().getInstanceName(),
 									GlobalParam.FLOWINFO.MASTER.name())
 							.get(GlobalParam.FLOWINFO.FULL_STOREID.name());
@@ -93,22 +94,22 @@ public class FlowTask {
 		if (Common.setFlowStatus(instance,L1seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Ready,STATUS.Running)) {
 			try {
 				String storeId = Common.getStoreId(instance, L1seq, transDataFlow, false, false);
-				if (!GlobalParam.FLOW_INFOS.containsKey(instance, GlobalParam.FLOWINFO.MASTER.name())) {
-					GlobalParam.FLOW_INFOS.set(instance, GlobalParam.FLOWINFO.MASTER.name(),
+				if (!Resource.FLOW_INFOS.containsKey(instance, GlobalParam.FLOWINFO.MASTER.name())) {
+					Resource.FLOW_INFOS.set(instance, GlobalParam.FLOWINFO.MASTER.name(),
 							new HashMap<String, String>());
 				}
-				GlobalParam.FLOW_INFOS.get(instance, GlobalParam.FLOWINFO.MASTER.name())
+				Resource.FLOW_INFOS.get(instance, GlobalParam.FLOWINFO.MASTER.name())
 						.put(GlobalParam.FLOWINFO.FULL_STOREID.name(), storeId);
 
 				CPU.RUN(transDataFlow.getID(), "Pond", "createStorePosition", true,
 						Common.getMainName(instance, L1seq), storeId);
 
-				GlobalParam.FLOW_INFOS.get(instance, GlobalParam.FLOWINFO.MASTER.name()).put(
+				Resource.FLOW_INFOS.get(instance, GlobalParam.FLOWINFO.MASTER.name()).put(
 						GlobalParam.FLOWINFO.FULL_JOBS.name(),
 						getNextJobs(transDataFlow.getInstanceConfig().getPipeParams().getNextJob()));
 
 				for (String slave : transDataFlow.getInstanceConfig().getPipeParams().getNextJob()) {
-					GlobalParam.FlOW_CENTER.runInstanceNow(slave, "full");
+					Resource.FlOW_CENTER.runInstanceNow(slave, "full");
 				}
 			} catch (Exception e) {
 				log.error(instance + " Full Exception", e);
@@ -121,15 +122,15 @@ public class FlowTask {
 	public void runMasterIncrement() {
 		if (Common.setFlowStatus(instance,L1seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready,STATUS.Running)) {
 			String storeId = Common.getStoreId(instance, L1seq, transDataFlow, true, recompute);
-			if (!GlobalParam.FLOW_INFOS.containsKey(instance, GlobalParam.FLOWINFO.MASTER.name())) {
-				GlobalParam.FLOW_INFOS.set(instance, GlobalParam.FLOWINFO.MASTER.name(),
+			if (!Resource.FLOW_INFOS.containsKey(instance, GlobalParam.FLOWINFO.MASTER.name())) {
+				Resource.FLOW_INFOS.set(instance, GlobalParam.FLOWINFO.MASTER.name(),
 						new HashMap<String, String>());
 			}
-			GlobalParam.FLOW_INFOS.get(instance, GlobalParam.FLOWINFO.MASTER.name())
+			Resource.FLOW_INFOS.get(instance, GlobalParam.FLOWINFO.MASTER.name())
 					.put(GlobalParam.FLOWINFO.INCRE_STOREID.name(), storeId);
 			try {
 				for (String slave : transDataFlow.getInstanceConfig().getPipeParams().getNextJob()) {
-					GlobalParam.FlOW_CENTER.runInstanceNow(slave, "increment");
+					Resource.FlOW_CENTER.runInstanceNow(slave, "increment");
 				}
 			} finally {
 				Common.setFlowStatus(instance,L1seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Blank,STATUS.Ready);  
@@ -147,7 +148,7 @@ public class FlowTask {
 		if (Common.setFlowStatus(instance,L1seq,GlobalParam.JOB_TYPE.INCREMENT.name(),STATUS.Ready,STATUS.Running)) {
 			String storeId;
 			if (masterControl) {
-				storeId = GlobalParam.FLOW_INFOS.get(transDataFlow.getInstanceConfig().getPipeParams().getInstanceName(),
+				storeId = Resource.FLOW_INFOS.get(transDataFlow.getInstanceConfig().getPipeParams().getInstanceName(),
 						GlobalParam.FLOWINFO.MASTER.name()).get(GlobalParam.FLOWINFO.INCRE_STOREID.name());
 				Common.setAndGetScanInfo(instance, L1seq, storeId);
 			} else {
@@ -178,7 +179,7 @@ public class FlowTask {
 	private static String getNextJobs(String[] nextJobs) {
 		StringBuilder sf = new StringBuilder();
 		for (String job : nextJobs) {
-			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(job);
+			InstanceConfig instanceConfig = Resource.nodeConfig.getInstanceConfigs().get(job);
 			if (instanceConfig.openTrans()) {
 				String[] _seqs = Common.getL1seqs(instanceConfig, true);
 				for (String seq : _seqs) {

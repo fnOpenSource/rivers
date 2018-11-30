@@ -2,8 +2,8 @@ package com.feiniu.reader;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,7 +38,7 @@ public abstract class ReaderFlowSocket extends Flow{
 	 
 	public abstract DataPage getPageData(final HashMap<String, String> param,final Map<String, RiverField> transParams,Handler handler,int pageSize);
 
-	public abstract List<String> getPageSplit(final HashMap<String, String> param,int pageSize);
+	public abstract ConcurrentLinkedDeque<String> getPageSplit(final HashMap<String, String> param,int pageSize);
 	
 	public void freeJobPage() {
 		this.dataPage.clear(); 

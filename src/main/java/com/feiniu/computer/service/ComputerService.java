@@ -21,6 +21,7 @@ import com.feiniu.node.SocketCenter;
 import com.feiniu.service.FNService;
 import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
+import com.feiniu.yarn.Resource;
 
 /**
  * 
@@ -57,7 +58,7 @@ public class ComputerService {
 		long startTime = System.currentTimeMillis();
 		ResponseState response = null; 
 		String pipe = request.getPipe(); 
-		Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+		Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
 		if (configMap.containsKey(pipe)) { 
 			response = SocketCenter.getComputer(pipe,"","",false).startCompute(request);
 		} 
@@ -82,7 +83,7 @@ public class ComputerService {
 			response.setHeader("PowerBy", "rivers"); 
 			rq.setHandled(true);
 			RiverRequest RR = Common.getRequest(rq);
-			if (GlobalParam.nodeConfig.getSearchConfigs().containsKey(
+			if (Resource.nodeConfig.getSearchConfigs().containsKey(
 					RR.getPipe())) {
 				ResponseState rps = null;
 				try {

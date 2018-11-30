@@ -5,10 +5,10 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.feiniu.config.GlobalParam;
 import com.feiniu.instruction.Context;
 import com.feiniu.instruction.Instruction;
 import com.feiniu.node.CPU;
+import com.feiniu.yarn.Resource;
 
 /**
  *  * runtime manage
@@ -38,12 +38,12 @@ public class Track extends Instruction {
 		} else {
 			return false;
 		}
-		CPU.prepare(id, GlobalParam.nodeConfig.getInstanceConfigs().get(instance),
-				GlobalParam.SOCKET_CENTER.getWriterSocket(
-						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(), instance,
+		CPU.prepare(id, Resource.nodeConfig.getInstanceConfigs().get(instance),
+				Resource.SOCKET_CENTER.getWriterSocket(
+						Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(), instance,
 						seq, ""),
-				GlobalParam.SOCKET_CENTER.getReaderSocket(
-						GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadFrom(), instance,
+				Resource.SOCKET_CENTER.getReaderSocket(
+						Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadFrom(), instance,
 						seq, ""));
 		return true;
 

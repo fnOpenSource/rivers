@@ -29,6 +29,7 @@ import com.feiniu.service.HttpService;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
 import com.feiniu.util.MD5Util;
+import com.feiniu.yarn.Resource;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -99,7 +100,7 @@ public class HttpReaderService {
 									&& rq.getParameter("fn_is_monopoly").equals("true"))
 								monopoly = true;
 							
-							PipePump pipePump = GlobalParam.SOCKET_CENTER.getPipePump(instance, seq, false,monopoly?GlobalParam.FLOW_TAG._MOP.name():GlobalParam.FLOW_TAG._DEFAULT.name());
+							PipePump pipePump = Resource.SOCKET_CENTER.getPipePump(instance, seq, false,monopoly?GlobalParam.FLOW_TAG._MOP.name():GlobalParam.FLOW_TAG._DEFAULT.name());
 							if (pipePump == null || !pipePump.getInstanceConfig().getAlias().equals(dataTo)) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance not exits!\"}");
 								break;
@@ -143,7 +144,7 @@ public class HttpReaderService {
 						break;
 					case "get_new_storeid":
 						if (rq.getParameterMap().get("instance") != null && rq.getParameterMap().get("seq") != null) {
-							PipePump pipePump = GlobalParam.SOCKET_CENTER.getPipePump(rq.getParameter("instance"),
+							PipePump pipePump = Resource.SOCKET_CENTER.getPipePump(rq.getParameter("instance"),
 									rq.getParameter("seq"), false,"");
 							String storeid = Common.getStoreId(rq.getParameter("instance"), rq.getParameter("seq"),
 									pipePump, false, false);
@@ -160,7 +161,7 @@ public class HttpReaderService {
 							String storeid;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							PipePump pipePump = GlobalParam.SOCKET_CENTER.getPipePump(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
+							PipePump pipePump = Resource.SOCKET_CENTER.getPipePump(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name());
 							if(rq.getParameterMap().get("storeid")!=null) {
 								storeid = rq.getParameter("storeid");
 							}else {
@@ -181,13 +182,13 @@ public class HttpReaderService {
 							SearcherModel<?, ?, ?> query=null;
 							String instance = rq.getParameter("instance");
 							String seq = rq.getParameter("seq");
-							PipePump transFlow = GlobalParam.SOCKET_CENTER.getPipePump(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name()); 
+							PipePump transFlow = Resource.SOCKET_CENTER.getPipePump(instance, seq, false,GlobalParam.FLOW_TAG._DEFAULT.name()); 
 							if (transFlow == null) {
 								response.getWriter().println("{\"status\":0,\"info\":\"Writer get Error,Instance and seq Error!\"}");
 								break;
 							}
 							String storeid = Common.getStoreId(instance,seq, transFlow, true, true);
-							WarehouseParam param = GlobalParam.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParams().getWriteTo());
+							WarehouseParam param = Resource.SOCKET_CENTER.getWHP(transFlow.getInstanceConfig().getPipeParams().getWriteTo());
 							switch (param.getType()) {
 							case ES:
 								query = SearcherESModel.getInstance(Common.getRequest(rq),transFlow.getInstanceConfig());

@@ -39,6 +39,7 @@ import com.feiniu.util.Common;
 import com.feiniu.util.NodeUtil;
 import com.feiniu.util.SystemInfoUtil; 
 import com.feiniu.writer.WriterFlowSocket;
+import com.feiniu.yarn.Resource;
 
 /**
  * * data-flow router maintain apis,default port
@@ -165,7 +166,7 @@ public final class NodeMonitor {
 					break;
 				}
 				if (o != null) {
-					GlobalParam.nodeConfig.addSource(type, o);
+					Resource.nodeConfig.addSource(type, o);
 					setResponse(1, "add Resource to node success!");
 				}
 			} catch (Exception e) {
@@ -281,7 +282,7 @@ public final class NodeMonitor {
 		dt.put("SERVICE_LEVEL", service_level);
 		dt.put("STATUS", "running");
 		dt.put("VERSION", GlobalParam.VERSION);
-		dt.put("TASKS", GlobalParam.tasks.size());
+		dt.put("TASKS", Resource.tasks.size());
 		try {
 			dt.put("CPU", SystemInfoUtil.getCpuUsage());
 			dt.put("MEMORY", SystemInfoUtil.getMemUsage());
@@ -295,11 +296,11 @@ public final class NodeMonitor {
 		if (rq.getParameter("instance").length() > 1) {
 			try {
 				String instance = rq.getParameter("instance");
-				InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
-				WarehouseParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse()
+				InstanceConfig instanceConfig = Resource.nodeConfig.getInstanceConfigs().get(instance);
+				WarehouseParam dataMap = Resource.nodeConfig.getNoSqlWarehouse()
 						.get(instanceConfig.getPipeParams().getReadFrom());
 				if (dataMap == null) {
-					dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
+					dataMap = Resource.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
 				}
 				setResponse(1, StringUtils.join(dataMap.getL1seq(), ","));
 			} catch (Exception e) {
@@ -335,37 +336,37 @@ public final class NodeMonitor {
 	}
 
 	public void getInstanceInfo(Request rq) {
-		if (GlobalParam.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance"))) {
+		if (Resource.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance"))) {
 			String instance = rq.getParameter("instance"); 
 			StringBuilder sb = new StringBuilder();
-			InstanceConfig config = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
-			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
-				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom())
+			InstanceConfig config = Resource.nodeConfig.getInstanceConfigs().get(instance);
+			if (Resource.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
+				String poolname = Resource.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getReadFrom())
 						.getPoolName(null);
 				sb.append(",[DataFrom Pool Status] " + FnConnectionPool.getStatus(poolname));
-			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
-				WarehouseSqlParam ws = GlobalParam.nodeConfig.getSqlWarehouse()
+			} else if (Resource.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom()) != null) {
+				WarehouseSqlParam ws = Resource.nodeConfig.getSqlWarehouse()
 						.get(config.getPipeParams().getReadFrom());
 				String poolname = "";
 				if (ws.getL1seq() != null && ws.getL1seq().length > 0) {
 					for (String seq : ws.getL1seq()) {
-						poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
+						poolname = Resource.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
 								.getPoolName(seq);
 						sb.append(",[Seq(" + seq + ") Reader Pool Status] " + FnConnectionPool.getStatus(poolname));
 					}
 				} else {
-					poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
+					poolname = Resource.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getReadFrom())
 							.getPoolName(null);
 					sb.append(",[Reader Pool Status] " + FnConnectionPool.getStatus(poolname));
 				}
 			}
 
-			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getWriteTo()) != null) {
-				String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getWriteTo())
+			if (Resource.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getWriteTo()) != null) {
+				String poolname = Resource.nodeConfig.getNoSqlWarehouse().get(config.getPipeParams().getWriteTo())
 						.getPoolName(null);
 				sb.append(",[Writer Pool Status] " + FnConnectionPool.getStatus(poolname));
-			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getWriteTo()) != null) {
-				String poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getWriteTo())
+			} else if (Resource.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getWriteTo()) != null) {
+				String poolname = Resource.nodeConfig.getSqlWarehouse().get(config.getPipeParams().getWriteTo())
 						.getPoolName(null);
 				sb.append(",[Writer Pool Status] " + FnConnectionPool.getStatus(poolname));
 			}
@@ -380,17 +381,17 @@ public final class NodeMonitor {
 					searcher_info = ",[Searcher Pool Status] ";
 				}
 
-				if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(searchFrom) != null) {
-					String poolname = GlobalParam.nodeConfig.getNoSqlWarehouse().get(searchFrom).getPoolName(null);
+				if (Resource.nodeConfig.getNoSqlWarehouse().get(searchFrom) != null) {
+					String poolname = Resource.nodeConfig.getNoSqlWarehouse().get(searchFrom).getPoolName(null);
 					sb.append(searcher_info + FnConnectionPool.getStatus(poolname));
 				} else {
-					String poolname = GlobalParam.nodeConfig.getSqlWarehouse().get(searchFrom).getPoolName(null);
+					String poolname = Resource.nodeConfig.getSqlWarehouse().get(searchFrom).getPoolName(null);
 					sb.append(searcher_info + FnConnectionPool.getStatus(poolname));
 				}
 			}
 
 			if (config.openTrans()) {
-				WarehouseSqlParam wsp = GlobalParam.nodeConfig.getSqlWarehouse()
+				WarehouseSqlParam wsp = Resource.nodeConfig.getSqlWarehouse()
 						.get(config.getPipeParams().getReadFrom());
 				if (wsp.getL1seq().length > 0) {
 					sb.append(",[增量存储状态]");
@@ -438,18 +439,18 @@ public final class NodeMonitor {
 					sb.append(",[全量存储状态] ");
 					sb.append(Common.getFullStartInfo(instance, null));
 				}
-				if (!GlobalParam.FLOW_INFOS.containsKey(instance, JOB_TYPE.FULL.name())
-						|| GlobalParam.FLOW_INFOS.get(instance, JOB_TYPE.FULL.name()).size() == 0) {
+				if (!Resource.FLOW_INFOS.containsKey(instance, JOB_TYPE.FULL.name())
+						|| Resource.FLOW_INFOS.get(instance, JOB_TYPE.FULL.name()).size() == 0) {
 					sb.append(",[全量运行状态] " + "full:null");
 				} else {
-					sb.append(",[全量运行状态] " + "full:" + GlobalParam.FLOW_INFOS.get(instance, JOB_TYPE.FULL.name()));
+					sb.append(",[全量运行状态] " + "full:" + Resource.FLOW_INFOS.get(instance, JOB_TYPE.FULL.name()));
 				}
-				if (!GlobalParam.FLOW_INFOS.containsKey(instance, JOB_TYPE.INCREMENT.name())
-						|| GlobalParam.FLOW_INFOS.get(instance, JOB_TYPE.INCREMENT.name()).size() == 0) {
+				if (!Resource.FLOW_INFOS.containsKey(instance, JOB_TYPE.INCREMENT.name())
+						|| Resource.FLOW_INFOS.get(instance, JOB_TYPE.INCREMENT.name()).size() == 0) {
 					sb.append(",[增量运行状态] " + "increment:null");
 				} else {
 					sb.append(",[增量运行状态] " + "increment:"
-							+ GlobalParam.FLOW_INFOS.get(instance, JOB_TYPE.INCREMENT.name()));
+							+ Resource.FLOW_INFOS.get(instance, JOB_TYPE.INCREMENT.name()));
 				}
 				sb.append(",[增量线程状态] ");
 				sb.append(threadStateInfo(instance, GlobalParam.JOB_TYPE.INCREMENT));
@@ -468,7 +469,7 @@ public final class NodeMonitor {
 	 * @param rq
 	 */
 	public void getInstances(Request rq) {
-		Map<String, InstanceConfig> nodes = GlobalParam.nodeConfig.getInstanceConfigs();
+		Map<String, InstanceConfig> nodes = Resource.nodeConfig.getInstanceConfigs();
 		HashMap<String, List<String>> rs = new HashMap<String, List<String>>();
 		for (Map.Entry<String, InstanceConfig> entry : nodes.entrySet()) {
 			InstanceConfig config = entry.getValue();
@@ -514,9 +515,9 @@ public final class NodeMonitor {
 
 	public void runNow(Request rq) {
 		if (rq.getParameter("instance") != null && rq.getParameter("jobtype") != null) {
-			if (GlobalParam.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance"))
-					&& GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).openTrans()) {
-				boolean state = GlobalParam.FlOW_CENTER.runInstanceNow(rq.getParameter("instance"),
+			if (Resource.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance"))
+					&& Resource.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).openTrans()) {
+				boolean state = Resource.FlOW_CENTER.runInstanceNow(rq.getParameter("instance"),
 						rq.getParameter("jobtype"));
 				if (state) {
 					setResponse(1, "Writer " + rq.getParameter("instance") + " job has been started now!");
@@ -571,24 +572,24 @@ public final class NodeMonitor {
 	public void reloadConfig(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
 			controlThreadState(rq.getParameter("instance"), STATUS.Stop, true);
-			int type = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getInstanceType();
+			int type = Resource.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getInstanceType();
 			String instanceConfig = rq.getParameter("instance");
 			if (type > 0) {
 				instanceConfig = rq.getParameter("instance") + ":" + type;
 			} else {
-				if (!GlobalParam.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance")))
+				if (!Resource.nodeConfig.getInstanceConfigs().containsKey(rq.getParameter("instance")))
 					setResponse(0, rq.getParameter("instance") + " not exists!");
 			}
 			if (rq.getParameter("reset") != null && rq.getParameter("reset").equals("true")
 					&& rq.getParameter("instance").length() > 2) {
-				GlobalParam.nodeConfig.loadConfig(instanceConfig, true);
+				Resource.nodeConfig.loadConfig(instanceConfig, true);
 			} else {
-				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.FULL.name());
-				GlobalParam.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.INCREMENT.name());
+				Resource.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.FULL.name());
+				Resource.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.INCREMENT.name());
 				freeInstanceConnectPool(rq.getParameter("instance"));
-				String alias = GlobalParam.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
-				GlobalParam.nodeConfig.getSearchConfigs().remove(alias);
-				GlobalParam.nodeConfig.loadConfig(instanceConfig, false);
+				String alias = Resource.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
+				Resource.nodeConfig.getSearchConfigs().remove(alias);
+				Resource.nodeConfig.loadConfig(instanceConfig, false);
 			}
 			rebuildFlowGovern(instanceConfig);
 			controlThreadState(rq.getParameter("instance"), STATUS.Ready, true);
@@ -605,12 +606,12 @@ public final class NodeMonitor {
 	 */
 	public void addInstance(Request rq) {
 		if (rq.getParameter("instance").length() > 1) {
-			GlobalParam.nodeConfig.loadConfig(rq.getParameter("instance"), false);
+			Resource.nodeConfig.loadConfig(rq.getParameter("instance"), false);
 			String tmp[] = rq.getParameter("instance").split(":");
 			String instanceName = rq.getParameter("instance");
 			if (tmp.length > 1)
 				instanceName = tmp[0];
-			InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName);
+			InstanceConfig instanceConfig = Resource.nodeConfig.getInstanceConfigs().get(instanceName);
 			if (instanceConfig.checkStatus())
 				NodeUtil.initParams(instanceConfig);
 			rebuildFlowGovern(rq.getParameter("instance"));
@@ -637,7 +638,7 @@ public final class NodeMonitor {
 	public void deleteInstanceData(Request rq) {
 		if (rq.getParameter("instance") != null) {
 			String _instance = rq.getParameter("instance");
-			Map<String, InstanceConfig> configMap = GlobalParam.nodeConfig.getInstanceConfigs();
+			Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
 			boolean state = true;
 			for (Map.Entry<String, InstanceConfig> ents : configMap.entrySet()) {
 				String instance = ents.getKey();
@@ -655,8 +656,8 @@ public final class NodeMonitor {
 					controlThreadState(instance, STATUS.Stop, true);
 					for (String L1seq : L1seqs) { 
 						String tags = Common.getResourceTag(instance, L1seq, GlobalParam.FLOW_TAG._DEFAULT.name(), false);
-						WriterFlowSocket wfs = GlobalParam.SOCKET_CENTER.getWriterSocket(
-								GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
+						WriterFlowSocket wfs = Resource.SOCKET_CENTER.getWriterSocket(
+								Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteTo(),
 								instance, L1seq, tags); 
 						wfs.PREPARE(false, false);
 						if(wfs.ISLINK()) {
@@ -679,12 +680,12 @@ public final class NodeMonitor {
   
 	private void removeInstance(String instance) {
 		controlThreadState(instance, STATUS.Stop, true);
-		if (GlobalParam.nodeConfig.getInstanceConfigs().get(instance).getInstanceType() > 0) {
-			GlobalParam.FLOW_INFOS.remove(instance, JOB_TYPE.FULL.name());
-			GlobalParam.FLOW_INFOS.remove(instance, JOB_TYPE.INCREMENT.name());
+		if (Resource.nodeConfig.getInstanceConfigs().get(instance).getInstanceType() > 0) {
+			Resource.FLOW_INFOS.remove(instance, JOB_TYPE.FULL.name());
+			Resource.FLOW_INFOS.remove(instance, JOB_TYPE.INCREMENT.name());
 		}
-		GlobalParam.nodeConfig.getInstanceConfigs().remove(instance);
-		GlobalParam.FlOW_CENTER.removeInstance(instance);
+		Resource.nodeConfig.getInstanceConfigs().remove(instance);
+		Resource.FlOW_CENTER.removeInstance(instance);
 		String tmp = "";
 		for (String str : GlobalParam.StartConfig.getProperty("instances").split(",")) {
 			String[] s = str.split(":");
@@ -765,11 +766,11 @@ public final class NodeMonitor {
 	}
 
 	private String[] getInstanceL1seqs(String instance) {
-		InstanceConfig instanceConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instance);
-		WarehouseParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse()
+		InstanceConfig instanceConfig = Resource.nodeConfig.getInstanceConfigs().get(instance);
+		WarehouseParam dataMap = Resource.nodeConfig.getNoSqlWarehouse()
 				.get(instanceConfig.getPipeParams().getReadFrom());
 		if (dataMap == null) {
-			dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
+			dataMap = Resource.nodeConfig.getSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom());
 		}
 		String[] seqs;
 		if (dataMap == null) {
@@ -790,17 +791,17 @@ public final class NodeMonitor {
 			String[] strs = inst.split(":");
 			if (strs.length < 1)
 				continue;
-			GlobalParam.FlOW_CENTER.addFlowGovern(strs[0], GlobalParam.nodeConfig.getInstanceConfigs().get(strs[0]),
+			Resource.FlOW_CENTER.addFlowGovern(strs[0], Resource.nodeConfig.getInstanceConfigs().get(strs[0]),
 					true);
 		}
 	} 
 
 	private void freeInstanceConnectPool(String instanceName) {
-		InstanceConfig paramConfig = GlobalParam.nodeConfig.getInstanceConfigs().get(instanceName);
+		InstanceConfig paramConfig = Resource.nodeConfig.getInstanceConfigs().get(instanceName);
 		String[] dataSource = { paramConfig.getPipeParams().getReadFrom(), paramConfig.getPipeParams().getWriteTo() };
 		for (String dt : dataSource) {
-			if (GlobalParam.nodeConfig.getNoSqlWarehouse().get(dt) != null) {
-				WarehouseNosqlParam dataMap = GlobalParam.nodeConfig.getNoSqlWarehouse().get(dt);
+			if (Resource.nodeConfig.getNoSqlWarehouse().get(dt) != null) {
+				WarehouseNosqlParam dataMap = Resource.nodeConfig.getNoSqlWarehouse().get(dt);
 				if (dataMap == null) {
 					break;
 				}
@@ -812,8 +813,8 @@ public final class NodeMonitor {
 				} else {
 					FnConnectionPool.release(dataMap.getPoolName(null));
 				}
-			} else if (GlobalParam.nodeConfig.getSqlWarehouse().get(dt) != null) {
-				WarehouseSqlParam dataMap = GlobalParam.nodeConfig.getSqlWarehouse().get(dt);
+			} else if (Resource.nodeConfig.getSqlWarehouse().get(dt) != null) {
+				WarehouseSqlParam dataMap = Resource.nodeConfig.getSqlWarehouse().get(dt);
 				if (dataMap == null) {
 					break;
 				}

@@ -33,7 +33,8 @@ import com.feiniu.model.RiverRequest;
 import com.feiniu.model.reader.ScanPosition;
 import com.feiniu.node.CPU;
 import com.feiniu.param.warehouse.WarehouseParam;
-import com.feiniu.piper.PipePump; 
+import com.feiniu.piper.PipePump;
+import com.feiniu.yarn.Resource; 
 
 /**
  * 
@@ -359,11 +360,11 @@ public final class Common {
 	public static String[] getL1seqs(InstanceConfig instanceConfig,boolean fillDefault){
 		String[] seqs = {};
 		WarehouseParam whParam;
-		if(GlobalParam.nodeConfig.getNoSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom())!=null){
-			whParam = GlobalParam.nodeConfig.getNoSqlWarehouse().get(
+		if(Resource.nodeConfig.getNoSqlWarehouse().get(instanceConfig.getPipeParams().getReadFrom())!=null){
+			whParam = Resource.nodeConfig.getNoSqlWarehouse().get(
 					instanceConfig.getPipeParams().getReadFrom());
 		}else{
-			whParam = GlobalParam.nodeConfig.getSqlWarehouse().get(
+			whParam = Resource.nodeConfig.getSqlWarehouse().get(
 					instanceConfig.getPipeParams().getReadFrom());
 		}
 		if (null != whParam) {
@@ -457,9 +458,9 @@ public final class Common {
 	 * @return boolean,lock status
 	 */
 	public static boolean setFlowStatus(String instance,String L1seq,String type,STATUS needState, STATUS setState) {
-		synchronized (GlobalParam.FLOW_STATUS.get(instance, L1seq, type)) {
-			if (needState.equals(STATUS.Blank) || (GlobalParam.FLOW_STATUS.get(instance, L1seq, type).get() == needState.getVal())) {
-				GlobalParam.FLOW_STATUS.get(instance, L1seq, type).set(setState.getVal()); 
+		synchronized (Resource.FLOW_STATUS.get(instance, L1seq, type)) {
+			if (needState.equals(STATUS.Blank) || (Resource.FLOW_STATUS.get(instance, L1seq, type).get() == needState.getVal())) {
+				Resource.FLOW_STATUS.get(instance, L1seq, type).set(setState.getVal()); 
 				return true;
 			} else {
 				LOG.info(instance + " " + type + " not in state "+needState.name()+"!");
@@ -469,7 +470,7 @@ public final class Common {
 	}  
 	
 	public static boolean checkFlowStatus(String instance,String seq,JOB_TYPE type,STATUS state) {
-		if((GlobalParam.FLOW_STATUS.get(instance, seq, type.name()).get() & state.getVal())>0)
+		if((Resource.FLOW_STATUS.get(instance, seq, type.name()).get() & state.getVal())>0)
 			return true; 
 		return false;
 	} 
