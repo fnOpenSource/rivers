@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -192,15 +193,17 @@ public final class PipePump extends Instruction {
 					} else {
 						log.info(Common.formatLog("start","Start " + job_type.name(), mainName, storeId, L2seq,0, "",
 								GlobalParam.SCAN_POSITION.get(mainName).getL2SeqPos(L2seq), 0,",totalpage:" + pageList.size()));
-						Object monitor = new Object();
+						long start = Common.getNow();
+						AtomicInteger total = new AtomicInteger(0); 
 						if(getInstanceConfig().getPipeParams().isMultiThread()) {
-							synchronized (monitor) {
-								Resource.ThreadPools.submitJobPage(new Pump(monitor,instance,mainName,L1seq,L2seq,job_type,storeId,originalSql,pageList,param,sqlParam,writeTo));
-								monitor.wait();
-							} 
+							final CountDownLatch synThreads = new CountDownLatch((int) (1+Math.log(pageList.size())));
+							Resource.ThreadPools.submitJobPage(new Pump(synThreads,instance,mainName,L1seq,L2seq,job_type,storeId,originalSql,pageList,param,sqlParam,writeTo,total));
+							synThreads.await();
 						}else {
-							singleThread(instance,mainName,L1seq,L2seq,job_type,storeId,originalSql,pageList,param,sqlParam,writeTo);
+							singleThread(instance,mainName,L1seq,L2seq,job_type,storeId,originalSql,pageList,param,sqlParam,writeTo,total);
 						} 
+						log.info(Common.formatLog("complete", "Complete " + job_type.name(), mainName, storeId, L2seq, total.get(),
+								"", GlobalParam.SCAN_POSITION.get(mainName).getL2SeqPos(L2seq), Common.getNow() - start, "")); 
 					}
 				} while (param.get(GlobalParam._end_time).length() > 0 && this.readHandler.loopScan(param));
 
@@ -257,12 +260,11 @@ public final class PipePump extends Instruction {
 	 * @param pageList
 	 * @throws FNException 
 	 */
-	private void singleThread(String instance,String mainName,String L1seq,String L2seq,JOB_TYPE job_type,String storeId,String originalSql,ConcurrentLinkedDeque<String> pageList,HashMap<String, String> param,SQLParam sqlParam,String writeTo) throws FNException { 
+	private void singleThread(String instance,String mainName,String L1seq,String L2seq,JOB_TYPE job_type,String storeId,String originalSql,ConcurrentLinkedDeque<String> pageList,HashMap<String, String> param,SQLParam sqlParam,String writeTo,AtomicInteger total) throws FNException { 
 		ReaderState rState = null;
 		int processPos = 0;
-		String startId = "0"; 
-		int total = 0; 
-		long start = Common.getNow();
+		String startId = "0";  
+		
 		boolean isUpdate = getInstanceConfig().getPipeParams().getWriteType().equals("increment") ? true : false;
 		String incrementField = sqlParam.getIncrementField();
 		String keyColumn = sqlParam.getKeyColumn();
@@ -304,7 +306,7 @@ public final class PipePump extends Instruction {
 				} 
 				if (rState.isStatus() == false)
 					throw new FNException("read data exception!");
-				total += rState.getCount();
+				total.getAndAdd(rState.getCount());
 				startId = dataBoundary;
 			}
 			
@@ -314,19 +316,20 @@ public final class PipePump extends Instruction {
 			if (job_type==JOB_TYPE.INCREMENT) { 
 				Common.saveTaskInfo(instance, L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
-		}
-		log.info(Common.formatLog("complete", "Complete " + job_type.name(), mainName, storeId, L2seq, total,
-				startId, GlobalParam.SCAN_POSITION.get(mainName).getL2SeqPos(L2seq), Common.getNow() - start, "")); 
+		}  
 	}
 	
 	public class Pump implements Runnable { 
-		ReaderState rState = null;
-		AtomicInteger processPos = new AtomicInteger(0);  
-		int pageSize;
-		String startId = "0"; 
-		AtomicInteger total = new AtomicInteger(0);  
 		long start = Common.getNow();
+		final int pageSize;
+		CountDownLatch synThreads;
+		
 		boolean isUpdate = getInstanceConfig().getPipeParams().getWriteType().equals("increment") ? true : false;
+		ReaderState rState = null;
+		AtomicInteger processPos = new AtomicInteger(0);   
+		String startId = "0"; 
+		final AtomicInteger total;   
+		
 		String incrementField;
 		String keyColumn;
 		String instance;
@@ -337,10 +340,9 @@ public final class PipePump extends Instruction {
 		String L2seq;
 		String L1seq;
 		String writeTo;
-		String storeId;
-		Object monitor;
+		String storeId;  
 		
-		public Pump(Object monitor,String instance,String mainName,String L1seq,String L2seq,JOB_TYPE job_type,String storeId,String originalSql,ConcurrentLinkedDeque<String> pageList,HashMap<String, String> param,SQLParam sqlParam,String writeTo) {
+		public Pump(CountDownLatch synThreads,String instance,String mainName,String L1seq,String L2seq,JOB_TYPE job_type,String storeId,String originalSql,ConcurrentLinkedDeque<String> pageList,HashMap<String, String> param,SQLParam sqlParam,String writeTo,AtomicInteger total) {
 			incrementField = sqlParam.getIncrementField();
 			keyColumn = sqlParam.getKeyColumn();
 			this.pageList = pageList;
@@ -352,8 +354,9 @@ public final class PipePump extends Instruction {
 			this.L1seq = L1seq;
 			this.writeTo = writeTo;
 			this.storeId = storeId;
-			this.monitor = monitor;
+			this.synThreads = synThreads;
 			this.pageSize = pageList.size();
+			this.total = total;
 		}
 		
 		public int getId() {
@@ -361,7 +364,7 @@ public final class PipePump extends Instruction {
 		}
 		
 		public int estimateThreads() {
-			return  (int) (1+Math.log(pageList.size()));
+			return  (int) (1+Math.log(this.pageSize));
 		}
 		
 		@Override
@@ -419,9 +422,7 @@ public final class PipePump extends Instruction {
 					Common.saveTaskInfo(instance, L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 				}
 			} 
-			synchronized (monitor) {
-				monitor.notify();
-			} 
+			synThreads.countDown(); 
 		}
 		
 	}
