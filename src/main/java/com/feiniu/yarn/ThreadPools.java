@@ -35,12 +35,12 @@ public class ThreadPools {
 		}
 	}
 	
-	public void cleanWaitJob(int id) {
+	public void cleanWaitJob(String id) {
 		Iterator<PipePump.Pump> iter = waitJob.iterator();
 		PipePump.Pump job;
         while(iter.hasNext()) {
         	job = iter.next();
-        	if(job.getId()==id)
+        	if(job.getId().equals(id))
         		waitJob.remove(job);
         }
 	}
