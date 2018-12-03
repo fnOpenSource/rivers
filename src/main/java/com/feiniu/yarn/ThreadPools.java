@@ -53,7 +53,7 @@ public class ThreadPools {
 					while(cachedThreadPool.getTaskCount()>=maxThreadNums) {
 						Thread.sleep(900);
 					} 
-					for(int i=0;i<job.estimateThreads();i++)
+					for(int i=0;i<job.needThreads();i++)
 						cachedThreadPool.execute(job);
 				}  
 			} catch (Exception e) {

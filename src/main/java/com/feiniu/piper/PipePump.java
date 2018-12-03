@@ -196,16 +196,16 @@ public final class PipePump extends Instruction {
 						long start = Common.getNow();
 						AtomicInteger total = new AtomicInteger(0); 
 						if(getInstanceConfig().getPipeParams().isMultiThread()) {
-							final CountDownLatch synThreads = new CountDownLatch((int) (1+Math.log(pageList.size())));
+							final CountDownLatch synThreads = new CountDownLatch(estimateThreads(pageList.size()));
 							Resource.ThreadPools.submitJobPage(new Pump(synThreads,instance,mainName,L1seq,L2seq,job_type,storeId,originalSql,pageList,param,sqlParam,writeTo,total));
 							synThreads.await();
-						}else { 
+						}else {
 							singleThread(instance,mainName,L1seq,L2seq,job_type,storeId,originalSql,pageList,param,sqlParam,writeTo,total);
 						} 
 						log.info(Common.formatLog("complete", "Complete " + job_type.name(), mainName, storeId, L2seq, total.get(),
 								"", GlobalParam.SCAN_POSITION.get(mainName).getL2SeqPos(L2seq), Common.getNow() - start, "")); 
-						if(Common.checkFlowStatus(instance, L1seq, job_type, STATUS.Termination)) 
-							break; 
+						if(Common.checkFlowStatus(instance, L1seq, job_type, STATUS.Termination))
+							throw new FNException(instance + " " + job_type.name() + " job has been Terminated!");
 					}
 				} while (param.get(GlobalParam._end_time).length() > 0 && this.readHandler.loopScan(param));
 
@@ -281,7 +281,6 @@ public final class PipePump extends Instruction {
 							param.get(GlobalParam._start_time), param.get(GlobalParam._end_time),
 							incrementField)); 
 			if (Common.checkFlowStatus(instance, L1seq, job_type, STATUS.Termination)) {
-				Common.LOG.warn(instance + " " + job_type.name() + " job has been Terminated!");
 				break;
 			} else {
 				DataPage pagedata; 
@@ -320,6 +319,10 @@ public final class PipePump extends Instruction {
 				Common.saveTaskInfo(instance, L1seq,storeId,GlobalParam.JOB_INCREMENTINFO_PATH);
 			}
 		}   
+	}
+	
+	int estimateThreads(int numJobs) {
+		return  (int) (1+Math.log(numJobs));
 	}
 	
 	public class Pump implements Runnable { 
@@ -367,8 +370,8 @@ public final class PipePump extends Instruction {
 			return ID;
 		}
 		
-		public int estimateThreads() {
-			return  (int) (1+Math.log(this.pageSize));
+		public int needThreads() {
+			return estimateThreads(this.pageSize);
 		}
 		
 		@Override
@@ -384,6 +387,7 @@ public final class PipePump extends Instruction {
 								param.get(GlobalParam._start_time), param.get(GlobalParam._end_time),
 								incrementField)); 
 				if (Common.checkFlowStatus(instance, L1seq, job_type, STATUS.Termination)) {
+					Resource.ThreadPools.cleanWaitJob(getId());
 					Common.LOG.warn(instance + " " + job_type.name() + " job has been Terminated!");
 					break;
 				} else {
