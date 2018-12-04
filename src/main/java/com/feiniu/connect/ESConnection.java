@@ -72,9 +72,10 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	public ESConnector getConnection(boolean searcher) {
 		connect();
 		if (!searcher) {
-			freeBP();
-			this.bulkProcessor = getBulkProcessor(this.conn);
-			this.ESC.setBulkProcessor(this.bulkProcessor);
+			if (this.bulkProcessor == null) {
+				this.bulkProcessor = getBulkProcessor(this.conn);
+				this.ESC.setBulkProcessor(this.bulkProcessor);
+			} 
 		}
 		this.ESC.setRunState(true);
 		return this.ESC;

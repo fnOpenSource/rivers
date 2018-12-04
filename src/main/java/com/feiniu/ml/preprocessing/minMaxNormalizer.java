@@ -1,4 +1,4 @@
-package com.feiniu.ml.preprocessing.normalization;
+package com.feiniu.ml.preprocessing;
 
 /**
  * 
@@ -6,7 +6,7 @@ package com.feiniu.ml.preprocessing.normalization;
  * @version 1.0
  * @date 2018-11-13 10:34
  */
-public class minMax {
+public class minMaxNormalizer {
  
 	public static double[][] normalize(double[][] points) {
 		if (points == null || points.length < 1) {

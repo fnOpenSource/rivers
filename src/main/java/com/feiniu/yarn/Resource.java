@@ -39,5 +39,9 @@ public final class Resource {
 	public static HashMap<String, FlowTask> tasks; 
 	
 	public final static ThreadPools ThreadPools = new ThreadPools();
+	
+	public void collectNodeResource() {
+		
+	}
 	 
 }
