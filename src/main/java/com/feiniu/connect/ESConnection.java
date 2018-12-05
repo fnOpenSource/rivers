@@ -46,7 +46,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	@Override
 	public boolean connect() {
 		if (this.connectParams.get("ip") != null) {
-			if (this.conn == null) {
+			if (status()) {
 				Settings settings = Settings.builder()
 				        .put("client.transport.sniff", true)
 				        .put("cluster.name", String.valueOf(this.connectParams.get("name"))).build(); 

@@ -6,7 +6,6 @@ import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -122,15 +121,7 @@ public final class Common {
 		}
 		return ret;
 	}
-
-	public static String long2DateFormat(long t) {
-		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
-		SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm:ss");
-		Date d = new Date(t);
-		String ret = sdf1.format(d) + " " + sdf2.format(d);
-		return ret;
-	}
-
+ 
 	public static long getNow() {
 		return System.currentTimeMillis() / 1000;
 	}
