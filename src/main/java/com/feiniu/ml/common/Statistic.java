@@ -1,4 +1,4 @@
-package com.feiniu.ml;
+package com.feiniu.ml.common;
 
 /**
  * 
@@ -8,13 +8,13 @@ package com.feiniu.ml;
  */
 public final class Statistic {
 	
-	public strictfp static double conditionalEntropy() {
+	public static double conditionalEntropy() {
 		return 0; 
 	}
 
-	public static double entropy(double[] datas) {
+	public static double entropy(double[] probs) {
 		double entropy = 0.0;
-		for (Double prob : datas) {
+		for (Double prob : probs) {
 			if (prob > 0) {
 				entropy -= prob * Math.log(prob);
 			}
@@ -22,7 +22,7 @@ public final class Statistic {
 		return entropy;
 	}
 
-	public strictfp static double conditionalEntropy(double[] data, double[] condition) {
+	public static double conditionalEntropy(double[] data, double[] condition) {
 		return 0; 
 	}
 }

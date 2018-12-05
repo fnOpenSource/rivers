@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.feiniu.field.RiverField;
 import com.feiniu.instruction.Context;
-import com.feiniu.ml.MathFunction;
+import com.feiniu.ml.common.MathFunction;
 import com.feiniu.model.computer.SamplePoint;
 import com.feiniu.model.computer.SampleSets;
 import com.feiniu.model.reader.DataPage;
