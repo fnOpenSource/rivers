@@ -335,8 +335,8 @@ public class ESFlow extends WriterFlowSocket {
 	private String timeMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
 		long current=System.currentTimeMillis(); 
 		return String.valueOf(current/(1000*3600*24)*(1000*3600*24)-TimeZone.getDefault().getRawOffset()); 
-	}
-	
+	} 
+ 
 	private String abMechanism(String mainName, boolean isIncrement, InstanceConfig instanceConfig) {
 		boolean a_alias = false;
 		boolean b_alias = false;
@@ -353,14 +353,9 @@ public class ESFlow extends WriterFlowSocket {
 			if (a && b) {
 				if (a_alias) {
 					if (b_alias) {
-						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) { 
-							getESC().getClient().admin().indices()
-							.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "b")));
+						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) {  
 							select = "a";
-						} else { 
-							if (getDocumentNums(mainName, "b") > getDocumentNums(mainName, "a")) 
-								getESC().getClient().admin().indices()
-								.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "a")));
+						} else {  
 							select = "b";
 						}
 					} else {
@@ -385,9 +380,13 @@ public class ESFlow extends WriterFlowSocket {
 			if (a && b) {
 				if (a_alias) {
 					if (b_alias) {
-						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) { 
+						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) {  
+							getESC().getClient().admin().indices()
+							.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "b")));
 							select = "b";
-						} else { 
+						} else {  
+							getESC().getClient().admin().indices()
+							.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "a")));
 							select = "a";
 						}
 					} else {
