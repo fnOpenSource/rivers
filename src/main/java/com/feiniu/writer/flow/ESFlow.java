@@ -353,9 +353,14 @@ public class ESFlow extends WriterFlowSocket {
 			if (a && b) {
 				if (a_alias) {
 					if (b_alias) {
-						if (getDocumentNums(mainName, "a") > this.getDocumentNums(mainName, "b")) { 
+						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) { 
+							getESC().getClient().admin().indices()
+							.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "b")));
 							select = "a";
 						} else { 
+							if (getDocumentNums(mainName, "b") > getDocumentNums(mainName, "a")) 
+								getESC().getClient().admin().indices()
+								.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "a")));
 							select = "b";
 						}
 					} else {
@@ -400,8 +405,8 @@ public class ESFlow extends WriterFlowSocket {
 		return select;
 	}
 	
-	private long getDocumentNums(String instanceName, String storeId) {
-		String name = Common.getStoreName(instanceName, storeId);
+	private long getDocumentNums(String instance, String storeId) {
+		String name = Common.getStoreName(instance, storeId);
 		IndicesStatsResponse response = getESC().getClient().admin().indices().prepareStats(name).all().get();
 		long res = response.getPrimaries().getDocs().getCount();
 		return res;
