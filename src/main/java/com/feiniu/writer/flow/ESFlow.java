@@ -353,13 +353,9 @@ public class ESFlow extends WriterFlowSocket {
 			if (a && b) {
 				if (a_alias) {
 					if (b_alias) {
-						if (getDocumentNums(mainName, "a") > this.getDocumentNums(mainName, "b")) {
-							getESC().getClient().admin().indices()
-									.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "b")));
+						if (getDocumentNums(mainName, "a") > this.getDocumentNums(mainName, "b")) { 
 							select = "a";
-						} else {
-							getESC().getClient().admin().indices()
-									.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "a")));
+						} else { 
 							select = "b";
 						}
 					} else {
@@ -384,13 +380,9 @@ public class ESFlow extends WriterFlowSocket {
 			if (a && b) {
 				if (a_alias) {
 					if (b_alias) {
-						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) {
-							getESC().getClient().admin().indices()
-									.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "b")));
+						if (getDocumentNums(mainName, "a") > getDocumentNums(mainName, "b")) { 
 							select = "b";
-						} else {
-							getESC().getClient().admin().indices()
-									.delete(new DeleteIndexRequest(Common.getStoreName(mainName, "a")));
+						} else { 
 							select = "a";
 						}
 					} else {
