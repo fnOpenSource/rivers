@@ -164,7 +164,7 @@ public class ESFlow extends WriterFlowSocket {
 				}
 			} 
 		} catch (Exception e) {
-			log.error("write Exception", e);
+			log.error("write Exception", e); 
 			if (e.getMessage().contains("IndexNotFoundException")) {
 				throw new FNException("storeId not found");
 			} else {
@@ -418,13 +418,11 @@ public class ESFlow extends WriterFlowSocket {
 		return response.exists();
 	} 
 	
-	private ESConnector getESC() { 
-		synchronized (this) {
-			if(this.CONNS==null || reconn) {
-				reconn = false;
-				this.CONNS = (ESConnector) GETSOCKET().getConnection(false); 
-			} 
-			return this.CONNS;
-		}
+	private synchronized ESConnector getESC() { 
+		if(this.CONNS==null || reconn) {
+			reconn = false;
+			this.CONNS = (ESConnector) GETSOCKET().getConnection(false); 
+		} 
+		return this.CONNS;
 	}
 }

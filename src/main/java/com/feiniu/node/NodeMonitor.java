@@ -589,7 +589,8 @@ public final class NodeMonitor {
 				freeInstanceConnectPool(rq.getParameter("instance"));
 				String alias = Resource.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
 				Resource.nodeConfig.getSearchConfigs().remove(alias);
-				Resource.nodeConfig.loadConfig(instanceConfig, false);
+				Resource.nodeConfig.loadConfig(instanceConfig, false); 
+				Resource.FlOW_CENTER.removeInstance(rq.getParameter("instance"),true,true);
 			}
 			rebuildFlowGovern(instanceConfig);
 			controlThreadState(rq.getParameter("instance"), STATUS.Ready, true);
@@ -685,7 +686,7 @@ public final class NodeMonitor {
 			Resource.FLOW_INFOS.remove(instance, JOB_TYPE.INCREMENT.name());
 		}
 		Resource.nodeConfig.getInstanceConfigs().remove(instance);
-		Resource.FlOW_CENTER.removeInstance(instance);
+		Resource.FlOW_CENTER.removeInstance(instance,true,true);
 		String tmp = "";
 		for (String str : GlobalParam.StartConfig.getProperty("instances").split(",")) {
 			String[] s = str.split(":");

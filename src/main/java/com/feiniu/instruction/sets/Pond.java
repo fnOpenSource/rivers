@@ -68,7 +68,7 @@ public class Pond extends Instruction {
 				String keyVal = String.valueOf(args[2]);
 				context.getWriter().delete(context.getInstanceConfig().getName(),storeId,keyColumn,keyVal);
 			} catch (Exception e) {
-				log.error("DeleteByQuery Exception", e);
+				log.error("deleteByKey Exception", e);
 				freeConn = true;
 			} finally {
 				context.getWriter().REALEASE(false,freeConn);

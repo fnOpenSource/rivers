@@ -46,7 +46,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	@Override
 	public boolean connect() {
 		if (this.connectParams.get("ip") != null) {
-			if (status()) {
+			if (!status()) {
 				Settings settings = Settings.builder()
 				        .put("client.transport.sniff", true)
 				        .put("cluster.name", String.valueOf(this.connectParams.get("name"))).build(); 
@@ -60,8 +60,8 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 						log.error("connect Exception", e);
 					}
 				}
-			}
-			this.ESC.setClient(this.conn);
+				this.ESC.setClient(this.conn);
+			} 
 		} else {
 			return false;
 		}
@@ -73,7 +73,7 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 		connect();
 		if (!searcher) {
 			if (this.bulkProcessor == null) {
-				this.bulkProcessor = getBulkProcessor(this.conn);
+				getBulkProcessor(this.conn);
 				this.ESC.setBulkProcessor(this.bulkProcessor);
 			} 
 		}
@@ -106,12 +106,13 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 	
 	private void freeBP() {
 		if (this.bulkProcessor != null) {
+			this.bulkProcessor.flush();
 			this.bulkProcessor.close();
 			this.bulkProcessor = null;
 		}
 	}
 
-	private BulkProcessor getBulkProcessor(Client _client) {
+	private void getBulkProcessor(Client _client) {
 		this.bulkProcessor = BulkProcessor.builder(_client, new BulkProcessor.Listener() {
 			@Override
 			public void beforeBulk(long executionId, BulkRequest request) {
@@ -135,7 +136,6 @@ public class ESConnection extends FnConnectionSocket implements FnConnection<ESC
 			}
 		}).setBulkActions(BULK_BUFFER).setBulkSize(new ByteSizeValue(BULK_SIZE, ByteSizeUnit.MB))
 				.setFlushInterval(TimeValue.timeValueSeconds(BULK_FLUSH_SECONDS))
-				.setConcurrentRequests(BULK_CONCURRENT).build();
-		return this.bulkProcessor;
+				.setConcurrentRequests(BULK_CONCURRENT).build(); 
 	}
 }

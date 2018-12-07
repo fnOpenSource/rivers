@@ -307,7 +307,7 @@ public final class PipePump extends Instruction {
 							",process:" + processPos + "/" + pageList.size(), isUpdate, false);  
 				} 
 				if (rState.isStatus() == false)
-					throw new FNException("read data exception!");
+					throw new FNException("writeDataSet data exception!");
 				total.getAndAdd(rState.getCount());
 				startId = dataBoundary;
 			}
@@ -413,11 +413,15 @@ public final class PipePump extends Instruction {
 								getInstanceConfig().getWriteFields(),getReader(),readHandler);  
 						getReader().freeJobPage();
 						getReader().lock.unlock();
-						rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, job_type.name(), writeTo, storeId, L2seq, pagedata,
-								",process:" + processPos + "/" + pageSize, isUpdate, false);  
+						try {
+							rState = (ReaderState) CPU.RUN(getID(), "Pipe", "writeDataSet", false, job_type.name(), writeTo, storeId, L2seq, pagedata,
+									",process:" + processPos + "/" + pageSize, isUpdate, false);  
+						}finally {
+							Common.setFlowStatus(instance,L1seq,GlobalParam.JOB_TYPE.FULL.name(),STATUS.Blank,STATUS.Ready);
+						} 
 					} 
 					if (rState.isStatus() == false) {
-						Common.LOG.info("read data exception!");
+						Common.LOG.warn("read data exception!");
 						return;
 					} 
 					total.addAndGet(rState.getCount());

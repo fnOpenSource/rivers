@@ -32,7 +32,7 @@ public final class Resource {
 	
 	public static Run RIVERS;
 	
-	public final static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<AtomicInteger>();
+	public final static RiverState<AtomicInteger> FLOW_STATUS = new RiverState<>();
 	/**FLOW_INFOS store current flow running state information*/
 	public final static RiverState<HashMap<String,String>> FLOW_INFOS = new RiverState<HashMap<String,String>>();
 

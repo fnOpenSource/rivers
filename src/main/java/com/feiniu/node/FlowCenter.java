@@ -78,7 +78,7 @@ public class FlowCenter{
 		return state;
 	}
  
-	public boolean removeInstance(String instance){
+	public boolean removeInstance(String instance,boolean removeTask,boolean removePipe){
 		Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
 		boolean state = true;
 		if(configMap.containsKey(instance)){
@@ -88,13 +88,16 @@ public class FlowCenter{
 				for (String L1seq : L1seqs) {
 					if (L1seq == null)
 						continue;  
-					if(Resource.tasks.containsKey(Common.getMainName(instance, L1seq)))
+					if(removeTask && Resource.tasks.containsKey(Common.getMainName(instance, L1seq))) {
 						Resource.tasks.remove(Common.getMainName(instance, L1seq));
-					
-					for(GlobalParam.FLOW_TAG tag:GlobalParam.FLOW_TAG.values()) {
-						Resource.SOCKET_CENTER.clearPipePump(instance, L1seq, tag.name());
+						state = removeFlowScheduleJob(Common.getMainName(instance, L1seq),instanceConfig) && state;
 					} 
-					state = removeFlowScheduleJob(Common.getMainName(instance, L1seq),instanceConfig) && state;
+					
+					if(removePipe) {
+						for(GlobalParam.FLOW_TAG tag:GlobalParam.FLOW_TAG.values()) {
+							Resource.SOCKET_CENTER.clearPipePump(instance, L1seq, tag.name());
+						} 
+					}  
 				}
 			}catch(Exception e){
 				Common.LOG.error("remove Instance "+instance+" Exception", e);

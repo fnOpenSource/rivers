@@ -164,14 +164,16 @@ public final class FnConnectionPool {
 		 * close connection pool all connections
 		 */
 		public void releaseAll() {
-			for (FnConnection<?> conn : freeConnections) {
-				if (!conn.free()) {
-					log.warn("error close one connection in pool " + this.poolName);
+			synchronized(freeConnections) {
+				for (FnConnection<?> conn : freeConnections) {
+					if (!conn.free()) {
+						log.warn("error close one connection in pool " + this.poolName);
+					}
 				}
-			}
-			log.info("free connection pool " + this.poolName + " ,Active Connections:" + activeNum
-					+ ",Release Connections:" + freeConnections.size());
-			freeConnections.clear();
+				log.info("free connection pool " + this.poolName + " ,Active Connections:" + activeNum
+						+ ",Release Connections:" + freeConnections.size());
+				freeConnections.clear();
+			} 
 		}
 
 		/**
