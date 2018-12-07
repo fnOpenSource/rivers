@@ -77,6 +77,7 @@ public final class NodeMonitor {
 		{
 			// node manage
 			add("addResource");
+			add("removeResource");
 			add("getNodeConfig");
 			add("setNodeConfig");
 			add("getStatus");
@@ -133,7 +134,66 @@ public final class NodeMonitor {
 			Common.LOG.error("ac " + rq.getParameter("ac") + " Exception ", e);
 		}
 	}
-
+	
+	/**
+	 * Be care full,this will remove all relative instance
+	 * @param rq
+	 */
+	public void removeResource(Request rq) {
+		if (rq.getParameter("name") != null && rq.getParameter("type") != null) {
+			String name = rq.getParameter("name");
+			RESOURCE_TYPE type = RESOURCE_TYPE.valueOf(rq.getParameter("type"));
+			String[] seqs;
+			WarehouseParam wp;
+			
+			Map<String, InstanceConfig> configMap = Resource.nodeConfig.getInstanceConfigs();
+			for (Map.Entry<String, InstanceConfig> entry : configMap.entrySet()) {
+				InstanceConfig instanceConfig = entry.getValue();
+				if(instanceConfig.getPipeParams().getReadFrom().equals(name)) {
+					removeInstance(entry.getKey());
+				}
+				if(instanceConfig.getPipeParams().getWriteTo().equals(name)) {
+					removeInstance(entry.getKey());
+				}
+				if(instanceConfig.getPipeParams().getSearchFrom().equals(name)) {
+					removeInstance(entry.getKey());
+				} 
+			}
+			
+			switch (type) {
+			case SQL:
+				wp = Resource.nodeConfig.getNoSqlWarehouse().get(name); 
+				seqs = wp.getL1seq();
+				if (seqs.length > 0) {
+					for (String seq : seqs) {
+						FnConnectionPool.release(wp.getPoolName(seq));
+					}
+				} else {
+					FnConnectionPool.release(wp.getPoolName(null));
+				}
+				break;
+				
+			case NOSQL:
+				wp = Resource.nodeConfig.getSqlWarehouse().get(name); 
+				seqs = wp.getL1seq();
+				if (seqs.length > 0) {
+					for (String seq : seqs) {
+						FnConnectionPool.release(wp.getPoolName(seq));
+					}
+				} else {
+					FnConnectionPool.release(wp.getPoolName(null));
+				}
+				break;
+				
+			case INSTRUCTION:
+				break;
+			} 
+		} else {
+			setResponse(0, "Parameter not match!");
+		} 
+	}
+	
+	
 	/**
 	 * @param socket
 	 *            resource configs json string
@@ -585,8 +645,7 @@ public final class NodeMonitor {
 				Resource.nodeConfig.loadConfig(instanceConfig, true);
 			} else {
 				Resource.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.FULL.name());
-				Resource.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.INCREMENT.name());
-				freeInstanceConnectPool(rq.getParameter("instance"));
+				Resource.FLOW_INFOS.remove(rq.getParameter("instance"), JOB_TYPE.INCREMENT.name()); 
 				String alias = Resource.nodeConfig.getInstanceConfigs().get(rq.getParameter("instance")).getAlias();
 				Resource.nodeConfig.getSearchConfigs().remove(alias);
 				Resource.nodeConfig.loadConfig(instanceConfig, false); 
@@ -796,40 +855,7 @@ public final class NodeMonitor {
 					true);
 		}
 	} 
-
-	private void freeInstanceConnectPool(String instanceName) {
-		InstanceConfig paramConfig = Resource.nodeConfig.getInstanceConfigs().get(instanceName);
-		String[] dataSource = { paramConfig.getPipeParams().getReadFrom(), paramConfig.getPipeParams().getWriteTo() };
-		for (String dt : dataSource) {
-			if (Resource.nodeConfig.getNoSqlWarehouse().get(dt) != null) {
-				WarehouseNosqlParam dataMap = Resource.nodeConfig.getNoSqlWarehouse().get(dt);
-				if (dataMap == null) {
-					break;
-				}
-				String[] seqs = dataMap.getL1seq();
-				if (seqs.length > 0) {
-					for (String seq : seqs) {
-						FnConnectionPool.release(dataMap.getPoolName(seq));
-					}
-				} else {
-					FnConnectionPool.release(dataMap.getPoolName(null));
-				}
-			} else if (Resource.nodeConfig.getSqlWarehouse().get(dt) != null) {
-				WarehouseSqlParam dataMap = Resource.nodeConfig.getSqlWarehouse().get(dt);
-				if (dataMap == null) {
-					break;
-				}
-				String[] seqs = dataMap.getL1seq();
-				if (seqs.length > 0) {
-					for (String seq : seqs) {
-						FnConnectionPool.release(dataMap.getPoolName(seq));
-					}
-				} else {
-					FnConnectionPool.release(dataMap.getPoolName(null));
-				}
-			}
-		}
-	}
+ 
 
 	private void saveNodeConfig() throws Exception {
 		OutputStream os = null;
