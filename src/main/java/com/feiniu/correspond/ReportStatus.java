@@ -25,6 +25,11 @@ public final class ReportStatus {
 					ZKUtil.createPath(path, true);
 				}
 				ZKUtil.createPath(path+"/INSTANCES", true);
+				
+				if (ZKUtil.getZk().exists(path+"/instructions.xml", true) == null) 
+					ZKUtil.createPath(path+"/instructions.xml", true);
+				if (ZKUtil.getZk().exists(path+"/resource.xml", true) == null) 
+					ZKUtil.createPath(path+"/resource.xml", true);
 			}
 			if (ZKUtil.getZk().exists(GlobalParam.CONFIG_PATH + "/RIVER_NODES", false) == null) {
 				ZKUtil.createPath(GlobalParam.CONFIG_PATH + "/RIVER_NODES", true);
