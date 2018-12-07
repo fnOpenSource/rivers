@@ -44,6 +44,8 @@ public final class GlobalParam {
 	
 	public static Properties StartConfig; 
 	
+	public static final String configPath = System.getProperty("config");
+	
 	
 	/**master,slave,backup*/
 	public static enum NODE_TYPE{

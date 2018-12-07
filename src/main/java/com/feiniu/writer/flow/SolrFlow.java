@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 
@@ -33,14 +32,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.feiniu.config.GlobalParam;
-import com.feiniu.config.InstanceConfig;
 import com.feiniu.config.GlobalParam.Mechanism;
+import com.feiniu.config.InstanceConfig;
 import com.feiniu.field.RiverField;
 import com.feiniu.model.reader.PipeDataUnit;
 import com.feiniu.param.end.WriterParam;
 import com.feiniu.util.Common;
 import com.feiniu.util.FNException;
-import com.feiniu.util.FNIoc;
 import com.feiniu.writer.WriterFlowSocket;
 
 /**
@@ -56,8 +54,7 @@ public class SolrFlow extends WriterFlowSocket{
 	private static String srcDir= "config/template";
 	private static String zkDir = "/configs";
 	private final static int BUFFER_LEN = 1024;
-	private final static int END = -1;
-	private Properties property;
+	private final static int END = -1; 
 	protected CloudSolrClient CONNS;
 	private List<SolrInputDocument> docs = new ArrayList<SolrInputDocument>(); 
 	
@@ -72,21 +69,18 @@ public class SolrFlow extends WriterFlowSocket{
 	@Override
 	public void INIT(HashMap<String, Object> connectParams) {
 		this.connectParams = connectParams; 
-		this.poolName = String.valueOf(connectParams.get("poolName"));
-		this.property = (Properties)FNIoc.getBean("riverPathConfig");
+		this.poolName = String.valueOf(connectParams.get("poolName")); 
 		this.isBatch = GlobalParam.WRITE_BATCH;
 	}
  
 	 
 	@Override
 	public boolean create(String instantcName, String storeId, Map<String, RiverField> transParams) {
-		String name = Common.getStoreName(instantcName, storeId);
-		String path = null; 
+		String name = Common.getStoreName(instantcName, storeId); 
 		try {
-			log.info("create index " + name);
-			path = this.property.getProperty("config.path"); 
+			log.info("create index " + name); 
 			String zkHost = getSolrConn().getZkHost();
-			moveFile2ZookeeperDest((path+"/"+srcDir).replace("file:", ""), zkDir+"/"+instantcName, zkHost);
+			moveFile2ZookeeperDest((GlobalParam.configPath+"/"+srcDir).replace("file:", ""), zkDir+"/"+instantcName, zkHost);
 			getSchemaFile(transParams, instantcName, storeId, zkHost); 
 			CollectionAdminRequest.Create create = new CollectionAdminRequest.Create();
 			create.setConfigName(instantcName);
@@ -283,8 +277,7 @@ public class SolrFlow extends WriterFlowSocket{
  
 	private void getSchemaFile(Map<String,RiverField> paramMap,String instantcName, String storeId,String zkHost) {
 		BufferedReader head_reader = null;
-		BufferedReader tail_reader = null; 
-		String path = null;
+		BufferedReader tail_reader = null;  
 		String destPath = zkDir+"/"+instantcName+"/schema.xml";
 		ZooKeeper zk = null;
 		Stat stat = null;
@@ -303,10 +296,9 @@ public class SolrFlow extends WriterFlowSocket{
 			if (null == stat) {
 				zk.create(destPath, "".getBytes(), Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
 			}
-			
-			path = property.getProperty("config.path");
-			String head = path+"/"+srcDir+"/schema_head.txt";
-			String tail = path+"/"+srcDir+"/schema_tail.txt";
+			 
+			String head = GlobalParam.configPath+"/"+srcDir+"/schema_head.txt";
+			String tail = GlobalParam.configPath+"/"+srcDir+"/schema_tail.txt";
 			head_reader = new BufferedReader(new InputStreamReader(new FileInputStream(head.replace("file:", "")), "UTF-8"));
 			tail_reader = new BufferedReader(new FileReader(tail.replace("file:", "")));
 			String str = null;

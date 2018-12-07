@@ -16,7 +16,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.commons.lang.StringUtils;
 import org.mortbay.jetty.Request;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
@@ -37,7 +36,7 @@ import com.feiniu.reader.service.HttpReaderService;
 import com.feiniu.searcher.service.SearcherService;
 import com.feiniu.util.Common;
 import com.feiniu.util.NodeUtil;
-import com.feiniu.util.SystemInfoUtil; 
+import com.feiniu.util.SystemInfoUtil;
 import com.feiniu.writer.WriterFlowSocket;
 import com.feiniu.yarn.Resource;
 
@@ -63,10 +62,7 @@ public final class NodeMonitor {
 	private SearcherService SearcherService;
 
 	@Autowired
-	private HttpReaderService HttpReaderService;
-
-	@Value("#{riverPathConfig['config.path']}")
-	private String configPath;
+	private HttpReaderService HttpReaderService; 
 
 	private String response;
 
@@ -859,7 +855,7 @@ public final class NodeMonitor {
 
 	private void saveNodeConfig() throws Exception {
 		OutputStream os = null;
-		os = new FileOutputStream(configPath.replace("file:", "") + "/config/config.properties");
+		os = new FileOutputStream(GlobalParam.configPath.replace("file:", "") + "/config.properties");
 		GlobalParam.StartConfig.store(os, "Auto Save Config with no format,BeCarefull!");
 	} 
 }

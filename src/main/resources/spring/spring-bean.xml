@@ -16,8 +16,7 @@
 		http://www.springframework.org/schema/aop/spring-aop.xsd
 	    http://www.springframework.org/schema/mvc
         http://www.springframework.org/schema/mvc/spring-mvc.xsd"> 
-	<context:component-scan base-package="com.feiniu" />
-	<util:properties id="riverPathConfig" location="classpath:config/configPath.properties"></util:properties>
+	<context:component-scan base-package="com.feiniu" /> 
 	<util:properties id="nodeSystemInfo" location="classpath:config/node.properties"></util:properties>
  
 	<bean id="log4jInitialization" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
@@ -25,7 +24,7 @@
 	   <property name="targetMethod" value="initLogging" />
 	   <property name="arguments">
 	      <list>
-	         <value>#{riverPathConfig['config.path']}/config/log4j.properties
+	         <value>#{systemProperties['config']}/log4j.properties
 	         </value>
 	      </list>
 	   </property>
@@ -39,6 +38,6 @@
 	<bean id="SearcherService" class="com.feiniu.searcher.service.SearcherService"/> 
 	<bean id="ComputerService" class="com.feiniu.computer.service.ComputerService"/>  
 	<bean id="RIVERS" class="com.feiniu.node.startup.Run">  
-		<constructor-arg type="String" index="0" value="#{riverPathConfig['config.path']}/config/config.properties"/>
+		<constructor-arg type="String" index="0" value="#{systemProperties['config']}/config.properties"/>
 	</bean>
 </beans>
