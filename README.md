@@ -1,7 +1,7 @@
 # Rivers是什么?
     Rivers是一个支持在任意类型数据端之间以及数据与用户端之间进行可定时定量多渠道方式，
     通过建立可计算流通道完成交换数据服务的中间件。  
-
+目前支持将流接入deeplearning4j，可支持tensorflow等深度学习框架。
 
 ![image](https://github.com/fnOpenSource/rivers/blob/master/architecture.jpg)
 
