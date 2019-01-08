@@ -50,7 +50,7 @@
 	   <property name="maxPoolSize" value="30"/>
    </bean> 
     
-   <bean id="emailModel" class="com.feiniu.util.email.EmailModel">  
+   <bean id="emailModel" class="org.elasticflow.util.email.EmailModel">  
 	   <constructor-arg type="String" index="0"  value="#{mailConfigBean['mail.From']}" />
 	   <constructor-arg type="String" index="1"  value="#{mailConfigBean['mail.Address']}" />
 	   <constructor-arg type="String" index="2"  value="#{mailConfigBean['mail.Bcc']}" />
@@ -60,7 +60,7 @@
    </bean> 
 
    
-   <bean id="javaxEmailBean" class="com.feiniu.util.email.EmailConfig">  
+   <bean id="javaxEmailBean" class="org.elasticflow.util.email.EmailConfig">  
    <constructor-arg type="String" index="0"  value="#{mailConfigBean['mail.host']}" />
 	   <constructor-arg type="String" index="1"  value="#{mailConfigBean['mail.From']}" />
 	   <constructor-arg type="String" index="2"  value="#{mailConfigBean['mail.FromName']}" />
@@ -71,7 +71,7 @@
 	   <constructor-arg type="String" index="7"  value="#{mailConfigBean['mail.Subject']}" />
 	   <constructor-arg type="String" index="8"  value="#{mailConfigBean['mail.Content']}" />
    </bean> 
-   <bean id="mailService" class="com.feiniu.util.email.MailServiceImpl">
+   <bean id="mailService" class="org.elasticflow.util.email.MailServiceImpl">
 	   <constructor-arg type="boolean" index="0"  value="#{mailConfigBean['mail.sendModel.syncMode']}" />
 	   <property name="syncMode" value="#{mailConfigBean['mail.sendModel.syncMode']}"  />
    </bean>  

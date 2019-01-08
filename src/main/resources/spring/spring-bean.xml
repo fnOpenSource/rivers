@@ -16,7 +16,7 @@
 		http://www.springframework.org/schema/aop/spring-aop.xsd
 	    http://www.springframework.org/schema/mvc
         http://www.springframework.org/schema/mvc/spring-mvc.xsd"> 
-	<context:component-scan base-package="com.feiniu" /> 
+	<context:component-scan base-package="org.elasticflow" /> 
 	<util:properties id="nodeSystemInfo" location="classpath:config/node.properties"></util:properties>
  
 	<bean id="log4jInitialization" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
@@ -30,14 +30,14 @@
 	   </property>
 	</bean>  
 
-	<bean id="SocketCenter" class="com.feiniu.node.SocketCenter"/> 
-	<bean id="FlowCenter" class="com.feiniu.node.FlowCenter" /> 
+	<bean id="SocketCenter" class="org.elasticflow.node.SocketCenter"/> 
+	<bean id="FlowCenter" class="org.elasticflow.node.FlowCenter" /> 
 	<bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"/>
-	<bean id="taskJobCenter" class="com.feiniu.task.schedule.TaskJobCenter"/>
-	<bean id="HttpReaderService" class="com.feiniu.reader.service.HttpReaderService"/> 
-	<bean id="SearcherService" class="com.feiniu.searcher.service.SearcherService"/> 
-	<bean id="ComputerService" class="com.feiniu.computer.service.ComputerService"/>  
-	<bean id="RIVERS" class="com.feiniu.node.startup.Run">  
+	<bean id="taskJobCenter" class="org.elasticflow.task.schedule.TaskJobCenter"/>
+	<bean id="HttpReaderService" class="org.elasticflow.reader.service.HttpReaderService"/> 
+	<bean id="SearcherService" class="org.elasticflow.searcher.service.SearcherService"/> 
+	<bean id="ComputerService" class="org.elasticflow.computer.service.ComputerService"/>  
+	<bean id="RIVERS" class="org.elasticflow.node.startup.Run">  
 		<constructor-arg type="String" index="0" value="#{systemProperties['config']}/config.properties"/>
 	</bean>
 </beans>
