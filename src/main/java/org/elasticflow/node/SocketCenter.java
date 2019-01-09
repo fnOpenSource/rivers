@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.elasticflow.computer.Computer;
 import org.elasticflow.config.InstanceConfig;
+import org.elasticflow.param.pipe.ConnectParams;
 import org.elasticflow.param.warehouse.WarehouseParam;
 import org.elasticflow.piper.PipePump;
 import org.elasticflow.reader.ReaderFlowSocket;
@@ -136,7 +137,11 @@ public final class SocketCenter {
 				WarehouseParam param = getWHP(resourceName);
 				if (param == null)
 					return null;
-				readerSocketMap.put(tags, ReaderFlowSocketFactory.getInstance(param, L1seq,
+				ConnectParams connectParams = new ConnectParams();
+				connectParams.setWhp(param);
+				connectParams.setL1Seq(L1seq);
+				connectParams.setInstanceConfig(Resource.nodeConfig.getInstanceConfigs().get(instance)); 
+				readerSocketMap.put(tags, ReaderFlowSocketFactory.getInstance(connectParams, L1seq,
 						Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadHandler()));
 			}
 			return readerSocketMap.get(tags);
@@ -158,7 +163,11 @@ public final class SocketCenter {
 				WarehouseParam param = getWHP(resourceName);
 				if (param == null)
 					return null;
-				writerSocketMap.put(tags, WriterSocketFactory.getInstance(param, L1seq,
+				ConnectParams connectParams = new ConnectParams();
+				connectParams.setWhp(param);
+				connectParams.setL1Seq(L1seq);
+				connectParams.setInstanceConfig(Resource.nodeConfig.getInstanceConfigs().get(instance)); 
+				writerSocketMap.put(tags, WriterSocketFactory.getInstance(connectParams, L1seq,
 						Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteHandler()));
 			}
 			return writerSocketMap.get(tags);
@@ -177,10 +186,14 @@ public final class SocketCenter {
 			String tags = Common.getResourceTag(tagInstance, L1seq, tag, ignoreSeqUseAlias);
 
 			if (reload || !searcherSocketMap.containsKey(tags)) {
-				WarehouseParam param = getWHP(resourceName);
+				WarehouseParam param = getWHP(resourceName); 
 				if (param == null)
 					return null; 
-				SearcherFlowSocket searcher = SearcherSocketFactory.getInstance(param, Resource.nodeConfig.getSearchConfigs().get(instance), null);
+				ConnectParams connectParams = new ConnectParams();
+				connectParams.setWhp(param);
+				connectParams.setL1Seq(L1seq);
+				connectParams.setInstanceConfig(Resource.nodeConfig.getInstanceConfigs().get(instance)); 
+				SearcherFlowSocket searcher = SearcherSocketFactory.getInstance(connectParams, Resource.nodeConfig.getSearchConfigs().get(instance), null);
 				searcherSocketMap.put(tags, searcher);
 			}
 			return searcherSocketMap.get(tags);
