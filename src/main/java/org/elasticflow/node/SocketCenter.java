@@ -18,14 +18,15 @@ import org.elasticflow.writer.WriterFlowSocket;
 import org.elasticflow.writer.WriterSocketFactory;
 import org.elasticflow.yarn.Resource;
 
-/**
- * data-flow router reader searcher computer and writer control center L1seq only
- * support for reader to read series data source and create one or more instance
- * in writer searcherMap and computerMap for data to user data transfer
+/** 
+ * data-flow router reader searcher computer and writer control center L1seq
+ * only support for reader to read series data source and create one or more
+ * instance in writer searcherMap and computerMap for data to user data transfer
  * 
  * @author chengwen
  * @version 2.0
  * @date 2018-10-31 13:55
+ * @modify 2019-01-10 09:45
  */
 public final class SocketCenter {
 
@@ -43,14 +44,10 @@ public final class SocketCenter {
 	 * get Writer auto look for sql and nosql maps to get socket each writer has
 	 * sperate flow
 	 * 
-	 * @param L1seq
-	 *            for series data source sequence
-	 * @param instanceName
-	 *            data source main tag name
-	 * @param needClear
-	 *            for reset resource
-	 * @param tag
-	 *            Marking resource
+	 * @param L1seq        for series data source sequence
+	 * @param instanceName data source main tag name
+	 * @param needClear    for reset resource
+	 * @param tag          Marking resource
 	 */
 	public PipePump getPipePump(String instance, String L1seq, boolean needClear, String tag) {
 		synchronized (pipePumpMap) {
@@ -95,7 +92,7 @@ public final class SocketCenter {
 				Searcher searcher = Searcher.getInstance(instance, instanceConfig,
 						getSearcherSocket(
 								Resource.nodeConfig.getSearchConfigs().get(instance).getPipeParams().getSearchFrom(),
-								instance, L1seq, tag,reload));
+								instance, L1seq, tag, reload));
 				searcherMap.put(instance, searcher);
 			}
 			return searcherMap.get(instance);
@@ -134,14 +131,11 @@ public final class SocketCenter {
 			String tags = Common.getResourceTag(tagInstance, L1seq, tag, ignoreSeqUseAlias);
 
 			if (!readerSocketMap.containsKey(tags)) {
-				WarehouseParam param = getWHP(resourceName);
-				if (param == null)
-					return null;
-				ConnectParams connectParams = new ConnectParams();
-				connectParams.setWhp(param);
-				connectParams.setL1Seq(L1seq);
-				connectParams.setInstanceConfig(Resource.nodeConfig.getInstanceConfigs().get(instance)); 
-				readerSocketMap.put(tags, ReaderFlowSocketFactory.getInstance(connectParams, L1seq,
+				WarehouseParam whp = getWHP(resourceName);
+				if (whp == null)
+					return null;  
+				readerSocketMap.put(tags, ReaderFlowSocketFactory.getInstance(ConnectParams.getInstance(whp, L1seq,
+						Resource.nodeConfig.getInstanceConfigs().get(instance), null), L1seq,
 						Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getReadHandler()));
 			}
 			return readerSocketMap.get(tags);
@@ -160,21 +154,19 @@ public final class SocketCenter {
 			String tags = Common.getResourceTag(tagInstance, L1seq, tag, ignoreSeqUseAlias);
 
 			if (!writerSocketMap.containsKey(tags)) {
-				WarehouseParam param = getWHP(resourceName);
-				if (param == null)
-					return null;
-				ConnectParams connectParams = new ConnectParams();
-				connectParams.setWhp(param);
-				connectParams.setL1Seq(L1seq);
-				connectParams.setInstanceConfig(Resource.nodeConfig.getInstanceConfigs().get(instance)); 
-				writerSocketMap.put(tags, WriterSocketFactory.getInstance(connectParams, L1seq,
+				WarehouseParam whp = getWHP(resourceName);
+				if (whp == null)
+					return null; 
+				writerSocketMap.put(tags, WriterSocketFactory.getInstance(ConnectParams.getInstance(whp, L1seq,
+						Resource.nodeConfig.getInstanceConfigs().get(instance), null), L1seq,
 						Resource.nodeConfig.getInstanceConfigs().get(instance).getPipeParams().getWriteHandler()));
 			}
 			return writerSocketMap.get(tags);
 		}
 	}
 
-	public SearcherFlowSocket getSearcherSocket(String resourceName, String instance, String L1seq, String tag,boolean reload) {
+	public SearcherFlowSocket getSearcherSocket(String resourceName, String instance, String L1seq, String tag,
+			boolean reload) {
 		synchronized (searcherSocketMap) {
 			boolean ignoreSeqUseAlias = false;
 			if (Resource.nodeConfig.getInstanceConfigs().get(instance) != null)
@@ -186,19 +178,19 @@ public final class SocketCenter {
 			String tags = Common.getResourceTag(tagInstance, L1seq, tag, ignoreSeqUseAlias);
 
 			if (reload || !searcherSocketMap.containsKey(tags)) {
-				WarehouseParam param = getWHP(resourceName); 
-				if (param == null)
-					return null; 
-				ConnectParams connectParams = new ConnectParams();
-				connectParams.setWhp(param);
-				connectParams.setL1Seq(L1seq);
-				connectParams.setInstanceConfig(Resource.nodeConfig.getInstanceConfigs().get(instance)); 
-				SearcherFlowSocket searcher = SearcherSocketFactory.getInstance(connectParams, Resource.nodeConfig.getSearchConfigs().get(instance), null);
+				WarehouseParam whp = getWHP(resourceName);
+				if (whp == null)
+					return null;
+				SearcherFlowSocket searcher = SearcherSocketFactory
+						.getInstance(
+								ConnectParams.getInstance(whp, L1seq,
+										Resource.nodeConfig.getInstanceConfigs().get(instance), null),
+								Resource.nodeConfig.getSearchConfigs().get(instance), null);
 				searcherSocketMap.put(tags, searcher);
 			}
 			return searcherSocketMap.get(tags);
 		}
-	} 
+	}
 
 	public WarehouseParam getWHP(String destination) {
 		WarehouseParam param = null;

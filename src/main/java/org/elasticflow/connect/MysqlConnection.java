@@ -39,9 +39,10 @@ public class MysqlConnection extends FnConnectionSocket<Connection> {
 	public boolean connect() {
 		try {
 			if (!status()) {
+				WarehouseSqlParam wsp = (WarehouseSqlParam) this.connectParams.getWhp();
 				this.conn = DriverManager.getConnection(getConnectionUrl(),
-						((WarehouseSqlParam) this.connectParams.getWhp()).getUser(),
-						((WarehouseSqlParam) this.connectParams.getWhp()).getPassword());
+						wsp.getUser(),
+						wsp.getPassword());
 				log.info("build connect to " + getConnectionUrl());
 			}
 			return true;

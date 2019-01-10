@@ -39,14 +39,15 @@ public class OracleConnection extends FnConnectionSocket<Connection> {
 	public boolean connect() {
 		try {
 			if (!status()) {
+				WarehouseSqlParam wsp = (WarehouseSqlParam) this.connectParams.getWhp();
 				this.conn = DriverManager.getConnection(getConnectionUrl(),
-						((WarehouseSqlParam) this.connectParams.getWhp()).getUser(),
-						((WarehouseSqlParam) this.connectParams.getWhp()).getPassword());
+						wsp.getUser(),
+						wsp.getPassword());
 				log.info("build connect to " + getConnectionUrl());
 			}
 			return true;
 		} catch (Exception e) {
-			log.error("connect Exception,", e);
+			log.error(((WarehouseSqlParam) this.connectParams.getWhp()).getHost() + "connect Exception,", e);
 			return false;
 		}
 	}

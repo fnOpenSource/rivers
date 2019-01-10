@@ -29,9 +29,10 @@ public class SolrConnection extends FnConnectionSocket<CloudSolrClient> {
 
 	@Override
 	public boolean connect() {
-		if (((WarehouseNosqlParam) this.connectParams.getWhp()).getPath() != null) {
+		WarehouseNosqlParam wnp = (WarehouseNosqlParam) this.connectParams.getWhp();
+		if (wnp.getPath() != null) {
 			if (!status()) {
-				this.conn = new CloudSolrClient(((WarehouseNosqlParam) this.connectParams.getWhp()).getPath());
+				this.conn = new CloudSolrClient(wnp.getPath());
 				this.conn.setZkClientTimeout(zkClientTimeout);
 				this.conn.setZkConnectTimeout(zkConnectTimeout);
 			}

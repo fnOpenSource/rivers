@@ -8,7 +8,16 @@ public class ConnectParams {
 	private Object plugin;
 	private volatile WarehouseParam whp;
 	private volatile InstanceConfig instanceConfig; 
-
+	
+	public static ConnectParams getInstance(WarehouseParam whp,String L1Seq,InstanceConfig instanceConfig,Object plugin) {
+		ConnectParams o = new ConnectParams();
+		o.whp = whp;
+		o.L1Seq = L1Seq;
+		o.instanceConfig = instanceConfig;
+		o.plugin = plugin;
+		return o; 
+	}
+	
 	public String getL1Seq() {
 		return L1Seq;
 	}
